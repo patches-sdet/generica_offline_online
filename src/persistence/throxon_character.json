@@ -1,0 +1,49 @@
+{
+    "name": "Throxon",
+    "attributes": {
+        "strength": 42,
+        "constitution": 50,
+        "intelligence": 22,
+        "wisdom": 46,
+        "dexterity": 33,
+        "agility": 30,
+        "charisma": 30,
+        "willpower": 41,
+        "perception": 25,
+        "luck": 40,
+        "race": "Dwarf",
+        "adventure_job": null,
+        "adventure_level": 0,
+        "craft_job": null,
+        "craft_level": 0
+    },
+    "pools": {
+        "hp": [
+            92,
+            92
+        ],
+        "sanity": [
+            68,
+            68
+        ],
+        "stamina": [
+            72,
+            72
+        ],
+        "moxie": [
+            71,
+            71
+        ],
+        "fortune": [
+            65,
+            65
+        ]
+    },
+    "defenses": {
+        "armor": 0,
+        "mental_fortitude": 0,
+        "endurance": 0,
+        "cool": 0,
+        "fate": 0
+    }
+}
