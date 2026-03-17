@@ -103,7 +103,20 @@ RACES = {
         racial_armor = 10,
         racial_endurance = 10,
         )
-
+        "Elf": Race(
+            name="Elf",
+            stat_modifiers = make_mods(
+            strengh = 5,
+            constitution = 5,
+            intelligence = 5,
+            wisdom = 5,
+            dexterity = 5,
+            agility = 5,
+            willpower = 5,
+            perception = 5,
+            luck = 5,
+        ),
+        )
         }
 
 def get_race(name: str) -> Race:
