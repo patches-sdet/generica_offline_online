@@ -1,7 +1,7 @@
 import random
 from src.domain.attributes import Attributes, Defenses, PoolManager, calculate_pools, DEFAULT_STATS
 from src.domain.character import Character
-from src.domain.race import get_race
+from src.domain.race import resolve_race, apply_material_template
 
 def roll_2d10() -> int:
     """
@@ -22,11 +22,10 @@ ATTRIBUTE_NAMES = [
     "luck"
 ]
 
-def roll_attributes(race_name: str) -> Attributes:
+def roll_attributes(race) -> Attributes:
     """
     Generate Attributes object based on race + 2d10 rolls.
     """
-    race = get_race(race_name)
 
     rolled_stats = {
         stat: DEFAULT_STATS[stat] + race.stat_modifiers.get(stat, 0) + roll_2d10()
@@ -59,8 +58,18 @@ def create_character(name: str, race_name: str) -> Character:
     Generate a full Character object with attributes, pools, and defenses.
     """
     
-    race = get_race(race_name)
-    attrs = roll_attributes(race_name)
+    race = resolve_race(race_name)
+    
+    if race.requires_material:
+        print("\nChoose material:")
+        print("- cloth\n- leather\n- metal")
+
+        material = input("Material: ").strip().lower()
+        while material not in ["cloth", "leather", "metal"]:
+            material = input("Invalid. Choose cloth, leather, or metal: ").strip().lower()
+            race = apply_material_template(race, material)
+
+    attrs = roll_attributes(race)
     pools = calculate_pools(attrs)
     defenses = calculate_defenses(attrs, race)
 

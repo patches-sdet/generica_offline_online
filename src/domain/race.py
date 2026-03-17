@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
 
 @dataclass(frozen=True)
 class Race:
@@ -12,6 +12,10 @@ class Race:
     racial_endurance: int = 0
     racial_cool: int = 0
     racial_fate: int = 0
+    requires_material: bool = False
+    
+    # Added this to allow Doll Haunters or Toy Golems
+    base_race: Optional[str] = None
 
 DEFAULT_STATS = {
         "strength": 25,
@@ -102,7 +106,7 @@ RACES = {
         ),
         racial_armor = 10,
         racial_endurance = 10,
-        )
+        ),
         "Elf": Race(
             name="Elf",
             stat_modifiers = make_mods(
@@ -116,10 +120,92 @@ RACES = {
             perception = 5,
             luck = 5,
         ),
-        )
+        ),
+
+
+
+        # Template Races (Doll Haunter, Toy Golem)
+        "Toy Golem": Race(
+            name="Toy Golem",
+            base_race = "Human", #hardcoded for initial testing
+            stat_modifiers = make_mods(),
+        racial_armor = 15,
+        racial_endurance = 25,
+        racial_cool = 20,
+        requires_material = True,
+        ),
         }
 
 def get_race(name: str) -> Race:
     if name not in RACES:
         raise ValueError(f"Race '{name}' not defined")
     return copy.deepcopy(RACES[name])
+
+def resolve_race(race_name: str) -> Race:
+    """
+    Resolve a race including any base race inheritance.
+    """
+
+    race = get_race(race_name)
+
+    if not race.base_race:
+        return race
+
+    base = resolve_race(race.base_race)
+
+    # Merge stats
+    combined_modifiers = {
+        stat: base.stat_modifiers.get(stat, 0) + race.stat_modifiers.get(stat, 0)
+        for stat in set(base.stat_modifiers) | set(race.stat_modifiers)
+    }
+
+    return Race(
+        name=race.name,
+        stat_modifiers=combined_modifiers,
+
+        requires_material=race.requires_material,
+        racial_hp_bonus=base.racial_hp_bonus + race.racial_hp_bonus,
+        racial_armor=base.racial_armor + race.racial_armor,
+        racial_mental_fortitude=base.racial_mental_fortitude + race.racial_mental_fortitude,
+        racial_endurance=base.racial_endurance + race.racial_endurance,
+        racial_cool=base.racial_cool + race.racial_cool,
+        racial_fate=base.racial_fate + race.racial_fate
+    )
+
+def apply_material_template(race: Race, material: str) -> Race:
+    """
+    Apply the material-based modifiers to Doll Haunters and Toy Golems.
+    """
+
+    MATERIALS = {
+            "cloth": {
+                "armor": 10,
+                "endurance": 20
+                },
+            "leather": {
+                "armor": 15,
+                "endurance": 15
+                },
+            "metal": {
+                "armor": 20,
+                "endurance": 10
+                }
+            }
+
+    if material not in MATERIALS:
+        raise ValueError(f"Invalid Material: {material}. Choose from {MATERIALS}")
+
+    mod = MATERIALS[material]
+
+    return Race(
+            name = f"{race.name} ({material})",
+            stat_modifiers = race.stat_modifiers.copy(),
+
+            requires_material=race.requires_material,
+            racial_hp_bonus = race.racial_hp_bonus,
+            racial_armor = race.racial_armor + mod["armor"],
+            racial_mental_fortitude = race.racial_mental_fortitude,
+            racial_endurance = race.racial_endurance + mod["endurance"],
+            racial_cool = race.racial_cool,
+            racial_fate = race.racial_fate
+            )
