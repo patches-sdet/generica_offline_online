@@ -35,6 +35,7 @@ def roll_attributes(race) -> Attributes:
     return Attributes(
         **rolled_stats,
         race=race.name,
+        material=race.material,
         adventure_job=None,
         adventure_level=0,
         craft_job=None,
@@ -67,7 +68,10 @@ def create_character(name: str, race_name: str) -> Character:
         material = input("Material: ").strip().lower()
         while material not in ["cloth", "leather", "metal"]:
             material = input("Invalid. Choose cloth, leather, or metal: ").strip().lower()
-            race = apply_material_template(race, material)
+            
+        race = apply_material_template(race, material)
+        
+        print(f"DEBUG (after apply): race.material = {race.material}")
 
     attrs = roll_attributes(race)
     pools = calculate_pools(attrs)
@@ -82,10 +86,3 @@ def create_character(name: str, race_name: str) -> Character:
     )
 
     return character
-
-
-if __name__ == "__main__":
-    my_char = create_character("Thorin", "Dwarf")
-    print(f"Character: {my_char.name} ({my_char.attributes.race})")
-    print(f"STR: {my_char.attributes.strength}, CON: {my_char.attributes.constitution}")
-    print(f"HP: {my_char.pools.hp[0]}/{my_char.pools.hp[1]}")

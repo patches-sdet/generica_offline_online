@@ -15,6 +15,7 @@ class Race:
     requires_material: bool = False
     
     # Added this to allow Doll Haunters or Toy Golems
+    material: Optional[str] = None
     base_race: Optional[str] = None
 
 DEFAULT_STATS = {
@@ -198,14 +199,16 @@ def apply_material_template(race: Race, material: str) -> Race:
     mod = MATERIALS[material]
 
     return Race(
-            name = f"{race.name} ({material})",
+            name = f"{race.name} (material.capitalize()})"
             stat_modifiers = race.stat_modifiers.copy(),
 
-            requires_material=race.requires_material,
+            material=material,
+            requires_material=False,
+
             racial_hp_bonus = race.racial_hp_bonus,
             racial_armor = race.racial_armor + mod["armor"],
             racial_mental_fortitude = race.racial_mental_fortitude,
             racial_endurance = race.racial_endurance + mod["endurance"],
             racial_cool = race.racial_cool,
-            racial_fate = race.racial_fate
-            )
+            racial_fate = race.racial_fate,
+        )

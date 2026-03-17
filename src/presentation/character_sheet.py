@@ -72,6 +72,8 @@ def print_stat_block(title, stats:dict, hide_keys: list = None, color_map: dict=
             current, maximum = value
             print(f"{color}{pretty_name}: {current}/{maximum}{RESET_COLOR}")
         else:
+            if key == "material" and isinstance(value, str):
+                value = value.capitalize()
             print(f"{color}{pretty_name}: {value}{RESET_COLOR}")
 
 def debug_print_character(character):
@@ -81,7 +83,11 @@ def debug_print_character(character):
     print("==============================")
 
     print(f"Name: {character.name}")
-    print(f"Race: {character.attributes.race}")
+    race_line = character.attributes.race
+    if character.attributes.race and character.attributes.race:
+        if hasattr(character, "material") and character.material:
+            race_line += f" ({character.material})"
+    print(f"Race: {race_line}")
 
     #attributes without color
     print_stat_block("Attributes", vars(character.attributes), hide_keys=["race"], color_map=None)

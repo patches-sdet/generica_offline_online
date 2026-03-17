@@ -34,12 +34,13 @@ class Attributes:
     luck: int
 
     race: str
+    material: str | None = None
 
-    adventure_job: str | None
-    adventure_level: int
+    adventure_job: str | None = None
+    adventure_level: int = 0
 
-    craft_job: str | None
-    craft_level: int
+    craft_job: str | None = None
+    craft_level: int = 0
 
 # Derived Stats
 
