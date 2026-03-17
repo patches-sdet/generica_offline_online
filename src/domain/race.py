@@ -55,7 +55,7 @@ RACES = {
         "Frosted Giant": Race(
             name="Frosted Giant",
             stat_modifiers = make_mods(
-            strength =35,
+            strength = 35,
             constitution = 55,
             intelligence = -15,
             wisdom = -10,
@@ -66,9 +66,9 @@ RACES = {
             perception = -15,
             luck = -5,
         ),
-        racial_armor=15,
-        racial_endurance=25,
-        racial_cool=10,
+        racial_armor = 15,
+        racial_endurance = 25,
+        racial_cool = 10,
         ),
         "Gribbit": Race(
             name="Gribbit",
@@ -83,9 +83,25 @@ RACES = {
             perception = 5,
             luck = -5,
         ),
-        racial_armor=5,
-        racial_mental_fortitude=10,
-        racial_endurance=5,
+        racial_armor = 5,
+        racial_mental_fortitude = 10,
+        racial_endurance = 5,
+        ),
+        "Raccant": Race(
+            name="Raccant",
+            stat_modifiers = make_mods(
+            strengh = -15,
+            constitution = 15,
+            intelligence = -5,
+            wisdom = -10,
+            dexterity = 15,
+            agility = 15,
+            willpower = -15,
+            perception = -5,
+            luck = 5,
+        ),
+        racial_armor = 10,
+        racial_endurance = 10,
         )
 
         }
