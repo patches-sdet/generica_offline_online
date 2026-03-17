@@ -3,6 +3,7 @@ from dataclasses import asdict
 from src.application.character_creation import create_character
 from src.presentation.character_sheet import debug_print_character
 from src.domain.race import RACES
+from src.domain.adventure import get_jobs_by_class
 
 PERSISTENCE_DIR = "src/persistence"
 
@@ -24,8 +25,13 @@ def main():
     while race_name not in RACES:
         race_name = input("Invalid race. Please choose a valid race: ").strip()
 
+    # Show available jobs, organized by class
+    job_name = input("\nChoose a job: ").strip()
+    for job in get_jobs_by_class("W"):
+        print (f"- {job}")
+
     # Create the character using character_creation.py
-    character = create_character(char_name, race_name)
+    character = create_character(char_name, race_name, job_name)
 
     # Print the character sheet
     print("\n=== Character Created ===\n")
@@ -41,6 +47,11 @@ def main():
     with open(filepath, "w") as f:
         json.dump(asdict(character), f, indent=4)
         print(f"\nCharacter saved to: {filename}")
+
+# sanity check test
+# char = create_character("Test", "Human", "Archer")
+# print("Job:", char.job.name)
+# print("STR:", char.attributes.strength)
 
 if __name__ == "__main__":
     main()

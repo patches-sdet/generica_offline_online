@@ -36,9 +36,6 @@ class Attributes:
     race: str
     material: str | None = None
 
-    adventure_job: str | None = None
-    adventure_level: int = 0
-
     craft_job: str | None = None
     craft_level: int = 0
 

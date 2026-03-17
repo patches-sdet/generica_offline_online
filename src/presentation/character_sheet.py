@@ -1,5 +1,5 @@
-from src.domain.character import Character
-from src.domain.attributes import Pools, Defenses
+from domain.character import Character
+from domain.attributes import Pools, Defenses
 
 POOL_COLORS = {
         "hp": "\033[91m",       #Red
@@ -88,6 +88,12 @@ def debug_print_character(character):
         if hasattr(character, "material") and character.material:
             race_line += f" ({character.material})"
     print(f"Race: {race_line}")
+    print("\n==============================")
+    print(f"      JOB(S)")
+    print("==============================")
+
+    # jobs with colors?
+    print(f"Job: {character.job.name} ({character.job.job_class})")
 
     #attributes without color
     print_stat_block("Attributes", vars(character.attributes), hide_keys=["race"], color_map=None)

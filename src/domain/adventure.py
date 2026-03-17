@@ -1,0 +1,162 @@
+from dataclasses import dataclass, field
+from typing import Dict, List
+
+
+# Class Registry
+
+CLASS_REGISTRY = {
+    "S": "Sage",
+    "C": "Creator",
+    "W": "Warrior",
+    "R": "Rogue",
+    "D": "Diva",
+    "P": "Priest",
+    "E": "Wanderer",
+}
+
+# Job to Class Map
+
+JOB_CLASS_MAP = {
+    # Warrior
+    "Archer": "W",
+    "Berserker": "W",
+    "Duelist": "W",
+    "Knight": "W",
+}
+
+
+# Core Adventure Job Dataclass
+
+@dataclass
+class AdventureJob:
+    name: str
+
+    # One-time stat bonuses on acquisition
+    stat_modifiers: Dict[str, int] = field(default_factory=dict)
+
+    # Future systems
+    pool_modifiers: Dict[str, float] = field(default_factory=dict)
+    defense_modifiers: Dict[str, int] = field(default_factory=dict)
+
+    abilities: List[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
+
+# Derived Properties
+
+    @property
+    def class_code(self) -> str:
+        return JOB_CLASS_MAP[self.name]
+
+    @property
+    def job_class(self) -> str:
+        return CLASS_REGISTRY[self.class_code]
+
+# Application Methods
+
+    def apply_to_attributes(self, attributes):
+        # This will change to apply_on_acquire when I get to
+        # adding leveling up and multi-classing >.>
+        """
+        Applies one-time stat bonuses when the job is acquired.
+        Assumes attributes has matching attribute names (STR, CON, etc.)
+        """
+        for stat, value in self.stat_modifiers.items():
+            current = getattr(attributes, stat)
+            setattr(attributes, stat, current + value)
+
+    def apply_to_pools(self, pools: Dict[str, tuple]):
+        """
+        Placeholder for future expansion.
+        """
+        for pool, multiplier in self.pool_modifiers.items():
+            current, max_val = pools[pool]
+            new_max = int(max_val * multiplier)
+            pools[pool] = (current, new_max)
+
+    def apply_to_defenses(self, defenses: Dict[str, int]):
+        """
+        Placeholder for future expansion.
+        """
+        for defense, value in self.defense_modifiers.items():
+            defenses[defense] += value
+
+
+# Job Registry
+
+JOB_REGISTRY: Dict[str, AdventureJob] = {}
+
+
+def register_job(job: AdventureJob):
+    JOB_REGISTRY[job.name.lower()] = job
+
+
+def resolve_job(name: str) -> AdventureJob:
+    job = JOB_REGISTRY.get(name.lower())
+    if not job:
+        raise ValueError(f"Unknown job: {name}")
+    return job
+
+# Factory Helper
+
+def make_job(name: str, **kwargs) -> AdventureJob:
+    if name not in JOB_CLASS_MAP:
+        raise ValueError(f"{name} is not defined in JOB_CLASS_MAP")
+
+    job = AdventureJob(name=name, **kwargs)
+    register_job(job)
+    return job
+
+# Warrior Jobs
+
+# Archer: +3 DEX, PER, STR
+make_job(
+    "Archer",
+    stat_modifiers={
+        "dexterity": 3,
+        "perception": 3,
+        "strength": 3,
+    },
+    tags=["ranged", "warrior"]
+)
+
+# Berserker: +3 CON, STR, WILL
+make_job(
+    "Berserker",
+    stat_modifiers={
+        "constitution": 3,
+        "strength": 3,
+        "willpower": 3,
+    },
+    tags=["melee", "aggressive", "warrior"]
+)
+
+# Duelist: +3 AGL, DEX, STR
+make_job(
+    "Duelist",
+    stat_modifiers={
+        "agility": 3,
+        "dexterity": 3,
+        "strength": 3,
+    },
+    tags=["melee", "precision", "warrior"]
+)
+
+# Knight: +3 CHA, CON, STR
+make_job(
+    "Knight",
+    stat_modifiers={
+        "charisma": 3,
+        "constitution": 3,
+        "strength": 3,
+    },
+    tags=["melee", "defensive", "warrior"]
+)
+
+# Utility Functions
+
+def get_jobs_by_class(class_code: str) -> List[str]:
+    return [
+        job.name
+        for job in JOB_REGISTRY.values()
+        if job.class_code == class_code
+    ]

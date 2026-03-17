@@ -199,7 +199,7 @@ def apply_material_template(race: Race, material: str) -> Race:
     mod = MATERIALS[material]
 
     return Race(
-            name = f"{race.name} (material.capitalize()})"
+            name = f"{race.name} ({material.capitalize()})",
             stat_modifiers = race.stat_modifiers.copy(),
 
             material=material,

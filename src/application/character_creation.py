@@ -1,7 +1,8 @@
 import random
-from src.domain.attributes import Attributes, Defenses, PoolManager, calculate_pools, DEFAULT_STATS
-from src.domain.character import Character
-from src.domain.race import resolve_race, apply_material_template
+from domain.attributes import Attributes, Defenses, PoolManager, calculate_pools, DEFAULT_STATS
+from domain.character import Character
+from domain.race import resolve_race, apply_material_template
+from domain.adventure import resolve_job
 
 def roll_2d10() -> int:
     """
@@ -35,11 +36,7 @@ def roll_attributes(race) -> Attributes:
     return Attributes(
         **rolled_stats,
         race=race.name,
-        material=race.material,
-        adventure_job=None,
-        adventure_level=0,
-        craft_job=None,
-        craft_level=0
+        material=race.material
     )
 
 def calculate_defenses(attrs: Attributes, race) -> Defenses:
@@ -54,7 +51,7 @@ def calculate_defenses(attrs: Attributes, race) -> Defenses:
         fate=race.racial_fate
     )
 
-def create_character(name: str, race_name: str) -> Character:
+def create_character(name: str, race_name: str, job_name: str) -> Character:
     """
     Generate a full Character object with attributes, pools, and defenses.
     """
@@ -70,16 +67,20 @@ def create_character(name: str, race_name: str) -> Character:
             material = input("Invalid. Choose cloth, leather, or metal: ").strip().lower()
             
         race = apply_material_template(race, material)
-        
-        print(f"DEBUG (after apply): race.material = {race.material}")
 
+    job = resolve_job(job_name)
     attrs = roll_attributes(race)
+    job.apply_to_attributes(attrs)
+    attrs.adventure_job = job.name
+    attrs.adventure_level = 1
     pools = calculate_pools(attrs)
     defenses = calculate_defenses(attrs, race)
 
     # Assemble Character
     character = Character(
         name=name,
+        race=race,
+        job=job,
         attributes=attrs,
         pools=pools,
         defenses=defenses
