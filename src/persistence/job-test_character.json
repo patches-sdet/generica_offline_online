@@ -1,0 +1,88 @@
+{
+    "name": "job-test",
+    "race": {
+        "name": "Gribbit",
+        "stat_modifiers": {
+            "constitution": 10,
+            "intelligence": -10,
+            "wisdom": 5,
+            "dexterity": -10,
+            "agility": 15,
+            "charisma": -5,
+            "willpower": -5,
+            "perception": 5,
+            "luck": -5
+        },
+        "racial_hp_bonus": 0,
+        "racial_armor": 5,
+        "racial_mental_fortitude": 10,
+        "racial_endurance": 5,
+        "racial_cool": 0,
+        "racial_fate": 0,
+        "requires_material": false,
+        "material": null,
+        "base_race": null
+    },
+    "job": {
+        "name": "Archer",
+        "stat_modifiers": {
+            "dexterity": 3,
+            "perception": 3,
+            "strength": 3
+        },
+        "pool_modifiers": {},
+        "defense_modifiers": {},
+        "abilities": [],
+        "tags": [
+            "ranged",
+            "warrior"
+        ]
+    },
+    "attributes": {
+        "strength": 45,
+        "constitution": 50,
+        "intelligence": 24,
+        "wisdom": 35,
+        "dexterity": 27,
+        "agility": 49,
+        "charisma": 31,
+        "willpower": 36,
+        "perception": 40,
+        "luck": 32,
+        "race": "Gribbit",
+        "material": null,
+        "adventure_job": null,
+        "adventure_level": 0,
+        "craft_job": null,
+        "craft_level": 0
+    },
+    "pools": {
+        "hp": [
+            95,
+            95
+        ],
+        "sanity": [
+            59,
+            59
+        ],
+        "stamina": [
+            94,
+            94
+        ],
+        "moxie": [
+            67,
+            67
+        ],
+        "fortune": [
+            72,
+            72
+        ]
+    },
+    "defenses": {
+        "armor": 5,
+        "mental_fortitude": 10,
+        "endurance": 5,
+        "cool": 0,
+        "fate": 0
+    }
+}

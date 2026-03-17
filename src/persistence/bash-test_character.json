@@ -1,0 +1,77 @@
+{
+    "name": "bash-test",
+    "race": {
+        "name": "Toy Golem (Cloth)",
+        "stat_modifiers": {},
+        "racial_hp_bonus": 0,
+        "racial_armor": 25,
+        "racial_mental_fortitude": 0,
+        "racial_endurance": 45,
+        "racial_cool": 20,
+        "racial_fate": 0,
+        "requires_material": false,
+        "material": "cloth",
+        "base_race": null
+    },
+    "job": {
+        "name": "Duelist",
+        "stat_modifiers": {
+            "agility": 3,
+            "dexterity": 3,
+            "strength": 3
+        },
+        "pool_modifiers": {},
+        "defense_modifiers": {},
+        "abilities": [],
+        "tags": [
+            "melee",
+            "precision",
+            "warrior"
+        ]
+    },
+    "attributes": {
+        "strength": 32,
+        "constitution": 42,
+        "intelligence": 36,
+        "wisdom": 32,
+        "dexterity": 38,
+        "agility": 39,
+        "charisma": 38,
+        "willpower": 40,
+        "perception": 35,
+        "luck": 36,
+        "race": "Toy Golem (Cloth)",
+        "material": "cloth",
+        "craft_job": null,
+        "craft_level": 0
+    },
+    "pools": {
+        "hp": [
+            74,
+            74
+        ],
+        "sanity": [
+            68,
+            68
+        ],
+        "stamina": [
+            71,
+            71
+        ],
+        "moxie": [
+            78,
+            78
+        ],
+        "fortune": [
+            71,
+            71
+        ]
+    },
+    "defenses": {
+        "armor": 25,
+        "mental_fortitude": 0,
+        "endurance": 45,
+        "cool": 20,
+        "fate": 0
+    }
+}

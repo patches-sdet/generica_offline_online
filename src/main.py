@@ -1,9 +1,9 @@
 import json, os
 from dataclasses import asdict
-from src.application.character_creation import create_character
-from src.presentation.character_sheet import debug_print_character
-from src.domain.race import RACES
-from src.domain.adventure import get_jobs_by_class
+from application.character_creation import create_character
+from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
+from domain.race import RACES
+from domain.adventure import get_jobs_grouped_by_class, get_all_jobs
 
 PERSISTENCE_DIR = "src/persistence"
 
@@ -26,9 +26,25 @@ def main():
         race_name = input("Invalid race. Please choose a valid race: ").strip()
 
     # Show available jobs, organized by class
-    job_name = input("\nChoose a job: ").strip()
-    for job in get_jobs_by_class("W"):
-        print (f"- {job}")
+    jobs_by_class = get_jobs_grouped_by_class()
+    print("Available Jobs:")
+    valid_jobs = []
+
+    for job_class in sorted(jobs_by_class.keys()):
+        print(f"{job_class}:")
+        for job in jobs_by_class[job_class]:
+            bonuses = ", ".join(
+                    f"+{v} {ATTRIBUTE_NAMES.get(k, k.upper())}" for k, v in job.stat_modifiers.items())
+            print(f"  - {job.name} ({bonuses})")
+
+            valid_jobs.append(job.name.lower())
+
+    # input validation
+    while True:
+        job_name = input("Choose a job: ").strip()
+        if job_name.lower() in valid_jobs:
+            break
+        print ("Invalid job. Please choose from the list.")
 
     # Create the character using character_creation.py
     character = create_character(char_name, race_name, job_name)

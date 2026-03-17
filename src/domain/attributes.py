@@ -33,9 +33,6 @@ class Attributes:
     perception: int
     luck: int
 
-    race: str
-    material: str | None = None
-
     craft_job: str | None = None
     craft_level: int = 0
 

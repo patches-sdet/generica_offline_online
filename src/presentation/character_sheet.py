@@ -1,21 +1,20 @@
 from domain.character import Character
-from domain.attributes import Pools, Defenses
+
+# COLORS
 
 POOL_COLORS = {
-        "hp": "\033[91m",       #Red
-        "sanity": "\033[94m",   #Blue
-        "stamina": "\033[92m",  #Green
-        "moxie": "\033[95m",    #Magenta (eventually purple?)
-        "fortune": "\033[93m"   #Yellow/Gold
-        }
+    "hp": "\033[91m",       # Red
+    "sanity": "\033[94m",   # Blue
+    "stamina": "\033[92m",  # Green
+    "moxie": "\033[95m",    # Magenta
+    "fortune": "\033[93m"   # Yellow
+}
 
 RESET_COLOR = "\033[0m"
 
-def divider(title):
-    print(f"\n--- {title.upper()} ---")
+# DISPLAY NAME MAPPINGS
 
-# Mapping to make the stats human-readable
-PRETTY_NAMES = {
+ATTRIBUTE_NAMES = {
     "strength": "STR",
     "constitution": "CON",
     "intelligence": "INT",
@@ -26,33 +25,39 @@ PRETTY_NAMES = {
     "willpower": "WIL",
     "perception": "PER",
     "luck": "LUK",
-    "adventure_job": "Adventure Job",
-    "adventure_level": "Adventure Lvl",
-    "craft_job": "Craft Job",
-    "craft_level": "Craft Lvl",
+}
+
+POOL_NAMES = {
     "hp": "HP",
     "sanity": "Sanity",
     "stamina": "Stamina",
     "moxie": "Moxie",
     "fortune": "Fortune",
+}
+
+DEFENSE_NAMES = {
     "armor": "Armor",
     "mental_fortitude": "Mental Fortitude",
     "endurance": "Endurance",
     "cool": "Cool",
-    "fate": "Fate"
+    "fate": "Fate",
 }
 
-def print_stat_block(title, stats:dict, hide_keys: list = None, color_map: dict=None):
-    """
-    This will print a block of stats in an RPG friendly format
-    and supports optional coloring and current/max for pools.
 
-    :param title: Title of the block
-    :param stats: Dictionary of field names to values
-                  For pools, the value should be a tuple (current, max)
-    :param hide_keys: This can hide the keys from the above dict
-    :param color_map: This can map pool field names to ANSI escape codes
-    """
+# HELPERS
+
+def divider(title):
+    print(f"\n--- {title.upper()} ---")
+
+
+def format_name(key, name_map):
+    return name_map.get(key, key.replace("_", " ").title())
+
+
+# stat block printer
+
+def print_stat_block(title, stats: dict, name_map: dict,
+                     hide_keys: list = None, color_map: dict = None):
 
     if hide_keys is None:
         hide_keys = []
@@ -61,47 +66,67 @@ def print_stat_block(title, stats:dict, hide_keys: list = None, color_map: dict=
         color_map = {}
 
     divider(title)
+
     for key, value in stats.items():
         if key in hide_keys:
             continue
-        pretty_name = PRETTY_NAMES.get(key, key.replace("_", " ").title())
+
+        pretty_name = format_name(key, name_map)
         color = color_map.get(key, "")
-        
-        # check for if the value is a pool tuple
+
+        # Pool tuple handling
         if isinstance(value, tuple) and len(value) == 2:
             current, maximum = value
             print(f"{color}{pretty_name}: {current}/{maximum}{RESET_COLOR}")
         else:
             if key == "material" and isinstance(value, str):
                 value = value.capitalize()
+
             print(f"{color}{pretty_name}: {value}{RESET_COLOR}")
 
-def debug_print_character(character):
+
+# MAIN CHARACTER SHEET
+
+def debug_print_character(character: Character):
 
     print("\n==============================")
-    print(f"      CHARACTER SHEET")
+    print("      CHARACTER SHEET")
     print("==============================")
 
     print(f"Name: {character.name}")
-    race_line = character.attributes.race
-    if character.attributes.race and character.attributes.race:
-        if hasattr(character, "material") and character.material:
-            race_line += f" ({character.material})"
+
+    race_line = character.race.name
+    if character.race.material:
+        race_line += f" ({character.race.material.capitalize()})"
+
     print(f"Race: {race_line}")
+
     print("\n==============================")
-    print(f"      JOB(S)")
+    print("      JOB(S)")
     print("==============================")
 
-    # jobs with colors?
     print(f"Job: {character.job.name} ({character.job.job_class})")
 
-    #attributes without color
-    print_stat_block("Attributes", vars(character.attributes), hide_keys=["race"], color_map=None)
+    # STAT BLOCKS
 
-    #pools have colors because I'm extra
-    print_stat_block("Pools", vars(character.pools), color_map=POOL_COLORS)
+    print_stat_block(
+        "Attributes",
+        vars(character.attributes),
+        ATTRIBUTE_NAMES,
+        hide_keys=["race", "material"]
+    )
 
-    #defenses are still plain and placeholder equations
-    print_stat_block("Defenses", vars(character.defenses))
+    print_stat_block(
+        "Pools",
+        vars(character.pools),
+        POOL_NAMES,
+        color_map=POOL_COLORS
+    )
+
+    print_stat_block(
+        "Defenses",
+        vars(character.defenses),
+        DEFENSE_NAMES
+    )
 
     print("==============================\n")

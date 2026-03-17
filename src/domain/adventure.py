@@ -154,9 +154,20 @@ make_job(
 
 # Utility Functions
 
-def get_jobs_by_class(class_code: str) -> List[str]:
+def get_jobs_by_class(class_code: str) -> List[AdventureJob]:
     return [
-        job.name
+        job
         for job in JOB_REGISTRY.values()
         if job.class_code == class_code
     ]
+
+def get_all_jobs() -> List[AdventureJob]:
+    return list(JOB_REGISTRY.values())
+
+def get_jobs_grouped_by_class() -> Dict[str, List[AdventureJob]]:
+    print("DEBUG: function called")
+    jobs_by_class = {}
+
+    for job in JOB_REGISTRY.values():
+        jobs_by_class.setdefault(job.job_class, []).append(job)
+    return jobs_by_class
