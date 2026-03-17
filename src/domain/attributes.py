@@ -33,9 +33,6 @@ class Attributes:
     perception: int
     luck: int
 
-    craft_job: str | None = None
-    craft_level: int = 0
-
 # Derived Stats
 
 STAT_FORMULAS = {

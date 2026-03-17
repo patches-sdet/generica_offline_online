@@ -96,6 +96,7 @@ def debug_print_character(character: Character):
     print(f"Name: {character.name}")
 
     race_line = character.race.name
+
     if character.race.material:
         race_line += f" ({character.race.material.capitalize()})"
 

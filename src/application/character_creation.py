@@ -33,11 +33,7 @@ def roll_attributes(race) -> Attributes:
         for stat in DEFAULT_STATS
     }
 
-    return Attributes(
-        **rolled_stats,
-        race=race.name,
-        material=race.material
-    )
+    return Attributes(**rolled_stats)
 
 def calculate_defenses(attrs: Attributes, race) -> Defenses:
     """
@@ -71,8 +67,6 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
     job = resolve_job(job_name)
     attrs = roll_attributes(race)
     job.apply_to_attributes(attrs)
-    attrs.adventure_job = job.name
-    attrs.adventure_level = 1
     pools = calculate_pools(attrs)
     defenses = calculate_defenses(attrs, race)
 
