@@ -69,6 +69,23 @@ RACES = {
         racial_armor=15,
         racial_endurance=25,
         racial_cool=10,
+        ),
+        "Gribbit": Race(
+            name="Gribbit",
+            stat_modifiers = make_mods(
+            constitution = 10,
+            intelligence = -10,
+            wisdom = 5,
+            dexterity = -10,
+            agility = 15,
+            charisma = -5,
+            willpower = -5,
+            perception = 5,
+            luck = -5,
+        ),
+        racial_armor=5,
+        racial_mental_fortitude=10,
+        racial_endurance=5,
         )
 
         }

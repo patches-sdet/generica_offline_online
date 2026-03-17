@@ -1,3 +1,6 @@
+from src.domain.character import Character
+from src.domain.attributes import Pools, Defenses
+
 POOL_COLORS = {
         "hp": "\033[91m",       #Red
         "sanity": "\033[94m",   #Blue
