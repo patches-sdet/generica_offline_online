@@ -95,7 +95,7 @@ RACES = {
         "Raccant": Race(
             name="Raccant",
             stat_modifiers = make_mods(
-            strengh = -15,
+            strength = -15,
             constitution = 15,
             intelligence = -5,
             wisdom = -10,
@@ -111,7 +111,7 @@ RACES = {
         "Elf": Race(
             name="Elf",
             stat_modifiers = make_mods(
-            strengh = 5,
+            strength = 5,
             constitution = 5,
             intelligence = 5,
             wisdom = 5,
@@ -120,6 +120,20 @@ RACES = {
             willpower = 5,
             perception = 5,
             luck = 5,
+        ),
+        ),
+        "Halven": Race(
+            name="Halven",
+            stat_modifiers = make_mods(
+            strength = -10,
+            constitution = -10,
+            intelligence = -10,
+            wisdom = 10,
+            dexterity = 10,
+            agility = 10,
+            willpower = -10,
+            perception = -10,
+            luck = 10,
         ),
         ),
 
