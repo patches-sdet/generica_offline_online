@@ -8,7 +8,7 @@ class Character:
     name: str
     race: Race
     adventure_job: AdventureJob
-    adventure_level:AdventureLevel
+#    adventure_level:AdventureLevel
     attributes: Attributes
     pools: Pools
     defenses: Defenses

@@ -128,10 +128,16 @@ RACES = {
         # Template Races (Doll Haunter, Toy Golem)
         "Toy Golem": Race(
             name="Toy Golem",
-            base_race = "Human", #hardcoded for initial testing
+            base_race = "Human", #hardcoded for initial testing, this can probably be deleted
             stat_modifiers = make_mods(),
-        racial_armor = 15,
-        racial_endurance = 25,
+        racial_hp_bonus = 30,
+        racial_cool = 20,
+        requires_material = True,
+        ),
+        "Doll Haunter": Race(
+            name="Doll Haunter",
+            stat_modifiers = make_mods(),
+        racial_hp_bonus = 30,
         racial_cool = 20,
         requires_material = True,
         ),

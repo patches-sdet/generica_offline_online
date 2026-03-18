@@ -74,7 +74,7 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
     character = Character(
         name=name,
         race=race,
-        job=job,
+        adventure_job=job,
         attributes=attrs,
         pools=pools,
         defenses=defenses

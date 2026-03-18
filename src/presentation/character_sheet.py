@@ -106,7 +106,7 @@ def debug_print_character(character: Character):
     print("      JOB(S)")
     print("==============================")
 
-    print(f"Job: {character.job.name} ({character.job.job_class})")
+    print(f"Job: {character.adventure_job.name} ({character.adventure_job.job_class})")
 
     # STAT BLOCKS
 
