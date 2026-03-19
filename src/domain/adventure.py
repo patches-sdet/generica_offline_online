@@ -33,6 +33,7 @@ class AdventureJob:
 
     # One-time stat bonuses on acquisition
     stat_modifiers: Dict[str, int] = field(default_factory=dict)
+    level_scaling: Dict[str, int]
 
     # Future systems
     pool_modifiers: Dict[str, float] = field(default_factory=dict)

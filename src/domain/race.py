@@ -6,6 +6,7 @@ from typing import Dict, Optional
 class Race:
     name: str
     stat_modifiers: Dict[str, int] = field(default_factory=dict)
+    level_scaling: Dict[str, int] # stat increases applied for each level up of your racial job(s)
     racial_hp_bonus: int = 0
     racial_armor: int = 0
     racial_mental_fortitude: int = 0

@@ -7,8 +7,11 @@ from .adventure import AdventureJob
 class Character:
     name: str
     race: Race
+#    race_level: RaceLevel
     adventure_job: AdventureJob
 #    adventure_level:AdventureLevel
+#    profession_job: ProfessionJob
+#    profession_level: ProfessionLevel
     attributes: Attributes
     pools: Pools
     defenses: Defenses
