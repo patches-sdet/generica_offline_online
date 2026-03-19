@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
-
+from domain.effects import Effect, make_effects
 
 # Class Registry
 
@@ -27,13 +27,13 @@ JOB_CLASS_MAP = {
 
 # Core Adventure Job Dataclass
 
-@dataclass
+@dataclass (frozen=True)
 class AdventureJob:
     name: str
 
     # One-time stat bonuses on acquisition
-    stat_modifiers: Dict[str, int] = field(default_factory=dict)
-    level_scaling: Dict[str, int]
+    effects_on_acquire: List[Effect] = field(default_factory=list)
+    effects_per_level: List[Effect] = field(default_factory=list)
 
     # Future systems
     pool_modifiers: Dict[str, float] = field(default_factory=dict)
@@ -41,6 +41,17 @@ class AdventureJob:
 
     abilities: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
+            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
+            "pool_modifiers": self.pool_modifiers,
+            "defense_modifiers": self.defense_modifiers,
+            "abilities": self.abilities,
+            "tags": self.tags,
+        }
 
 # Derived Properties
 
@@ -54,16 +65,8 @@ class AdventureJob:
 
 # Application Methods
 
-    def apply_to_attributes(self, attributes):
-        # This will change to apply_on_acquire when I get to
-        # adding leveling up and multi-classing >.>
-        """
-        Applies one-time stat bonuses when the job is acquired.
-        Assumes attributes has matching attribute names (STR, CON, etc.)
-        """
-        for stat, value in self.stat_modifiers.items():
-            current = getattr(attributes, stat)
-            setattr(attributes, stat, current + value)
+    def make_effects(**mods):
+        return [StatIncrease(stat, value) for stat, value in mods.items()]
 
     def apply_to_pools(self, pools: Dict[str, tuple]):
         """
@@ -84,7 +87,7 @@ class AdventureJob:
 
 # Job Registry
 
-JOB_REGISTRY: Dict[str, AdventureJob] = {}
+JOB_REGISTRY: Dict[str, "AdventureJob"] = {}
 
 
 def register_job(job: AdventureJob):
@@ -112,44 +115,44 @@ def make_job(name: str, **kwargs) -> AdventureJob:
 # Archer: +3 DEX, PER, STR
 make_job(
     "Archer",
-    stat_modifiers={
-        "dexterity": 3,
-        "perception": 3,
-        "strength": 3,
-    },
+    effects_on_acquire = make_effects(
+        dexterity = 3,
+        perception = 3,
+        strength = 3,
+    ),
     tags=["ranged", "warrior"]
 )
 
 # Berserker: +3 CON, STR, WILL
 make_job(
     "Berserker",
-    stat_modifiers={
-        "constitution": 3,
-        "strength": 3,
-        "willpower": 3,
-    },
+    effects_on_acquire = make_effects(
+        constitution = 3,
+        strength = 3,
+        willpower = 3,
+        ),
     tags=["melee", "aggressive", "warrior"]
 )
 
 # Duelist: +3 AGL, DEX, STR
 make_job(
     "Duelist",
-    stat_modifiers={
-        "agility": 3,
-        "dexterity": 3,
-        "strength": 3,
-    },
+    effects_on_acquire = make_effects(
+        agility = 3,
+        dexterity = 3,
+        strength = 3,
+        ),
     tags=["melee", "precision", "warrior"]
 )
 
 # Knight: +3 CHA, CON, STR
 make_job(
     "Knight",
-    stat_modifiers={
-        "charisma": 3,
-        "constitution": 3,
-        "strength": 3,
-    },
+    effects_on_acquire = make_effects(
+        charisma = 3,
+        constitution = 3,
+        strength = 3,
+        ),
     tags=["melee", "defensive", "warrior"]
 )
 

@@ -1,11 +1,21 @@
 import json, os
-from dataclasses import asdict
 from application.character_creation import create_character
 from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
 from domain.race import RACES
 from domain.adventure import get_jobs_grouped_by_class, get_all_jobs
+from domain.effects import StatIncrease
 
 PERSISTENCE_DIR = "src/persistence"
+
+def format_effects(effects):
+    parts = []
+
+    for effect in effects:
+        if isinstance(effect, StatIncrease):
+            stat_name = ATTRIBUTE_NAMES.get(effect.stat, effect.stat.upper())
+            parts.append(f"+{effect.amount} {stat_name}")
+
+    return ", ".join(parts)
 
 def main():
     print("=== Tabletop RPG Character Creator ===\n")
@@ -33,8 +43,7 @@ def main():
     for job_class in sorted(jobs_by_class.keys()):
         print(f"{job_class}:")
         for job in jobs_by_class[job_class]:
-            bonuses = ", ".join(
-                    f"+{v} {ATTRIBUTE_NAMES.get(k, k.upper())}" for k, v in job.stat_modifiers.items())
+            bonuses = format_effects(job.effects_on_acquire)
             print(f"  - {job.name} ({bonuses})")
 
             valid_jobs.append(job.name.lower())
@@ -57,11 +66,11 @@ def main():
     filename = f"{char_name.replace(' ', '_').lower()}_character.json"
     filepath = os.path.join(PERSISTENCE_DIR, filename)
 
-    data = asdict(character)
+    data = character.to_dict()
     data.pop("pool_manager", None)
 
     with open(filepath, "w") as f:
-        json.dump(asdict(character), f, indent=4)
+        json.dump(data, f, indent=4)
         print(f"\nCharacter saved to: {filename}")
 
 # sanity check test

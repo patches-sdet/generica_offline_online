@@ -1,12 +1,13 @@
 import copy
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, List, Optional
+from domain.effects import StatIncrease, Effect
 
 @dataclass(frozen=True)
 class Race:
     name: str
-    stat_modifiers: Dict[str, int] = field(default_factory=dict)
-    level_scaling: Dict[str, int] # stat increases applied for each level up of your racial job(s)
+    effects_on_acquire: List[Effect] = field(default_factory=list)
+    effects_per_level: List[Effect] = field(default_factory=list)
     racial_hp_bonus: int = 0
     racial_armor: int = 0
     racial_mental_fortitude: int = 0
@@ -18,6 +19,22 @@ class Race:
     # Added this to allow Doll Haunters or Toy Golems
     material: Optional[str] = None
     base_race: Optional[str] = None
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
+            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
+            "racial_hp_bonus": self.racial_hp_bonus,
+            "racial_armor": self.racial_armor,
+            "racial_mental_fortitude": self.racial_mental_fortitude,
+            "racial_endurance": self.racial_endurance,
+            "racial_cool": self.racial_cool,
+            "racial_fate": self.racial_fate,
+            "requires_material": self.requires_material,
+            "material": self.material,
+            "base_race": self.base_race,
+        }
 
 DEFAULT_STATS = {
         "strength": 25,
@@ -37,17 +54,17 @@ def make_stats(**overrides):
     stats.update(overrides)
     return stats
 
-def make_mods(**mods):
-    return mods
+def make_effects(**mods):
+    return [StatIncrease(stat, value) for stat, value in mods.items()]
 
 RACES = {
         "Human": Race(
             name="Human",
-            stat_modifiers=make_mods(),
+            effects_on_acquire = make_effects(),
         ),
         "Dwarf": Race(
             name="Dwarf",
-            stat_modifiers=make_mods(
+            effects_on_acquire = make_effects(
             strength = 10,
             constitution =  10,
             intelligence = -10,
@@ -60,7 +77,7 @@ RACES = {
         ),
         "Frosted Giant": Race(
             name="Frosted Giant",
-            stat_modifiers = make_mods(
+            effects_on_acquire = make_effects(
             strength = 35,
             constitution = 55,
             intelligence = -15,
@@ -78,7 +95,7 @@ RACES = {
         ),
         "Gribbit": Race(
             name="Gribbit",
-            stat_modifiers = make_mods(
+            effects_on_acquire = make_effects(
             constitution = 10,
             intelligence = -10,
             wisdom = 5,
@@ -95,7 +112,7 @@ RACES = {
         ),
         "Raccant": Race(
             name="Raccant",
-            stat_modifiers = make_mods(
+            effects_on_acquire = make_effects(
             strength = -15,
             constitution = 15,
             intelligence = -5,
@@ -111,7 +128,7 @@ RACES = {
         ),
         "Elf": Race(
             name="Elf",
-            stat_modifiers = make_mods(
+            effects_on_acquire = make_effects(
             strength = 5,
             constitution = 5,
             intelligence = 5,
@@ -125,7 +142,7 @@ RACES = {
         ),
         "Halven": Race(
             name="Halven",
-            stat_modifiers = make_mods(
+            effects_on_acquire = make_effects(
             strength = -10,
             constitution = -10,
             intelligence = -10,
@@ -144,14 +161,14 @@ RACES = {
         "Toy Golem": Race(
             name="Toy Golem",
             base_race = "Human", #hardcoded for initial testing, this can probably be deleted
-            stat_modifiers = make_mods(),
+            effects_on_acquire = make_effects(),
         racial_hp_bonus = 30,
         racial_cool = 20,
         requires_material = True,
         ),
         "Doll Haunter": Race(
             name="Doll Haunter",
-            stat_modifiers = make_mods(),
+            effects_on_acquire = make_effects(),
         racial_hp_bonus = 30,
         racial_cool = 20,
         requires_material = True,
@@ -183,7 +200,7 @@ def resolve_race(race_name: str) -> Race:
 
     return Race(
         name=race.name,
-        stat_modifiers=combined_modifiers,
+        effects_on_acquire=combined_modifiers,
 
         requires_material=race.requires_material,
         racial_hp_bonus=base.racial_hp_bonus + race.racial_hp_bonus,
@@ -221,7 +238,7 @@ def apply_material_template(race: Race, material: str) -> Race:
 
     return Race(
             name = race.name,
-            stat_modifiers = race.stat_modifiers.copy(),
+            effects_on_acquire = race.effects_on_acquire.copy(),
 
             material=material,
             requires_material=False,
@@ -233,3 +250,4 @@ def apply_material_template(race: Race, material: str) -> Race:
             racial_cool = race.racial_cool,
             racial_fate = race.racial_fate,
         )
+

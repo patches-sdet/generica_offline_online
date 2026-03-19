@@ -1,14 +1,12 @@
-
-
-
-def apply_scaling(attributes, scaling):
-    for stat, value in scaling.items():
-        current = getattr(attributes, stat)
-        setattr(attributes, stat, current + value)
+def apply_effects(effects, character):
+    for effect in effects:
+        effect.apply(character)
 
 def level_up(source, level_attr, character):
-    setattr(character, level_attr, getattr(character, level_attr) + 1)
-    apply_scaling(character.attributes, source.level_scaling)
+    # increment
+    current_level = getattr(character, level_attr)
+    setattr(character, level_attr, current_level + 1)
 
-level_up(character.race, "race_level", character)
-level_up(character.adventure_job, "adventure_level", character)
+    # then apply the level up
+    apply_effects(source.effects_per_level, character)
+

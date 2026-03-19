@@ -3,6 +3,8 @@ from domain.attributes import Attributes, Defenses, PoolManager, calculate_pools
 from domain.character import Character
 from domain.race import resolve_race, apply_material_template
 from domain.adventure import resolve_job
+from domain.effects import StatIncrease
+from domain.leveling import apply_effects
 
 def roll_2d10() -> int:
     """
@@ -23,13 +25,13 @@ ATTRIBUTE_NAMES = [
     "luck"
 ]
 
-def roll_attributes(race) -> Attributes:
+def roll_attributes() -> Attributes:
     """
     Generate Attributes object based on race + 2d10 rolls.
     """
 
     rolled_stats = {
-        stat: DEFAULT_STATS[stat] + race.stat_modifiers.get(stat, 0) + roll_2d10()
+        stat: DEFAULT_STATS[stat] + roll_2d10()
         for stat in DEFAULT_STATS
     }
 
@@ -65,8 +67,7 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
         race = apply_material_template(race, material)
 
     job = resolve_job(job_name)
-    attrs = roll_attributes(race)
-    job.apply_to_attributes(attrs)
+    attrs = roll_attributes()
     pools = calculate_pools(attrs)
     defenses = calculate_defenses(attrs, race)
 
@@ -74,10 +75,17 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
     character = Character(
         name=name,
         race=race,
+        race_level=0,
         adventure_job=job,
+        adventure_level=0,
+        profession_job=None,
+        profession_level=0,
         attributes=attrs,
         pools=pools,
         defenses=defenses
     )
+
+    apply_effects(race.effects_on_acquire, character)
+    apply_effects(job.effects_on_acquire, character)
 
     return character

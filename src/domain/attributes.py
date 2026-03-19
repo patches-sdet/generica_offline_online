@@ -33,6 +33,9 @@ class Attributes:
     perception: int
     luck: int
 
+    def to_dict(self):
+        return vars(self)
+
 # Derived Stats
 
 STAT_FORMULAS = {
@@ -50,6 +53,9 @@ class Pools:
     stamina: Tuple[int, int]
     moxie: Tuple[int, int]
     fortune: Tuple[int, int]
+
+    def to_dict(self):
+        return vars(self)
 
 # Calculated Pools
 
@@ -80,6 +86,9 @@ class Defenses:
     endurance: int
     cool: int
     fate: int
+
+    def to_dict(self):
+        return vars(self)
 
 # Pool Manager (runtime gameplay manipulation)
 
