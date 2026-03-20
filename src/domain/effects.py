@@ -1,4 +1,13 @@
 class Effect:
+#    type: EffectType
+
+#    EffectType = Enum(
+#            STAT,
+#            DERIVED,
+#            CONDITIONAL,
+#            TRIGGERED,
+#        )
+
     def apply(self, character):
         raise NotImplementedError()
 

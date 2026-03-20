@@ -5,6 +5,7 @@ from domain.race import Race, resolve_race
 from domain.adventure import resolve_job
 from domain.calculations import calculate_pools, recalculate
 from domain.effects import DerivedStatOverride
+from domain.craft import get_all_professions, resolve_profession
 
 def roll_2d10() -> int:
     """
@@ -91,19 +92,42 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
                 effects_per_level = base_race.effects_per_level + race.effects_per_level,
                 requires_material = race.requires_material,
                 )
+    def choose_profession():
+        professions = get_all_professions()
+
+        while True:
+            print("Choose a profession:")
+            for i, prof in enumerate(professions, 1):
+                print(f"{i}. {prof.name}")
+
+            choice = input("> ").strip()
+
+            if choice.isdigit():
+                index = int(choice) - 1
+                if 0 <= index < len(professions):
+                    return professions[index]
+                else:
+                    try:
+                        return resolve_professions(choice)
+                    except ValueError:
+                        pass
+                print("Invalid choice. Try again")
+
+        return professions[choice]
 
     job = resolve_job(job_name)
+    chosen_professions = choose_profession()
     attrs = roll_attributes()
 
     # Assemble Character
     character = Character(
             name = name,
             race = race,
-            race_level = 0,
+            race_level = 1,
             adventure_job = job,
-            adventure_level = 0,
-            profession_job = None,
-            profession_level = 0,
+            adventure_level = 1,
+            profession_job = chosen_professions,
+            profession_level = 1,
             attributes = attrs,
             )
 

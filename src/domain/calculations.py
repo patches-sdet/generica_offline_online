@@ -1,7 +1,6 @@
 from domain.character import Character
 from domain.attributes import Pools, Defenses
 
-
 # ----------------------
 # Internal Helpers
 # ----------------------
@@ -88,6 +87,9 @@ def recalculate(character: Character):
     - leveling
     - equipment changes (future)
     """
+    from domain.abilities import ALL_ABILITIES
+
+    character._base_attributes = vars(character.attributes).copy()
 
     # Reset derived bonuses
     character._derived_bonuses = {}
@@ -117,3 +119,25 @@ def recalculate(character: Character):
         for _ in range(character.profession_level):
             for effect in character.profession_job.effects_per_level:
                 effect.apply(character)
+
+    # Ability unlock
+        for ability in ALL_ABILITIES:
+            character.abilities = [
+                ability for ability in ALL_ABILITIES
+                if ability.unlock_condition(character)]
+        if not hasattr(character, "ability_levels"):
+            character.ability_levels = {}
+
+        for ability in character.abilities:
+            character.ability_levels.setdefault(ability.name, 1)
+
+        for ability in character.abilities:
+            if ability.name == "Creator's Guardians":
+                level = character.ability_levels.get(ability.name, 1)
+                will = character.attributes.willpower
+
+                bonus = (will + level) // 10
+
+                for attr_name, value in vars(character.attributes).items():
+                    if value > 0:
+                        setattr(character.attributes, attr_name, value + bonus)

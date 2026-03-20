@@ -1,174 +1,361 @@
-# Tabletop RPG Character Manager
+# Generica Offline Online — RPG Character Engine
 
-A Python-based, production-ready system for creating, managing, and printing characters for a crunch-heavy tabletop RPG system. This project follows Clean Architecture principles and is designed for dynamic, stat-driven gameplay.
+A Python-based, modular RPG character engine built for **deterministic state, extensibility, and system-driven gameplay**.
+
+This project has evolved from a character manager into a **fully architected stat engine** capable of supporting complex RPG systems including jobs, professions, abilities, and future combat mechanics.
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)  
-- [Architecture & Design Decisions](#architecture--design-decisions)  
-- [Project Structure](#project-structure)  
-- [Core Components](#core-components)  
-- [Character Creation Flow](#character-creation-flow)  
-- [Pools & Pool Management](#pools--pool-management)  
-- [Printing / Presentation](#printing--presentation)  
-- [Usage Example](#usage-example)  
-- [Future Work](#future-work)
+* [Overview](#overview)
+* [Core Design Philosophy](#core-design-philosophy)
+* [Architecture](#architecture)
+* [Project Structure](#project-structure)
+* [Core Systems](#core-systems)
+* [Character Creation Flow](#character-creation-flow)
+* [Recalculation Pipeline](#recalculation-pipeline)
+* [Abilities System](#abilities-system)
+* [Presentation Layer](#presentation-layer)
+* [Usage Example](#usage-example)
+* [Current Status](#current-status)
+* [Next Steps](#next-steps)
 
 ---
 
 ## Overview
 
-This project is designed to handle:
+This engine is designed to support:
 
-- Character creation with randomized or base stats
-- Dynamic pool calculation (HP, Stamina, Sanity, Moxie, Fortune)
-- Pool adjustments (damage, healing, spending, recovery)
-- Colored, cleanly formatted character sheets for terminal display
-- Flexible architecture suitable for expansion (new jobs, equipment, skills, etc.)
-
----
-
-## Architecture & Design Decisions
-
-- **Clean Architecture Principles:**  
-  - `domain/` contains core entities and business logic (`Attributes`, `Pools`, `Character`)  
-  - `application/` contains use cases (`character_creation.py`)  
-  - `presentation/` handles printing and UI (`character_sheet.py`)  
-  - `utils/` is reserved for generic helper functions  
-
-- **Domain-Centric:**  
-  - Pools and their management logic are part of the domain, keeping core rules centralized.  
-  - Attributes and stats drive derived values like pools.
-
-- **Extensibility:**  
-  - Pools are generic and stored as `(current, max)` tuples for easy adjustments.  
-  - PoolManager allows dynamic changes without hardcoding methods for each pool.  
-  - Adding new pools in the future only requires modifying the `Pools` dataclass and `PRETTY_NAMES` / `POOL_COLORS` mappings.
-
-- **Separation of Concerns:**  
-  - Domain logic is separate from presentation.  
-  - Calculation of max values happens in domain/application layer.  
-  - Presentation only handles printing, coloring, and formatting.
+* Modular character creation (race, jobs, professions)
+* Deterministic stat calculation (no drift, no hidden mutations)
+* Effect-driven stat modification
+* Derived stat systems (pools and defenses)
+* Passive ability system with scaling
+* Clean CLI-based character sheet output
+* JSON serialization for persistence
 
 ---
 
-## Project Structure
+## Core Design Philosophy
+
+### Deterministic State
 
 ```text
-├── pyproject.toml
-├── README.md
-├── src
-│   ├── application
-│   │   └── character_creation.py
-│   ├── domain
-│   │   ├── attributes.py       # Attributes, Pools, PoolManager, constants
-│   │   ├── character.py
-│   │   ├── adventure_job.py
-│   │   ├── craft_job.py
-│   │   ├── equipment.py
-│   │   ├── race.py
-│   │   └── skills.py
-│   ├── main.py
-│   ├── persistence
-│   ├── presentation
-│   │   └── character_sheet.py  # print_stat_block, debug_print_character
-│   └── utils
-└── tests
+state = function(all inputs)
+```
+
+All character stats are **fully recomputed**, not incrementally mutated.
 
 ---
 
-## Core Components
+### Composition Over Hardcoding
 
-Attributes
+Everything is expressed as:
 
-- Stores all character stats: strength, constitution, intelligence, wisdom, dexterity, agility, charisma, willpower, perception, luck
-- Optional character traits: race, adventuring_job, craft_job, levels
-- Used to calculate derived pools dynamically
+```text
+effects, not fields
+```
 
-Pools
-- Dataclass containing hp, sanity, stamina, moxie, fortune as (current, max) tuples
-- Maximum values are dynamically calculated based on attributes
-- Current values start equal to max but can be adjusted during gameplay
+* No hardcoded stat bonuses
+* All systems plug into a shared pipeline
 
-PoolManager
+---
 
--Generic helper for all pools
-- Supports:
--- adjust_pool(pool_name, delta) — dynamically adjust current value
--- get_current(pool_name) / get_max(pool_name)
--- set_current(pool_name, value) — clamps between 0 and max
--- Avoids repetitive methods for each pool
--- Enforces safe value ranges automatically
+### Separation of Concerns
+
+```text
+Character     → state container
+Effects       → stat mutation
+Calculations  → derived values
+Abilities     → conditional logic + scaling
+Presentation  → read-only display
+```
+
+---
+
+### Extensibility
+
+New systems can be added without rewriting core logic:
+
+* equipment
+* buffs/debuffs
+* active abilities
+* combat systems
+
+---
+
+## Architecture
+
+```text
+src/
+├── application/
+│   └── character_creation.py
+│
+├── domain/
+│   ├── character.py
+│   ├── attributes.py
+│   ├── race.py
+│   ├── adventure.py
+│   ├── profession.py
+│   ├── effects.py
+│   ├── abilities.py
+│   ├── leveling.py
+│   ├── calculations.py
+│
+├── presentation/
+│   └── character_sheet.py
+│
+├── persistence/
+│   └── *.json
+│
+└── main.py
+```
+
+---
+
+## Core Systems
+
+### Character Model
+
+Single source of truth for all runtime state:
+
+* race + race level
+* adventure job + level
+* profession job + level
+* attributes (mutable)
+* current pools
+* derived stat modifiers
+* abilities + ability levels
+* base attribute snapshot (for debugging)
+
+---
+
+### Effects System
+
+Unified stat modification layer:
+
+```python
+Effect.apply(character)
+```
+
+Implemented types:
+
+* `StatIncrease`
+* `DerivedStatBonus`
+* `DerivedStatOverride`
+
+---
+
+### Jobs System
+
+#### Adventure Jobs
+
+* Define character role and scaling
+* Provide stat bonuses and ability unlock conditions
+
+#### Profession Jobs
+
+* Provide steady stat growth per level
+* Lightweight and fully integrated into recalculation
+
+---
+
+### Derived Stats
+
+#### Pools
+
+Calculated from attributes:
+
+```text
+hp        = STR + CON
+sanity    = WIS + INT
+stamina   = CON + AGI
+moxie     = CHA + WIL
+fortune   = PER + LUK
+```
+
+Stored as:
+
+```text
+(current, max)
+```
+
+---
+
+#### Defenses
+
+Do **not** depend on attributes:
+
+```text
+final = (override if exists else 0) + bonus
+```
+
+---
 
 ## Character Creation Flow
 
-1. Generate Attributes
-- Base value from race and dice roll
-- example: (Human) Strength = 25 + 2d10
+1. Select race (and optional material/template)
+2. Select adventure job → level set to 1
+3. Select profession job → level set to 1
+4. Initialize attributes
+5. Run `recalculate(character)`
+6. Output character sheet
 
-2. Calculate Pools
-- Uses a pair of attributes to derive a tuple for current and max pools
+---
 
-3. Wrapped Pools in PoolManager
-- This could be used to dynamically update pools during a session
+## Recalculation Pipeline
 
-4. Create Character
-- This will generate a pretty print of the character
+Core engine function:
 
-## Pools & Pool Management
+```python
+recalculate(character)
+```
 
-- Pools are derived using the following formulas:
+Rebuilds the character from:
 
--- hp = strength + constitution
--- sanity = wisdom + intelligence
--- stamina = constitution + agility
--- moxie = charisma + willpower
--- fortune = perception + luck
+* race effects
+* job effects
+* profession effects
+* ability effects
 
-- Adjusting pools uses PoolManager.adjust_pool("hp", -10)
-- Printing pools uses print_stat_block("Pools", vars(character.pools), color_map=POOL_COLORS)
+---
 
-## Printing & Presentation
+### Pipeline Order
 
-- print_stat_block(title, stats, hide_keys=None, color_map=None)
--- Handles tuples as current/max
--- Applies colors via the color_map
--- Formats them easy reference
+```text
+1. Reset derived state
+2. Apply race effects
+3. Apply job effects
+4. Apply profession effects
+5. Capture base attributes
+6. Unlock abilities
+7. Apply passive abilities
+```
 
-- debug_print_character(character)
--- Prints Attributes, Pools, and Defense in an orderly format
--- Compatible with applying colors
+---
+
+## Abilities System
+
+### Features
+
+* Data-defined abilities
+* Unlock conditions
+* Per-character ability levels
+* Passive ability execution
+* Fully integrated into recalculation
+
+---
+
+### Example Ability
+
+**Creator's Guardians**
+
+```text
+Enhances all non-zero attributes based on:
+(WILL + ability level) // 10
+```
+
+---
+
+### Ability Model
+
+```python
+Ability
+├── name
+├── unlock_condition(character)
+├── effects (future expansion)
+```
+
+Character stores:
+
+```python
+abilities: List[Ability]
+ability_levels: Dict[str, int]
+```
+
+---
+
+## Presentation Layer
+
+### Character Sheet Output
+
+Displays:
+
+* race + level
+* jobs + levels
+* attributes
+* pools (colored)
+* defenses
+* abilities with levels
+
+---
+
+### Attribute Debugging (NEW)
+
+Attributes now show base vs modified values:
+
+```text
+STR: 32 (29 +3)
+```
+
+---
 
 ## Usage Example
 
-from domain.attributes import calculate_pools, PoolManager, POOL_COLORS, print_stat_block
+```python
+from domain.calculations import recalculate
+from presentation.character_sheet import debug_print_character
 
-# Generate character attributes (application/character_creation)
-attrs = character.attributes
+character = create_character()
 
-# Calculate pools dynamically
-character.pools = calculate_pools(attrs)
+recalculate(character)
 
-# Wrap in generic PoolManager
-pool_manager = PoolManager(character.pools)
+debug_print_character(character)
+```
 
-# Adjust pools dynamically
-pool_manager.adjust_pool("hp", -15)
-pool_manager.adjust_pool("stamina", -5)
-pool_manager.adjust_pool("moxie", +3)
+---
 
-# Print pools in colored format
-print_stat_block(
-    "Pools",
-    vars(character.pools),
-    color_map=POOL_COLORS
-)
+## Current Status
 
-## Future Work
+```text
+CORE ENGINE: COMPLETE
+JOB SYSTEMS: COMPLETE
+PROFESSION SYSTEM: COMPLETE
+ABILITY SYSTEM: FUNCTIONAL
+DETERMINISTIC PIPELINE: STABLE
+DEBUG VISIBILITY: STRONG
+```
 
-- Add buffs, debuffs, and effects that temporarily modify current or max pools
-- Implement equipment bonuses that dynamically update attributes and recalc pools
-- Add races, jobs, skills, and crafting systems with full integration into the character flow
-- Add unit tests to verify pool calculations, adjustments, and printing
+---
+
+## Next Steps
+
+### Immediate Objective
+
+Improve attribute visibility by breaking down stat sources:
+
+```text
+STR: 32 (29 +2 job +1 ability)
+```
+
+This requires:
+
+* tracking stat contributions by source
+* extending the effect system to tag origins
+* updating the character sheet to display breakdowns
+
+---
+
+### Future Work
+
+* AbilityEffect system (remove hardcoded ability logic)
+* Active abilities and combat hooks
+* Equipment system
+* Buff/debuff system
+* Multi-classing support
+* Balance tuning tools
+* Unit tests for deterministic validation
+
+---
+

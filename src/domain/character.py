@@ -1,12 +1,15 @@
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from domain.abilities import Ability
 
 from .attributes import Attributes
 from .race import Race
 from .adventure import AdventureJob
 
 
-@dataclass
+@dataclass(slots=True)
 class Character:
     name: str
 
@@ -20,12 +23,17 @@ class Character:
     profession_level: int = 0
 
     attributes: Optional[Attributes] = None
-
+    _base_attributes: dict = field(default_factory=dict, init=False)
+    
     current_hp: int = 0
     current_sanity: int = 0
     current_stamina: int = 0
     current_moxie: int = 0
     current_fortune: int = 0
+
+    abilities: List["Ability"] = field(default_factory=list)
+    ability_levels: dict[str, int] = field(default_factory=dict)
+
 
     _derived_bonuses: dict = None
     _derived_overrides: dict = None

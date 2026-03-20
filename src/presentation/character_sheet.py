@@ -1,5 +1,6 @@
 from domain.character import Character
 from domain.calculations import calculate_pools, calculate_defenses
+from domain.abilities import Ability
 
 # COLORS
 
@@ -57,6 +58,26 @@ def format_name(key, name_map):
 
 # stat block printer
 
+def print_attribute_block(character: Character):
+    divider("Attributes")
+
+    current = vars(character.attributes)
+    base = getattr(character, "_base_attributes", {})
+
+    for key, value in current.items():
+        if key in ["race", "material"]:
+            continue
+
+        pretty_name = format_name(key, ATTRIBUTE_NAMES)
+
+        base_value = base.get(key, value)
+        delta = value - base_value
+
+        if delta != 0:
+            print(f"{pretty_name}: {value} ({base_value} {'+' if delta > 0 else ''}{delta})")
+        else:
+            print(f"{pretty_name}: {value}")
+
 def print_stat_block(title, stats: dict, name_map: dict,
                      hide_keys: list = None, color_map: dict = None):
 
@@ -96,31 +117,49 @@ def debug_print_character(character: Character):
 
     print(f"Name: {character.name}")
 
+    # ----------------------
+    # Race
+    # ----------------------
     race_line = character.race.name
 
     if character.race.material:
         race_line += f" ({character.race.material.capitalize()})"
 
-    print(f"Race: {race_line}")
+    print(f"Race: {race_line} (Lv. {character.race_level})")
 
+    # ----------------------
+    # Jobs
+    # ----------------------
     print("\n==============================")
-    print("      JOB(S)")
+    print("         JOBS")
     print("==============================")
 
-    print(f"Job: {character.adventure_job.name} ({character.adventure_job.job_class})")
+    print(
+        f"Adventure Job: "
+        f"{character.adventure_job.name} "
+        f"Lv. {character.adventure_level}"
+    )
 
+    if character.profession_job:
+        print(
+            f"Profession: "
+            f"{character.profession_job.name} "
+            f"Lv. {character.profession_level}"
+        )
+    else:
+        print("Profession: None")
+
+    # ----------------------
     # Derived Values
+    # ----------------------
     pools = calculate_pools(character)
     defenses = calculate_defenses(character)
 
-    # Stat Blocks
+    # ----------------------
+    # Stats
+    # ----------------------
 
-    print_stat_block(
-        "Attributes",
-        vars(character.attributes),
-        ATTRIBUTE_NAMES,
-        hide_keys=["race", "material"]
-    )
+    print_attribute_block(character)
 
     print_stat_block(
         "Pools",
@@ -134,5 +173,19 @@ def debug_print_character(character: Character):
         vars(defenses),
         DEFENSE_NAMES
     )
+
+    print("\n==============================")
+    print("        ABILITIES")
+    print("==============================")
+
+    if hasattr(character, "abilities") and character.abilities:
+        for ability in character.abilities:
+            level = 1
+
+            if hasattr(character, "ability_levels"):
+                level = character.ability_levels.get(ability.name, 1)
+            print(f"- {ability.name:<25} (Lv. {level})")
+    else:
+        print("None")
 
     print("==============================\n")
