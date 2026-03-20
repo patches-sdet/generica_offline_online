@@ -1,12 +1,19 @@
-def apply_effects(effects, character):
-    for effect in effects:
-        effect.apply(character)
+from domain.calculations import recalculate
 
-def level_up(source, level_attr, character):
-    # increment
+
+def level_up(character, level_attr: str):
+    """
+    Generic level up function.
+
+    level_attr examples:
+    - "race_level"
+    - "adventure_level"
+    - "profession_level"
+    """
+
+    # Increment level
     current_level = getattr(character, level_attr)
     setattr(character, level_attr, current_level + 1)
 
-    # then apply the level up
-    apply_effects(source.effects_per_level, character)
-
+    # Rebuild all derived state
+    recalculate(character)

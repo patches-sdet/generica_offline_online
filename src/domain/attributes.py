@@ -57,3 +57,19 @@ class Pools:
     def to_dict(self):
         return vars(self)
 
+@dataclass
+class Defenses:
+    armor: int
+    mental_fortitude: int
+    endurance: int
+    cool: int
+    fate: int
+
+    def to_dict(self):
+        return {
+            "armor": self.armor,
+            "mental_fortitude": self.mental_fortitude,
+            "endurance": self.endurance,
+            "cool": self.cool,
+            "fate": self.fate,
+        }

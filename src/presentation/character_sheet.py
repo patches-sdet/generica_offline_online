@@ -1,4 +1,5 @@
 from domain.character import Character
+from domain.calculations import calculate_pools, calculate_defenses
 
 # COLORS
 
@@ -108,7 +109,11 @@ def debug_print_character(character: Character):
 
     print(f"Job: {character.adventure_job.name} ({character.adventure_job.job_class})")
 
-    # STAT BLOCKS
+    # Derived Values
+    pools = calculate_pools(character)
+    defenses = calculate_defenses(character)
+
+    # Stat Blocks
 
     print_stat_block(
         "Attributes",
@@ -119,14 +124,14 @@ def debug_print_character(character: Character):
 
     print_stat_block(
         "Pools",
-        vars(character.pools),
+        vars(pools),
         POOL_NAMES,
         color_map=POOL_COLORS
     )
 
     print_stat_block(
         "Defenses",
-        vars(character.defenses),
+        vars(defenses),
         DEFENSE_NAMES
     )
 

@@ -33,11 +33,8 @@ class AdventureJob:
 
     # One-time stat bonuses on acquisition
     effects_on_acquire: List[Effect] = field(default_factory=list)
-    effects_per_level: List[Effect] = field(default_factory=list)
 
-    # Future systems
-    pool_modifiers: Dict[str, float] = field(default_factory=dict)
-    defense_modifiers: Dict[str, int] = field(default_factory=dict)
+    effects_per_level: List[Effect] = field(default_factory=list)
 
     abilities: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
@@ -47,8 +44,6 @@ class AdventureJob:
             "name": self.name,
             "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
             "effects_per_level": [e.to_dict() for e in self.effects_per_level],
-            "pool_modifiers": self.pool_modifiers,
-            "defense_modifiers": self.defense_modifiers,
             "abilities": self.abilities,
             "tags": self.tags,
         }
@@ -62,28 +57,6 @@ class AdventureJob:
     @property
     def job_class(self) -> str:
         return CLASS_REGISTRY[self.class_code]
-
-# Application Methods
-
-    def make_effects(**mods):
-        return [StatIncrease(stat, value) for stat, value in mods.items()]
-
-    def apply_to_pools(self, pools: Dict[str, tuple]):
-        """
-        Placeholder for future expansion.
-        """
-        for pool, multiplier in self.pool_modifiers.items():
-            current, max_val = pools[pool]
-            new_max = int(max_val * multiplier)
-            pools[pool] = (current, new_max)
-
-    def apply_to_defenses(self, defenses: Dict[str, int]):
-        """
-        Placeholder for future expansion.
-        """
-        for defense, value in self.defense_modifiers.items():
-            defenses[defense] += value
-
 
 # Job Registry
 

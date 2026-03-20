@@ -1,49 +1,100 @@
 {
     "name": "Throxon",
-    "attributes": {
-        "strength": 42,
-        "constitution": 50,
-        "intelligence": 22,
-        "wisdom": 46,
-        "dexterity": 33,
-        "agility": 30,
-        "charisma": 30,
-        "willpower": 41,
-        "perception": 25,
-        "luck": 40,
-        "race": "Dwarf",
-        "adventure_job": null,
-        "adventure_level": 0,
-        "craft_job": null,
-        "craft_level": 0
+    "race": {
+        "name": "Dwarf",
+        "effects_on_acquire": [
+            {
+                "type": "stat_increase",
+                "stat": "strength",
+                "amount": 10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "constitution",
+                "amount": 10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "intelligence",
+                "amount": -10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "wisdom",
+                "amount": 10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "agility",
+                "amount": -10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "charisma",
+                "amount": -10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "willpower",
+                "amount": 10
+            },
+            {
+                "type": "stat_increase",
+                "stat": "perception",
+                "amount": -10
+            }
+        ],
+        "effects_per_level": [],
+        "requires_material": false,
+        "material": null,
+        "base_race": null
     },
-    "pools": {
-        "hp": [
-            92,
-            92
+    "race_level": 0,
+    "adventure_job": {
+        "name": "Duelist",
+        "effects_on_acquire": [
+            {
+                "type": "stat_increase",
+                "stat": "agility",
+                "amount": 3
+            },
+            {
+                "type": "stat_increase",
+                "stat": "dexterity",
+                "amount": 3
+            },
+            {
+                "type": "stat_increase",
+                "stat": "strength",
+                "amount": 3
+            }
         ],
-        "sanity": [
-            68,
-            68
-        ],
-        "stamina": [
-            72,
-            72
-        ],
-        "moxie": [
-            71,
-            71
-        ],
-        "fortune": [
-            65,
-            65
+        "effects_per_level": [],
+        "abilities": [],
+        "tags": [
+            "melee",
+            "precision",
+            "warrior"
         ]
     },
-    "defenses": {
-        "armor": 0,
-        "mental_fortitude": 0,
-        "endurance": 0,
-        "cool": 0,
-        "fate": 0
-    }
+    "adventure_level": 0,
+    "profession_job": null,
+    "profession_level": 0,
+    "attributes": {
+        "strength": 49,
+        "constitution": 47,
+        "intelligence": 24,
+        "wisdom": 48,
+        "dexterity": 44,
+        "agility": 22,
+        "charisma": 27,
+        "willpower": 49,
+        "perception": 27,
+        "luck": 36
+    },
+    "current_hp": 143,
+    "current_sanity": 120,
+    "current_stamina": 69,
+    "current_moxie": 103,
+    "current_fortune": 72
 }
