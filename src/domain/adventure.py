@@ -169,7 +169,6 @@ def get_all_jobs() -> List[AdventureJob]:
     return list(JOB_REGISTRY.values())
 
 def get_jobs_grouped_by_class() -> Dict[str, List[AdventureJob]]:
-    print("DEBUG: function called")
     jobs_by_class = {}
 
     for job in JOB_REGISTRY.values():
