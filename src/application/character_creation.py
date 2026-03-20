@@ -68,8 +68,14 @@ def create_character(name: str, race_name: str, job_name: str) -> Character:
 
     job = resolve_job(job_name)
     attrs = roll_attributes()
-    pools = calculate_pools(attrs)
+    pools = calculate_pools(character)
     defenses = calculate_defenses(attrs, race)
+
+    character.current_hp = pools.hp[1]
+    character.current_sanity = pools.sanity[1]
+    character.current_stamina = pools.stamina[1]
+    character.current_moxie = pools.moxie[1]
+    character.current_fortune = pools.fortune[1]
 
     # Assemble Character
     character = Character(

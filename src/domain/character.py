@@ -19,13 +19,12 @@ class Character:
     profession_level: int = 0
     
     attributes: Attributes = None
-    pools: Pools = None
-    defenses: Defenses = None
 
-    @property
-    def pool_manager(self):
-        return PoolManager(self.pools)
-
+    current_hp: int = 0
+    current_sanity: int = 0
+    current_stamina: int = 0
+    current_moxie: int = 0
+    current_fortune: int = 0
 
     def to_dict(self):
         return {
@@ -39,6 +38,4 @@ class Character:
             ),
             "profession_level": self.profession_level,
             "attributes": self.attributes.to_dict(),
-            "pools": self.pools.to_dict() if self.pools else None,
-            "defenses": self.defenses.to_dict() if self.defenses else None,
         }
