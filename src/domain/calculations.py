@@ -1,9 +1,7 @@
 from domain.character import Character
 from domain.attributes import Pools, Defenses
 
-# ----------------------
 # Internal Helpers
-# ----------------------
 
 def get_derived_bonus(character: Character, stat: str) -> int:
     """
@@ -11,10 +9,7 @@ def get_derived_bonus(character: Character, stat: str) -> int:
     """
     return getattr(character, "_derived_bonuses", {}).get(stat, 0)
 
-
-# ----------------------
 # Pool Calculations
-# ----------------------
 
 def calculate_pools(character: Character) -> Pools:
     """
@@ -24,21 +19,21 @@ def calculate_pools(character: Character) -> Pools:
 
     attrs = character.attributes
 
-    # --- Base formulas ---
+    # Base formulas
     hp = attrs.constitution * 2 + attrs.strength
     sanity = attrs.wisdom * 2 + attrs.intelligence
     stamina = attrs.constitution + attrs.agility
     moxie = attrs.charisma * 2 + attrs.willpower
     fortune = attrs.luck * 2
 
-    # --- Apply derived bonuses ---
+    # Derived bonuses
     hp += get_derived_bonus(character, "hp")
     sanity += get_derived_bonus(character, "sanity")
     stamina += get_derived_bonus(character, "stamina")
     moxie += get_derived_bonus(character, "moxie")
     fortune += get_derived_bonus(character, "fortune")
 
-    # --- Clamp current values ---
+    # Clamp current values
     current_hp = max(0, min(character.current_hp, hp))
     current_sanity = max(0, min(character.current_sanity, sanity))
     current_stamina = max(0, min(character.current_stamina, stamina))
@@ -53,10 +48,7 @@ def calculate_pools(character: Character) -> Pools:
         fortune=(current_fortune, fortune),
     )
 
-
-# ----------------------
 # Defense Calculations
-# ----------------------
 
 def calculate_defenses(character) -> Defenses:
     def resolve(stat: str):
@@ -74,9 +66,7 @@ def calculate_defenses(character) -> Defenses:
         fate=resolve("fate"),
     )
 
-# ----------------------
 # Full Recalculation Hook
-# ----------------------
 
 def recalculate(character: Character):
     """
@@ -103,7 +93,7 @@ def recalculate(character: Character):
         for effect in character.race.effects_per_level:
             effect.apply(character)
 
-    # Apply job effects
+    # Apply Adventure job effects
     for effect in character.adventure_job.effects_on_acquire:
         effect.apply(character)
 
@@ -111,7 +101,7 @@ def recalculate(character: Character):
         for effect in character.adventure_job.effects_per_level:
             effect.apply(character)
 
-    # Profession job (if present)
+    # Profession job
     if character.profession_job:
         for effect in character.profession_job.effects_on_acquire:
             effect.apply(character)
