@@ -55,6 +55,11 @@ def divider(title):
 def format_name(key, name_map):
     return name_map.get(key, key.replace("_", " ").title())
 
+def format_source_name(source: str) -> str:
+    if ":" in source:
+        category, name = source.split(":", 1)
+        return name
+    return source
 
 # stat block printer
 
@@ -63,6 +68,7 @@ def print_attribute_block(character: Character):
 
     current = vars(character.attributes)
     base = getattr(character, "_base_attributes", {})
+    sources = getattr(character, "_attribute_sources", {})
 
     for key, value in current.items():
         if key in ["race", "material"]:
@@ -71,10 +77,17 @@ def print_attribute_block(character: Character):
         pretty_name = format_name(key, ATTRIBUTE_NAMES)
 
         base_value = base.get(key, value)
-        delta = value - base_value
+        attr_sources = sources.get(key, {})
 
-        if delta != 0:
-            print(f"{pretty_name}: {value} ({base_value} {'+' if delta > 0 else ''}{delta})")
+        # Build source breakdown
+        parts = []
+        for source, amount in attr_sources.items():
+            if amount != 0:
+                parts.append(f"{amount:+d} {format_source_name(source)}")
+
+        if parts:
+            breakdown = " ".join(parts)
+            print(f"{pretty_name}: {value} ({base_value} {breakdown})")
         else:
             print(f"{pretty_name}: {value}")
 
@@ -117,9 +130,6 @@ def debug_print_character(character: Character):
 
     print(f"Name: {character.name}")
 
-    # ----------------------
-    # Race
-    # ----------------------
     race_line = character.race.name
 
     if character.race.material:
@@ -127,9 +137,6 @@ def debug_print_character(character: Character):
 
     print(f"Race: {race_line} (Lv. {character.race_level})")
 
-    # ----------------------
-    # Jobs
-    # ----------------------
     print("\n==============================")
     print("         JOBS")
     print("==============================")

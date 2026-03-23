@@ -20,11 +20,11 @@ def calculate_pools(character: Character) -> Pools:
     attrs = character.attributes
 
     # Base formulas
-    hp = attrs.constitution * 2 + attrs.strength
-    sanity = attrs.wisdom * 2 + attrs.intelligence
+    hp = attrs.constitution + attrs.strength
+    sanity = attrs.wisdom + attrs.intelligence
     stamina = attrs.constitution + attrs.agility
-    moxie = attrs.charisma * 2 + attrs.willpower
-    fortune = attrs.luck * 2
+    moxie = attrs.charisma + attrs.willpower
+    fortune = attrs.perception + attrs.luck
 
     # Derived bonuses
     hp += get_derived_bonus(character, "hp")
@@ -77,9 +77,17 @@ def recalculate(character: Character):
     - leveling
     - equipment changes (future)
     """
-    from domain.abilities import ALL_ABILITIES
 
+    from domain.abilities import ALL_ABILITIES
+    from collections import defaultdict
+
+    if not isinstance(character._attribute_sources, dict):
+        character._attribute_sources = defaultdict(lambda: defaultdict(int))
+    else:
+        character._attribute_sources.clear()
+    
     character._base_attributes = vars(character.attributes).copy()
+    character._attribute_sources.clear()
 
     # Reset derived bonuses
     character._derived_bonuses = {}
@@ -87,7 +95,7 @@ def recalculate(character: Character):
 
     # Apply race effects
     for effect in character.race.effects_on_acquire:
-        effect.apply(character)
+        effect.apply(character, source="race")
 
     for _ in range(character.race_level):
         for effect in character.race.effects_per_level:
@@ -95,7 +103,7 @@ def recalculate(character: Character):
 
     # Apply Adventure job effects
     for effect in character.adventure_job.effects_on_acquire:
-        effect.apply(character)
+        effect.apply(character, source="job")
 
     for _ in range(character.adventure_level):
         for effect in character.adventure_job.effects_per_level:
@@ -104,7 +112,7 @@ def recalculate(character: Character):
     # Profession job
     if character.profession_job:
         for effect in character.profession_job.effects_on_acquire:
-            effect.apply(character)
+            effect.apply(character, source="profession")
 
         for _ in range(character.profession_level):
             for effect in character.profession_job.effects_per_level:
@@ -122,12 +130,9 @@ def recalculate(character: Character):
             character.ability_levels.setdefault(ability.name, 1)
 
         for ability in character.abilities:
-            if ability.name == "Creator's Guardians":
-                level = character.ability_levels.get(ability.name, 1)
-                will = character.attributes.willpower
+            effects = ability.get_effects(character)
 
-                bonus = (will + level) // 10
+            for effect in effects:
+                effect.apply(character, source=f"ability:{ability.name}")
 
-                for attr_name, value in vars(character.attributes).items():
-                    if value > 0:
-                        setattr(character.attributes, attr_name, value + bonus)
+

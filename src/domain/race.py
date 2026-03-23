@@ -3,10 +3,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from domain.effects import StatIncrease, Effect, DerivedStatBonus
 
-
-# ----------------------
 # Core Race Dataclass
-# ----------------------
 
 @dataclass(frozen=True)
 class Race:
@@ -29,17 +26,12 @@ class Race:
         }
 
 
-# ----------------------
 # Effect Helpers
-# ----------------------
 
 def make_effects(**mods):
     return [StatIncrease(stat, value) for stat, value in mods.items()]
 
-
-# ----------------------
 # Race Definitions
-# ----------------------
 
 RACES = {
     "Human": Race(
@@ -165,10 +157,7 @@ RACES = {
     ),
 }
 
-
-# ----------------------
 # Race Resolution
-# ----------------------
 
 def get_race(name: str) -> Race:
     if name not in RACES:

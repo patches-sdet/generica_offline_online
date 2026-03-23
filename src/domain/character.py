@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING, DefaultDict
+from collections import defaultdict
 
 if TYPE_CHECKING:
     from domain.abilities import Ability
@@ -23,8 +24,10 @@ class Character:
     profession_level: int = 0
 
     attributes: Optional[Attributes] = None
-    _base_attributes: dict = field(default_factory=dict, init=False)
-    
+    _base_attributes: dict = field(default_factory = dict, init = False)
+    _attribute_sources: DefaultDict[str, DefaultDict[str, int]] = field(
+            default_factory = lambda: defaultdict(lambda: defaultdict(int)), init = False)
+
     current_hp: int = 0
     current_sanity: int = 0
     current_stamina: int = 0
@@ -45,6 +48,9 @@ class Character:
         if self._derived_overrides is None:
             self._derived_overrides = {}
 
+        if not isinstance(self._attribute_sources, dict):
+            self._attribute_sources = defaultdict(lambda: defaultdict(int))
+
     def to_dict(self):
         return {
             "name": self.name,
@@ -64,3 +70,13 @@ class Character:
             "current_moxie": self.current_moxie,
             "current_fortune": self.current_fortune,
         }
+
+    def add_attribute(self, attr: str, value: int, source: str = None):
+        if not hasattr(self.attributes, attr):
+            raise ValueError(f"Invalid attribute: {attr}")
+
+        current = getattr(self.attributes, attr)
+        setattr(self.attributes, attr, current + value)
+
+        if source:
+            self._attribute_sources[attr][source] += value
