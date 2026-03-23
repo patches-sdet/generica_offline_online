@@ -1,15 +1,14 @@
 from domain.character import Character
 from domain.calculations import calculate_pools, calculate_defenses
-from domain.abilities import Ability
 
 # COLORS
 
 POOL_COLORS = {
-    "hp": "\033[91m",       # Red
-    "sanity": "\033[94m",   # Blue
-    "stamina": "\033[92m",  # Green
-    "moxie": "\033[95m",    # Magenta
-    "fortune": "\033[93m"   # Yellow
+    "hp": "\033[91m",
+    "sanity": "\033[94m",
+    "stamina": "\033[92m",
+    "moxie": "\033[95m",
+    "fortune": "\033[93m"
 }
 
 RESET_COLOR = "\033[0m"
@@ -45,23 +44,21 @@ DEFENSE_NAMES = {
     "fate": "Fate",
 }
 
-
 # HELPERS
 
 def divider(title):
     print(f"\n--- {title.upper()} ---")
-
 
 def format_name(key, name_map):
     return name_map.get(key, key.replace("_", " ").title())
 
 def format_source_name(source: str) -> str:
     if ":" in source:
-        category, name = source.split(":", 1)
+        _, name = source.split(":", 1)
         return name
     return source
 
-# stat block printer
+# ATTRIBUTE BLOCK
 
 def print_attribute_block(character: Character):
     divider("Attributes")
@@ -79,7 +76,6 @@ def print_attribute_block(character: Character):
         base_value = base.get(key, value)
         attr_sources = sources.get(key, {})
 
-        # Build source breakdown
         parts = []
         for source, amount in attr_sources.items():
             if amount != 0:
@@ -91,14 +87,13 @@ def print_attribute_block(character: Character):
         else:
             print(f"{pretty_name}: {value}")
 
+# GENERIC STAT BLOCK
+
 def print_stat_block(title, stats: dict, name_map: dict,
-                     hide_keys: list = None, color_map: dict = None):
+                     hide_keys=None, color_map=None):
 
-    if hide_keys is None:
-        hide_keys = []
-
-    if color_map is None:
-        color_map = {}
+    hide_keys = hide_keys or []
+    color_map = color_map or {}
 
     divider(title)
 
@@ -109,16 +104,11 @@ def print_stat_block(title, stats: dict, name_map: dict,
         pretty_name = format_name(key, name_map)
         color = color_map.get(key, "")
 
-        # Pool tuple handling
         if isinstance(value, tuple) and len(value) == 2:
             current, maximum = value
             print(f"{color}{pretty_name}: {current}/{maximum}{RESET_COLOR}")
         else:
-            if key == "material" and isinstance(value, str):
-                value = value.capitalize()
-
             print(f"{color}{pretty_name}: {value}{RESET_COLOR}")
-
 
 # MAIN CHARACTER SHEET
 
@@ -131,7 +121,6 @@ def debug_print_character(character: Character):
     print(f"Name: {character.name}")
 
     race_line = character.race.name
-
     if character.race.material:
         race_line += f" ({character.race.material.capitalize()})"
 
@@ -156,15 +145,12 @@ def debug_print_character(character: Character):
     else:
         print("Profession: None")
 
-    # ----------------------
-    # Derived Values
-    # ----------------------
+    # DERIVED VALUES
+
     pools = calculate_pools(character)
     defenses = calculate_defenses(character)
 
-    # ----------------------
-    # Stats
-    # ----------------------
+    # STATS
 
     print_attribute_block(character)
 
@@ -185,13 +171,30 @@ def debug_print_character(character: Character):
     print("        ABILITIES")
     print("==============================")
 
-    if hasattr(character, "abilities") and character.abilities:
+    if character.abilities:
         for ability in character.abilities:
-            level = 1
+            level = character.ability_levels.get(ability.name, 1)
 
-            if hasattr(character, "ability_levels"):
-                level = character.ability_levels.get(ability.name, 1)
-            print(f"- {ability.name:<25} (Lv. {level})")
+            line = f"- {ability.name:<25} (Lv. {level})"
+
+            cost = getattr(ability, "cost", None)
+            cost_pool = getattr(ability, "cost_pool", None)
+            duration = getattr(ability, "duration", None)
+            description = getattr(ability, "description", None)
+
+            if cost:
+                if cost_pool:
+                    line += f" | Cost: {cost} {cost_pool.capitalize()}"
+                else:
+                    line += f" | Cost: {cost}"
+
+            if duration:
+                line += f" | Duration: {duration}"
+
+            print(line)
+
+            if description:
+                print(f"    {description}")
     else:
         print("None")
 

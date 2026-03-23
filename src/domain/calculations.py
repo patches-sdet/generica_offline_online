@@ -1,15 +1,42 @@
+from collections import defaultdict
 from domain.character import Character
-from domain.attributes import Pools, Defenses
+from domain.attributes import Pools, Defenses, Attributes
 
-# Internal Helpers
+
+# Derived stat helpers
 
 def get_derived_bonus(character: Character, stat: str) -> int:
-    """
-    Safely retrieve accumulated derived stat bonuses.
-    """
-    return getattr(character, "_derived_bonuses", {}).get(stat, 0)
+    return character._derived_bonuses.get(stat, 0)
 
-# Pool Calculations
+
+def get_derived_override(character: Character, stat: str):
+    return character._derived_overrides.get(stat)
+
+def _apply_derived(character: Character, stat: str, base_value: int) -> int:
+    """
+    Apply bonus + override (override takes precedence, even if 0).
+    """
+    value = base_value + get_derived_bonus(character, stat)
+    override = get_derived_override(character, stat)
+
+    return override if override is not None else value
+
+# Buff source tracking
+
+def add_derived_source(character: Character, stat: str, value: int, source: str | None):
+    """
+    Future-proof hook for tracking derived stat sources.
+    Safe to leave unused until you wire full support.
+    """
+    if not source:
+        return
+
+    if not hasattr(character, "_derived_sources") or character._derived_sources is None:
+        character._derived_sources = defaultdict(lambda: defaultdict(int))
+
+    character._derived_sources[stat][source] += value
+
+# POOLS
 
 def calculate_pools(character: Character) -> Pools:
     """
@@ -19,120 +46,134 @@ def calculate_pools(character: Character) -> Pools:
 
     attrs = character.attributes
 
-    # Base formulas
-    hp = attrs.constitution + attrs.strength
-    sanity = attrs.wisdom + attrs.intelligence
-    stamina = attrs.constitution + attrs.agility
-    moxie = attrs.charisma + attrs.willpower
-    fortune = attrs.perception + attrs.luck
+    # Baseline Pools
 
-    # Derived bonuses
-    hp += get_derived_bonus(character, "hp")
-    sanity += get_derived_bonus(character, "sanity")
-    stamina += get_derived_bonus(character, "stamina")
-    moxie += get_derived_bonus(character, "moxie")
-    fortune += get_derived_bonus(character, "fortune")
+    base_values = {
+            "hp": attrs.strength + attrs.constitution,
+            "sanity": attrs.intelligence + attrs.wisdom,
+            "stamina": attrs.dexterity + attrs.agility,
+            "moxie": attrs.charisma + attrs.willpower,
+            "fortune": attrs.perception + attrs.luck,
+            }
+    
+    final_values = {
+            stat: _apply_derived(character, stat, base)
+            for stat, base in base_values.items()
+            }
 
-    # Clamp current values
-    current_hp = max(0, min(character.current_hp, hp))
-    current_sanity = max(0, min(character.current_sanity, sanity))
-    current_stamina = max(0, min(character.current_stamina, stamina))
-    current_moxie = max(0, min(character.current_moxie, moxie))
-    current_fortune = max(0, min(character.current_fortune, fortune))
+    """
+    Stop values from going into the negatives (need to refactor
+    so that going below 0 results in condtions.
+    """
+    clamped = {}
+    for stat, max_val in final_values.items():
+        current_attr = f"current_{stat}"
+        current = getattr(character, current_attr)
+        clamped[stat] = max(0, min(current, max_val))
 
     return Pools(
-        hp=(current_hp, hp),
-        sanity=(current_sanity, sanity),
-        stamina=(current_stamina, stamina),
-        moxie=(current_moxie, moxie),
-        fortune=(current_fortune, fortune),
+        hp=(clamped["hp"], final_values["hp"]),
+        sanity=(clamped["sanity"], final_values["sanity"]),
+        stamina=(clamped["stamina"], final_values["stamina"]),
+        moxie=(clamped["moxie"], final_values["moxie"]),
+        fortune=(clamped["fortune"],final_values["fortune"]),
     )
 
-# Defense Calculations
+# DEFENSES
 
-def calculate_defenses(character) -> Defenses:
-    def resolve(stat: str):
-        override = character._derived_overrides.get(stat)
-        bonus = character._derived_bonuses.get(stat, 0)
+def calculate_defenses(character: Character) -> Defenses:
+    """
+    Calculate defensive stats from attributes + derived bonuses.
+    """
+    attrs = character.attributes
 
-        base = override if override is not None else 0
-        return base + bonus
+    base_values = {
+        "armor": 0,
+        "mental_fortitude": 0,
+        "endurance": 0,
+        "cool": 0,
+        "fate": 0,
+    }
 
-    return Defenses(
-        armor=resolve("armor"),
-        mental_fortitude=resolve("mental_fortitude"),
-        endurance=resolve("endurance"),
-        cool=resolve("cool"),
-        fate=resolve("fate"),
-    )
+    final_values = {
+        stat: _apply_derived(character, stat, base)
+        for stat, base in base_values.items()
+}
 
-# Full Recalculation Hook
+    return Defenses(**final_values)
+
+# Recalculation to keep state clean
 
 def recalculate(character: Character):
     """
-    Reapply all effects and recompute derived values.
-
-    Call this after:
-    - character creation
-    - leveling
-    - equipment changes (future)
+    Fully rebuilds character state deterministically from:
+    race, jobs, profession, abilities.
     """
 
-    from domain.abilities import ALL_ABILITIES
-    from collections import defaultdict
+    # -------------------------
+    # RESET STATE
+    # -------------------------
 
-    if not isinstance(character._attribute_sources, dict):
-        character._attribute_sources = defaultdict(lambda: defaultdict(int))
-    else:
-        character._attribute_sources.clear()
-    
+    character.attributes = character.race.get_base_attributes(character.race_level)
+
+    # Snapshot base attributes
     character._base_attributes = vars(character.attributes).copy()
+
+    # Reset tracking
     character._attribute_sources.clear()
+    character._derived_bonuses.clear()
+    character._derived_overrides.clear()
 
-    # Reset derived bonuses
-    character._derived_bonuses = {}
-    character._derived_overrides = {}
+    # -------------------------
+    # APPLY RACE EFFECTS
+    # -------------------------
 
-    # Apply race effects
-    for effect in character.race.effects_on_acquire:
+    for effect in character.race.get_effects(character.race_level):
         effect.apply(character, source="race")
 
-    for _ in range(character.race_level):
-        for effect in character.race.effects_per_level:
-            effect.apply(character)
+    # -------------------------
+    # APPLY ADVENTURE JOB EFFECTS
+    # -------------------------
 
-    # Apply Adventure job effects
-    for effect in character.adventure_job.effects_on_acquire:
-        effect.apply(character, source="job")
+    for effect in character.adventure_job.get_effects(character.adventure_level):
+        effect.apply(character, source=f"job:{character.adventure_job.name}")
 
-    for _ in range(character.adventure_level):
-        for effect in character.adventure_job.effects_per_level:
-            effect.apply(character)
+    # -------------------------
+    # APPLY PROFESSION EFFECTS
+    # -------------------------
 
-    # Profession job
     if character.profession_job:
-        for effect in character.profession_job.effects_on_acquire:
-            effect.apply(character, source="profession")
+        for effect in character.profession_job.get_effects(character.profession_level):
+            effect.apply(character, source=f"profession:{character.profession_job.name}")
 
-        for _ in range(character.profession_level):
-            for effect in character.profession_job.effects_per_level:
-                effect.apply(character)
+    # -------------------------
+    # ABILITY UNLOCK
+    # -------------------------
 
-    # Ability unlock
-        for ability in ALL_ABILITIES:
-            character.abilities = [
-                ability for ability in ALL_ABILITIES
-                if ability.unlock_condition(character)]
-        if not hasattr(character, "ability_levels"):
-            character.ability_levels = {}
+    from domain.abilities import ALL_ABILITIES
 
-        for ability in character.abilities:
-            character.ability_levels.setdefault(ability.name, 1)
+    character.abilities = [
+        ability for ability in ALL_ABILITIES
+        if ability.unlock_condition(character)
+    ]
 
-        for ability in character.abilities:
-            effects = ability.get_effects(character)
+    for ability in character.abilities:
+        character.ability_levels.setdefault(ability.name, 1)
 
-            for effect in effects:
-                effect.apply(character, source=f"ability:{ability.name}")
+    # -------------------------
+    # APPLY ABILITY EFFECTS
+    # -------------------------
 
+    ability_effects = []
 
+    for ability in character.abilities:
+        for effect in ability.get_effects(character):
+            ability_effects.append((effect, ability.name))
+
+    # Optional priority system
+    ability_effects.sort(key=lambda pair: getattr(pair[0], "priority", 0))
+
+    for effect, ability_name in ability_effects:
+        effect.apply(character, source=f"ability:{ability_name}")
+
+    return character

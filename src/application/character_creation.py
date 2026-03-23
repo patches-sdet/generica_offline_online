@@ -1,30 +1,32 @@
 import random
+
 from domain.attributes import Attributes, DEFAULT_STATS
 from domain.character import Character
-from domain.race import Race, resolve_race
+from domain.race import resolve_race, Race
 from domain.adventure import resolve_job
+from domain.profession import resolve_profession, get_all_professions
 from domain.calculations import calculate_pools, recalculate
 from domain.effects import DerivedStatOverride
-from domain.craft import get_all_professions, resolve_profession
+
+# =========================
+# ROLLING
+# =========================
 
 def roll_2d10() -> int:
-    """
-    Roll two 10-sided dice.
-    """
     return random.randint(1, 10) + random.randint(1, 10)
 
-ATTRIBUTE_NAMES = [
-    "strength",
-    "constitution",
-    "intelligence",
-    "wisdom",
-    "dexterity",
-    "agility",
-    "charisma",
-    "willpower",
-    "perception",
-    "luck"
-]
+
+def roll_attributes() -> Attributes:
+    rolled = {
+        stat: DEFAULT_STATS[stat] + roll_2d10()
+        for stat in DEFAULT_STATS
+    }
+    return Attributes(**rolled)
+
+
+# =========================
+# MATERIAL SYSTEM
+# =========================
 
 MATERIAL_EFFECTS = {
     "cloth": [
@@ -41,98 +43,76 @@ MATERIAL_EFFECTS = {
     ],
 }
 
-def roll_attributes() -> Attributes:
+
+def apply_material_to_race(race: Race, base_race: Race, material: str) -> Race:
+    return Race(
+        name=race.name,
+        effects_on_acquire=race.effects_on_acquire + MATERIAL_EFFECTS[material],
+        effects_per_level=base_race.effects_per_level + race.effects_per_level,
+        requires_material=race.requires_material,
+        material=material,
+        base_race=base_race.name,
+    )
+
+
+# =========================
+# PROFESSION SELECTION (LOGIC ONLY)
+# =========================
+
+def get_profession_by_name(name: str):
+    return resolve_profession(name)
+
+
+def list_professions():
+    return get_all_professions()
+
+
+# =========================
+# CORE CREATION
+# =========================
+
+def create_character(
+    name: str,
+    race_name: str,
+    job_name: str,
+    profession_name: str,
+    base_race_name: str | None = None,
+    material: str | None = None,
+) -> Character:
     """
-    Generate Attributes object based on DEFAULT_STATS + 2d10 rolls.
+    Pure character creation (no input/print).
     """
 
-    rolled_stats = {
-        stat: DEFAULT_STATS[stat] + roll_2d10()
-        for stat in DEFAULT_STATS
-    }
-
-    return Attributes(**rolled_stats)
-
-def create_character(name: str, race_name: str, job_name: str) -> Character:
-    """
-    Generate a full Character object with attributes, pools, and defenses.
-    """
-    
     race = resolve_race(race_name)
-    
+
+    # Handle material-based races
     if race.requires_material:
-        print("Choose a base race:")
+        if not base_race_name or not material:
+            raise ValueError("Material races require base_race_name and material")
 
-        from domain.race import RACES
-
-        base_race_names = [
-                r.name for r in RACES.values()
-                if not r.requires_material
-                ]
-        for r in base_race_names:
-            print(f"- {r}")
-        
-        base_choice = input("Base Race: ").strip()
-
-        while base_choice not in base_race_names:
-            base_choice = input("Invalid choice, choose a valid base race: ").strip()
-
-        base_race = resolve_race(base_choice)
-
-        print("\nChoose material:")
-        print("- Cloth\n- Leather\n- Metal")
-
-        material = input("Material: ").strip().lower()
-        while material not in ["cloth", "leather", "metal"]:
-            material = input("Invalid. Choose Cloth, Leather, or Metal: ").strip().lower()
-
-        race = Race(
-                name = race.name,
-                effects_on_acquire = race.effects_on_acquire + MATERIAL_EFFECTS[material],
-                effects_per_level = base_race.effects_per_level + race.effects_per_level,
-                requires_material = race.requires_material,
-                )
-    def choose_profession():
-        professions = get_all_professions()
-
-        while True:
-            print("Choose a profession:")
-            for i, prof in enumerate(professions, 1):
-                print(f"{i}. {prof.name}")
-
-            choice = input("> ").strip()
-
-            if choice.isdigit():
-                index = int(choice) - 1
-                if 0 <= index < len(professions):
-                    return professions[index]
-                else:
-                    try:
-                        return resolve_professions(choice)
-                    except ValueError:
-                        pass
-                print("Invalid choice. Try again")
-
-        return professions[choice]
+        base_race = resolve_race(base_race_name)
+        race = apply_material_to_race(race, base_race, material)
 
     job = resolve_job(job_name)
-    chosen_professions = choose_profession()
+    profession = resolve_profession(profession_name)
+
     attrs = roll_attributes()
 
-    # Assemble Character
     character = Character(
-            name = name,
-            race = race,
-            race_level = 1,
-            adventure_job = job,
-            adventure_level = 1,
-            profession_job = chosen_professions,
-            profession_level = 1,
-            attributes = attrs,
-            )
+        name=name,
+        race=race,
+        race_level=1,
+        adventure_job=job,
+        adventure_level=1,
+        profession_job=profession,
+        profession_level=1,
+        attributes=attrs,
+    )
 
+    # Build full state
     recalculate(character)
 
+    # Initialize pools to max
     pools = calculate_pools(character)
 
     character.current_hp = pools.hp[1]

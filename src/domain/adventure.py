@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
+
 from domain.effects import Effect, make_effects
 
-# Class Registry
+# =========================
+# CLASS REGISTRY
+# =========================
 
 CLASS_REGISTRY = {
     "S": "Sage",
@@ -14,71 +17,67 @@ CLASS_REGISTRY = {
     "E": "Wanderer",
 }
 
-# Job to Class Map
+# =========================
+# JOB → CLASS MAP
+# =========================
 
 JOB_CLASS_MAP = {
-    # (C) Creator
+    "Alchemist": "S",
     "Animator": "C",
-    "Conjuror": "C",
-    "Elementalist": "C",
-    "Necromancer": "C",
-    # (D) Diva
-    "Bard": "D",
-    "Model": "D",
-    "Ruler": "D",
-    "Sensate": "D",
-    # (E) Wanderer
-    "Explorer": "E",
-    "Mercenary": "E",
-    "Merchant": "E",
-    "Scout": "E",
-    # (P) Priest
-    "Cleric": "P",
-    "Cultist": "P",
-    "Oracle": "P",
-    "Shaman": "P",
-    # (R) Rogue
+    "Archer": "W",
     "Assassin": "R",
     "Bandit": "R",
+    "Bard": "D",
+    "Berserker": "W",
     "Burglar": "R",
-    "Grifter": "R",
-    # (S) Sage
-    "Alchemist": "S",
+    "Cleric": "P",
+    "Conjuror": "C",
+    "Cultist": "P",
+    "Duelist": "W",
+    "Elementalist": "C",
     "Enchanter": "S",
+    "Explorer": "E",
+    "Grifter": "R",
+    "Knight": "W",
+    "Mercenary": "E",
+    "Merchant": "E",
+    "Model": "D",
+    "Necromancer": "C",
+    "Oracle": "P",
+    "Ruler": "D",
+    "Scout": "E",
+    "Sensate": "D",
+    "Shaman": "P",
     "Tamer": "S",
     "Wizard": "S",
-    # (W) Warrior
-    "Archer": "W",
-    "Berserker": "W",
-    "Duelist": "W",
-    "Knight": "W",
 }
 
+# =========================
+# CORE DATACLASS
+# =========================
 
-# Core Adventure Job Dataclass
-
-@dataclass (frozen=True)
+@dataclass(frozen=True)
 class AdventureJob:
     name: str
-
-    # One-time stat bonuses on acquisition
     effects_on_acquire: List[Effect] = field(default_factory=list)
-
     effects_per_level: List[Effect] = field(default_factory=list)
-
-    abilities: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
 
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
-            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
-            "abilities": self.abilities,
-            "tags": self.tags,
-        }
+    # -------------------------
+    # REQUIRED FOR ENGINE
+    # -------------------------
 
-# Derived Properties
+    def get_effects(self, level: int) -> List[Effect]:
+        effects = []
+
+        effects.extend(self.effects_on_acquire)
+
+        for _ in range(level - 1):
+            effects.extend(self.effects_per_level)
+
+        return effects
+
+    # -------------------------
 
     @property
     def class_code(self) -> str:
@@ -88,9 +87,20 @@ class AdventureJob:
     def job_class(self) -> str:
         return CLASS_REGISTRY[self.class_code]
 
-# Job Registry
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
+            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
+            "tags": self.tags,
+        }
 
-JOB_REGISTRY: Dict[str, "AdventureJob"] = {}
+
+# =========================
+# REGISTRY
+# =========================
+
+JOB_REGISTRY: Dict[str, AdventureJob] = {}
 
 
 def register_job(job: AdventureJob):
@@ -103,352 +113,98 @@ def resolve_job(name: str) -> AdventureJob:
         raise ValueError(f"Unknown job: {name}")
     return job
 
-# Factory Helper
 
-def make_job(name: str, **kwargs) -> AdventureJob:
+# =========================
+# FACTORY
+# =========================
+
+def make_job(name: str, stats: dict, tags: List[str]) -> AdventureJob:
     if name not in JOB_CLASS_MAP:
-        raise ValueError(f"{name} is not defined in JOB_CLASS_MAP")
+        raise ValueError(f"{name} not defined in JOB_CLASS_MAP")
 
-    job = AdventureJob(name=name, **kwargs)
+    job = AdventureJob(
+        name=name,
+        effects_on_acquire=make_effects(**stats),
+        tags=tags,
+    )
+
     register_job(job)
     return job
 
-# Creator Jobs
 
-# Animator: +3 DEX, INT, WIL
-make_job(
-    "Animator",
-    effects_on_acquire = make_effects(
-        dexterity = 3,
-        intelligence = 3,
-        willpower = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+# =========================
+# JOB DEFINITIONS (CLEAN)
+# =========================
 
-# Conjuror: +3 CHA, INT, WIL
-make_job(
-    "Conjuror",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        intelligence = 3,
-        willpower = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+JOB_DATA = {
+    # Creator
+    "Animator": dict(stats=dict(dexterity=3, intelligence=3, willpower=3), tags=["ranged"]),
+    "Conjuror": dict(stats=dict(charisma=3, intelligence=3, willpower=3), tags=["ranged"]),
+    "Elementalist": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["ranged"]),
+    "Necromancer": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["ranged"]),
 
-# Elementalist: +3 CON, INT, WIL
-make_job(
-    "Elementalist",
-    effects_on_acquire = make_effects(
-        constitution = 3,
-        intelligence = 3,
-        willpower = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+    # Diva
+    "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["ranged"]),
+    "Model": dict(stats=dict(agility=3, charisma=3, perception=3), tags=["ranged"]),
+    "Ruler": dict(stats=dict(charisma=3, wisdom=3, luck=3), tags=["defensive"]),
+    "Sensate": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["defensive"]),
 
-# Necromancer: +3 INT, WIL, WIS
-make_job(
-    "Necromancer",
-    effects_on_acquire = make_effects(
-        intelligence = 3,
-        willpower = 3,
-        wisdom = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+    # Wanderer
+    "Explorer": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["ranged"]),
+    "Merchant": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["utility"]),
+    "Mercenary": dict(stats=dict(dexterity=3, perception=3, strength=3), tags=["melee"]),
+    "Scout": dict(stats=dict(agility=3, perception=3, wisdom=3), tags=["utility"]),
 
-# Diva Jobs
+    # Priest
+    "Cleric": dict(stats=dict(constitution=3, luck=3, wisdom=3), tags=["support"]),
+    "Cultist": dict(stats=dict(charisma=3, intelligence=3, luck=3), tags=["aggressive"]),
+    "Oracle": dict(stats=dict(charisma=3, luck=3, wisdom=3), tags=["support"]),
+    "Shaman": dict(stats=dict(luck=3, strength=3, wisdom=3), tags=["support"]),
 
-# Bard: +3 CHA, DEX, LUC
-make_job(
-    "Bard",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        dexterity = 3,
-        luck = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+    # Rogue
+    "Assassin": dict(stats=dict(agility=3, charisma=3, dexterity=3), tags=["precision"]),
+    "Bandit": dict(stats=dict(agility=3, strength=3, wisdom=3), tags=["aggressive"]),
+    "Burglar": dict(stats=dict(dexterity=3, perception=3, agility=3), tags=["precision"]),
+    "Grifter": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["utility"]),
 
-# Model: +3 AGI, CHA, PER
-make_job(
-    "Model",
-    effects_on_acquire = make_effects(
-        agility = 3,
-        charisma = 3,
-        perception = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+    # Sage
+    "Alchemist": dict(stats=dict(constitution=3, intelligence=3, dexterity=3), tags=["utility"]),
+    "Enchanter": dict(stats=dict(dexterity=3, intelligence=3, willpower=3), tags=["aggressive"]),
+    "Tamer": dict(stats=dict(charisma=3, perception=3, constitution=3), tags=["utility"]),
+    "Wizard": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["caster"]),
 
-# Ruler: +3 CHA, WIS, LUC
-make_job(
-    "Ruler",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        wisdom = 3,
-        luck = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
+    # Warrior
+    "Archer": dict(stats=dict(dexterity=3, perception=3, strength=3), tags=["ranged"]),
+    "Berserker": dict(stats=dict(constitution=3, strength=3, willpower=3), tags=["aggressive"]),
+    "Duelist": dict(stats=dict(agility=3, dexterity=3, strength=3), tags=["precision"]),
+    "Knight": dict(stats=dict(charisma=3, constitution=3, strength=3), tags=["defensive"]),
+}
 
-# Sensate: +3 CHA, INT, PER
-make_job(
-    "Sensate",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        intelligence = 3,
-        perception = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-# Wanderer Jobs
+# Build all jobs
 
-# Explorer: +3 CON, INT, WIL
-make_job(
-    "Explorer",
-    effects_on_acquire = make_effects(
-        constitution = 3,
-        intelligence = 3,
-        willpower = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
+for name, data in JOB_DATA.items():
+    make_job(name, stats=data["stats"], tags=data["tags"])
 
-# Merchant: +3 CHA, INT, PER
-make_job(
-    "Merchant",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        intelligence = 3,
-        perception = 3,
-        ),
-    tags=["melee", "aggressive", "warrior"]
-)
 
-# Mercenary: +3 DEX, PER, STR
-make_job(
-    "Mercenary",
-    effects_on_acquire = make_effects(
-        dexterity = 3,
-        perception = 3,
-        strength = 3,
-        ),
-    tags=["melee", "precision", "warrior"]
-)
-
-# Scout: +3 AGI, PER, WIS
-make_job(
-    "Scout",
-    effects_on_acquire = make_effects(
-        agility = 3,
-        perception = 3,
-        wisdom = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-
-# Priest Jobs
-
-# Cleric: +3 CON, LUC, WIS
-make_job(
-    "Cleric",
-    effects_on_acquire = make_effects(
-        constitution = 3,
-        luck = 3,
-        wisdom = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
-
-# Cultist: +3 CHA, INT, LUC
-make_job(
-    "Cultist",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        intelligence = 3,
-        luck = 3,
-        ),
-    tags=["melee", "aggressive", "warrior"]
-)
-
-# Oracle: +3 CHA, LUC, WIS
-make_job(
-    "Oracle",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        luck = 3,
-        wisdom = 3,
-        ),
-    tags=["melee", "precision", "warrior"]
-)
-
-# Shaman: +3 LUC, STR, WIS
-make_job(
-    "Shaman",
-    effects_on_acquire = make_effects(
-        luck = 3,
-        strength = 3,
-        wisdom = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-
-# Rogue
-
-# Assassin: +3 AGI, CHA, DEX
-make_job(
-    "Assassin",
-    effects_on_acquire = make_effects(
-        agility = 3,
-        charisma = 3,
-        dexterity = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
-
-# Bandit: +3 AGI, STR, WIS
-make_job(
-    "Bandit",
-    effects_on_acquire = make_effects(
-        agility = 3,
-        strength = 3,
-        wisdom = 3,
-        ),
-    tags=["melee", "aggressive", "warrior"]
-)
-
-# Burglar: +3 DEX, AGI, PER
-make_job(
-    "Burglar",
-    effects_on_acquire = make_effects(
-        dexterity = 3,
-        perception = 3,
-        agility = 3,
-        ),
-    tags=["melee", "precision", "warrior"]
-)
-
-# Grifter: +3 CHA, DEX, LUC
-make_job(
-    "Grifter",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        dexterity = 3,
-        luck = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-
-# Sage Jobs
-
-# Alchemist: +3 CON, DEX, INT
-make_job(
-    "Alchemist",
-    effects_on_acquire = make_effects(
-        constitution = 3,
-        intelligence = 3,
-        dexterity = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
-
-# Enchanter: +3 DEX, INT, WIL
-make_job(
-    "Enchanter",
-    effects_on_acquire = make_effects(
-        dexterity = 3,
-        intelligence = 3,
-        willpower = 3,
-        ),
-    tags=["melee", "aggressive", "warrior"]
-)
-
-# Tamer: +3 CHA, CON, PER
-make_job(
-    "Tamer",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        perception = 3,
-        constitution = 3,
-        ),
-    tags=["melee", "precision", "warrior"]
-)
-
-# Wizard: +3 INT, WIL, WIS
-make_job(
-    "Wizard",
-    effects_on_acquire = make_effects(
-        intelligence = 3,
-        willpower = 3,
-        wisdom = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-
-# Warrior Jobs
-
-# Archer: +3 DEX, PER, STR
-make_job(
-    "Archer",
-    effects_on_acquire = make_effects(
-        dexterity = 3,
-        perception = 3,
-        strength = 3,
-    ),
-    tags=["ranged", "warrior"]
-)
-
-# Berserker: +3 CON, STR, WILL
-make_job(
-    "Berserker",
-    effects_on_acquire = make_effects(
-        constitution = 3,
-        strength = 3,
-        willpower = 3,
-        ),
-    tags=["melee", "aggressive", "warrior"]
-)
-
-# Duelist: +3 AGL, DEX, STR
-make_job(
-    "Duelist",
-    effects_on_acquire = make_effects(
-        agility = 3,
-        dexterity = 3,
-        strength = 3,
-        ),
-    tags=["melee", "precision", "warrior"]
-)
-
-# Knight: +3 CHA, CON, STR
-make_job(
-    "Knight",
-    effects_on_acquire = make_effects(
-        charisma = 3,
-        constitution = 3,
-        strength = 3,
-        ),
-    tags=["melee", "defensive", "warrior"]
-)
-
-# Utility Functions
+# =========================
+# UTILITIES
+# =========================
 
 def get_jobs_by_class(class_code: str) -> List[AdventureJob]:
     return [
-        job
-        for job in JOB_REGISTRY.values()
+        job for job in JOB_REGISTRY.values()
         if job.class_code == class_code
     ]
+
 
 def get_all_jobs() -> List[AdventureJob]:
     return list(JOB_REGISTRY.values())
 
+
 def get_jobs_grouped_by_class() -> Dict[str, List[AdventureJob]]:
-    jobs_by_class = {}
+    grouped = {}
 
     for job in JOB_REGISTRY.values():
-        jobs_by_class.setdefault(job.job_class, []).append(job)
-    return jobs_by_class
+        grouped.setdefault(job.job_class, []).append(job)
+
+    return grouped
