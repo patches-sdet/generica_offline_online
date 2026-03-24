@@ -3,14 +3,14 @@ from domain.calculations import calculate_pools
 def _get_current_attr(pool_name: str) -> str:
     return f"current_{pool_name}"
 
-def validate_poool(character, pool_name: str, amount: int):
+def _validate_pool(character, pool_name: str, amount: int):
     attr = _get_current_attr(pool_name)
 
     if not hasattr(character, attr):
         raise ValueError(f"Invalid pool: {pool_name}")
 
 def _modify_current(character, pool_name: str, amount: int):
-    _validate_pool(character, pool_name)
+    _validate_pool(character, pool_name, amount)
 
     if amount == 0:
         return
@@ -38,7 +38,7 @@ def heal(character, pool_name: str, amount: int):
     _modify_current(character, pool_name, amount)
 
 def spend(character, pool_name: str, amount: int) -> bool:
-    _validate_pool(character, pool_name)
+    _validate_pool(character, pool_name, amount)
 
     if amount < 0:
         raise ValueError("Spend amount cannot be negative")

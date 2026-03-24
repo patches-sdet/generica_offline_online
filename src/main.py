@@ -122,6 +122,8 @@ def main():
     # -------------------------
     # INTERACTION LOOP
     # -------------------------
+    
+    should_save = False
 
     while True:
         debug_print_character(character)
@@ -130,6 +132,7 @@ def main():
         print("1. Use Ability")
         print("2. Refresh Character")
         print("3. Save & Exit")
+        print("4. Exit Without Saving")
 
         choice = input("> ").strip()
 
@@ -164,7 +167,14 @@ def main():
             print("Character recalculated.")
 
         elif choice == "3":
+            should_save = True
             break
+
+        elif choice == "4":
+            confirm = input("Exit without saving? (y/n): ").strip().lower()
+            if confirm == "y":
+                should_save = False
+                break
 
         else:
             print("Invalid option.")
@@ -173,17 +183,20 @@ def main():
     # SAVE CHARACTER
     # -------------------------
 
-    os.makedirs(PERSISTENCE_DIR, exist_ok=True)
+    if should_save:
+        os.makedirs(PERSISTENCE_DIR, exist_ok=True)
 
-    filename = f"{char_name.replace(' ', '_').lower()}_character.json"
-    filepath = os.path.join(PERSISTENCE_DIR, filename)
+        filename = f"{char_name.replace(' ', '_').lower()}_character.json"
+        filepath = os.path.join(PERSISTENCE_DIR, filename)
 
-    data = character.to_dict()
+        data = character.to_dict()
+    
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=4)
 
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=4)
-
-    print(f"Character saved to: {filename}")
+        print(f"Character saved to: {filename}")
+    else:
+        print("Exited without saving.")
 
 
 # -------------------------

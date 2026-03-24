@@ -194,7 +194,7 @@ def debug_print_character(character: Character):
             print(line)
 
             if description:
-                print(f"    {description}")
+                print(f"    {description}\n")
     else:
         print("None")
 

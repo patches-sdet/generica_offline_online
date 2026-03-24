@@ -14,7 +14,7 @@ class Ability:
     effect_generator: Callable[["Character"], List[Effect]] | None = None
 
     cost: int | None = None
-    cost_pool: str = "fortune"
+    cost_pool: str = None
     duration: str | None = None
     description: str | None = None
 
@@ -76,8 +76,6 @@ def _auto_register_abilities():
 
         if hasattr(module, "register"):
             module.register()
-            print(f"[Abilities] Loaded module: {module_name}")
-
 
 # runs on import
 _auto_register_abilities()
