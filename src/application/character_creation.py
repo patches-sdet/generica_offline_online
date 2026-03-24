@@ -1,4 +1,4 @@
-import random
+import random, copy
 
 from domain.attributes import Attributes, DEFAULT_STATS
 from domain.character import Character
@@ -91,7 +91,7 @@ def create_character(
             raise ValueError("Material races require base_race_name and material")
 
         base_race = resolve_race(base_race_name)
-        race = apply_material_to_race(race, base_race, material)
+        race = apply_material_to_race(copy.deepcopy(race), base_race, material)
 
     job = resolve_job(job_name)
     profession = resolve_profession(profession_name)
@@ -102,6 +102,7 @@ def create_character(
         name=name,
         race=race,
         race_level=1,
+        base_race_level=1,
         adventure_job=job,
         adventure_level=1,
         profession_job=profession,

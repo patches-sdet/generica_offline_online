@@ -20,8 +20,15 @@ class Race:
     material: Optional[str] = None
     base_race: Optional[str] = None
 
+    def get_display_name(self) -> str:
+        if self.base_race and self.material:
+            return (f"{self.name} ({self.material.title()} {self.base_race})")
+        elif self.material:
+            return (f"{self.name} ({self.material.titel()})")
+        return self.name
+
     # -------------------------
-    # NEW: BASE ATTRIBUTES
+    # BASE ATTRIBUTES
     # -------------------------
 
     def get_base_attributes(self, level: int) -> Attributes:

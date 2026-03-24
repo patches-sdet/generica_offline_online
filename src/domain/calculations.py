@@ -1,3 +1,5 @@
+import copy
+
 from collections import defaultdict
 from domain.character import Character
 from domain.attributes import Pools, Defenses, Attributes
@@ -68,7 +70,7 @@ def calculate_pools(character: Character) -> Pools:
     clamped = {}
     for stat, max_val in final_values.items():
         current_attr = f"current_{stat}"
-        current = getattr(character, current_attr)
+        current = getattr(character, current_attr, max_val)
         clamped[stat] = max(0, min(current, max_val))
 
     return Pools(
@@ -116,13 +118,10 @@ def recalculate(character: Character):
 
     character.attributes = character.race.get_base_attributes(character.race_level)
 
-    # Snapshot base attributes
-    character._base_attributes = vars(character.attributes).copy()
-
     # Reset tracking
-    character._attribute_sources.clear()
-    character._derived_bonuses.clear()
-    character._derived_overrides.clear()
+    character._attribute_sources = defaultdict(lambda: defaultdict(int))
+    character._derived_bonuses = defaultdict(int)
+    character._derived_overrides = {}
 
     # -------------------------
     # APPLY RACE EFFECTS
@@ -130,6 +129,8 @@ def recalculate(character: Character):
 
     for effect in character.race.get_effects(character.race_level):
         effect.apply(character, source="race")
+    
+    character._base_attributes = copy.deepcopy(vars(character.attributes))
 
     # -------------------------
     # APPLY ADVENTURE JOB EFFECTS
@@ -152,10 +153,12 @@ def recalculate(character: Character):
 
     from domain.abilities import ALL_ABILITIES
 
-    character.abilities = [
+    new_abilities = [
         ability for ability in ALL_ABILITIES
         if ability.unlock_condition(character)
     ]
+
+    character.abilities = new_abilities
 
     for ability in character.abilities:
         character.ability_levels.setdefault(ability.name, 1)

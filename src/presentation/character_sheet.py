@@ -120,11 +120,15 @@ def debug_print_character(character: Character):
 
     print(f"Name: {character.name}")
 
-    race_line = character.race.name
-    if character.race.material:
-        race_line += f" ({character.race.material.capitalize()})"
-
-    print(f"Race: {race_line} (Lv. {character.race_level})")
+    race_display = character.race.get_display_name()
+    
+    if character.race.base_race:
+        print(
+                f"Race: {race_display} "
+                f"(Lv. {character.race_level} / Base Lv. {character.base_race_level})"
+                )
+    else:
+        print(f"Race: {race_display} (Lv. {character.race_level})")
 
     print("\n==============================")
     print("         JOBS")

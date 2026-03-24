@@ -16,6 +16,7 @@ class Character:
 
     race: Race
     race_level: int
+    base_race_level: int
 
     adventure_job: AdventureJob
     adventure_level: int

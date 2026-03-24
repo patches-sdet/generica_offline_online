@@ -1,9 +1,8 @@
-import json
-import os
+import json, os
 
-from application.character_creation import create_character
+from application.character_creation import create_character, MATERIAL_EFFECTS
 from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
-from domain.race import RACES
+from domain.race import RACES, resolve_race
 from domain.adventure import get_jobs_grouped_by_class
 from domain.profession import get_all_professions
 from domain.effects import StatIncrease
@@ -26,21 +25,22 @@ def format_effects(effects):
 
     return ", ".join(parts)
 
-
-def choose_from_list(prompt, valid_options):
+def choose_from_mapping(prompt, options_dict):
+    """
+    options_dict: {normalized_key: display_value}
+    """
     while True:
-        choice = input(prompt).strip()
-        if choice.lower() in valid_options:
-            return choice
+        choice = input(prompt).strip().lower()
+        if choice in options_dict:
+            return options_dict[choice]
         print("Invalid choice. Try again.")
-
-
+        
 # -------------------------
 # MAIN
 # -------------------------
 
 def main():
-    print("=== Tabletop RPG Character Creator ===\n")
+    print("=== Generica Offline Character Creator ===\n")
 
     # -------------------------
     # NAME
@@ -60,12 +60,36 @@ def main():
 
     race_lookup = {r.lower(): r for r in RACES.keys()}
 
-    race_input = choose_from_list(
+    race_input = choose_from_mapping(
         "Choose a race: ",
-        race_lookup.keys()
+        race_lookup
     )
 
-    race_name = race_lookup[race_input.lower()]
+    race = resolve_race(race_name)
+
+    base_race_name = None
+    material = None
+
+    if race.requires_material:
+        print("\nThis race requires a base race and material.")
+        print("\nAvailable base races:")
+        base_race_lookup = {
+                r.name.lower(): r.name
+        for r in RACES.values()
+        if not r.requires_material
+        }
+
+        base_race_name = choose_from_mapping("Choose base race: ", base_race_lookup)
+        
+        print("\nAvailable materials:")
+        material_lookup = {
+                m.lower(): m 
+                for m in MATERIAL_EFFECTS.keys()
+                }
+        for mat in MATERIAL_EFFECTS.keys():
+            print(f"- {mat}")
+
+        material = choose_from_mapping("Choose material: ", material_lookup)
 
     # -------------------------
     # JOB
@@ -84,12 +108,10 @@ def main():
 
             valid_jobs[job.name.lower()] = job.name
 
-    job_input = choose_from_list(
+    job_name = choose_from_mapping(
         "Choose a job: ",
-        valid_jobs.keys()
+        valid_jobs
     )
-
-    job_name = valid_jobs[job_input.lower()]
 
     # Professions
 
@@ -104,18 +126,22 @@ def main():
         print(f"- {prof.name} ({bonuses})")
         valid_professions[prof.name.lower()] = prof.name
 
-    profession_input = choose_from_list(
+    profession_name = choose_from_mapping(
             "Choose a profession: ",
-             valid_professions.keys()
+             valid_professions
             )
-
-    profession_name = valid_professions[profession_input.lower()]
 
     # -------------------------
     # CREATE CHARACTER
     # -------------------------
 
-    character = create_character(char_name, race_name, job_name, profession_name)
+    character = create_character(char_name,
+                                 race_name,
+                                 job_name,
+                                 profession_name,
+                                 base_race_name=base_race_name,
+                                 material=material
+                                 )
 
     print("=== Character Created ===")
 
