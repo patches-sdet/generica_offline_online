@@ -11,6 +11,7 @@ class Ability:
     name: str
     unlock_condition: Callable[["Character"], bool]
     effects: list[Effect] = field(default_factory=list)
+    is_passive: bool = True
     effect_generator: Callable[["Character"], List[Effect]] | None = None
 
     cost: int | None = None
@@ -18,11 +19,17 @@ class Ability:
     duration: str | None = None
     description: str | None = None
 
-    execute: Callable[["Character"], None] | None = None
+    execute: Callable[["Character", list["Character"]], None] | None = None
 
     def get_effects(self, character: "Character") -> List[Effect]:
+        if self.effect_generator and self.effects:
+            raise ValueError(
+                    f"Ability '{self.name}' defines both effects and effect_generator"
+                    )
+
         if self.effect_generator:
             return self.effect_generator(character)
+
         return self.effects
 
 
@@ -42,7 +49,8 @@ def make_ability(*,
                  cost_pool=None,
                  duration=None, 
                  description=None,
-                 execute=None):
+                 execute=None,
+                 is_passive=True):
     ability = Ability(
         name=name,
         unlock_condition=unlock_condition,
@@ -53,6 +61,7 @@ def make_ability(*,
         duration=duration,
         description=description,
         execute=execute,
+        is_passive=is_passive,
     )
     register_ability(ability)
     return ability

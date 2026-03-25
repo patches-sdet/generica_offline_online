@@ -7,11 +7,20 @@ class Effect:
     All effects MUST:
     - implement apply(character, source=None)
     - never mutate state outside Character APIs
+    - conditionally apply to the correct objects
     """
 
     priority = 0  # future: ordering system
 
+    def applies_to(self, character) -> bool:
+        return True
+
     def apply(self, character, source: str | None = None):
+        if not self.applies_to(character):
+            return
+        self._apply(character, source)
+
+    def _apply(self, character, source:str | None = None):
         raise NotImplementedError()
 
     def to_dict(self):
@@ -28,7 +37,9 @@ class StatIncrease(Effect):
         self.stat = stat
         self.amount = amount
 
-    def apply(self, character, source: str | None = None):
+    def _apply(self, character, source: str | None = None):
+        if not self.applies_to(character):
+            return
         if not hasattr(character.attributes, self.stat):
             raise ValueError(f"Invalid attribute: {self.stat}")
 
@@ -51,7 +62,7 @@ class MultiStatIncrease(Effect):
     def __init__(self, stats: Dict[str, int]):
         self.stats = stats
 
-    def apply(self, character, source: str | None = None):
+    def _apply(self, character, source: str | None = None):
         for stat, amount in self.stats.items():
             if not hasattr(character.attributes, stat):
                 raise ValueError(f"Invalid attribute: {stat}")
@@ -63,6 +74,18 @@ class MultiStatIncrease(Effect):
             "type": "multi_stat_increase",
             "stats": self.stats,
         }
+
+class ConditionalEffect(Effect):
+    def __init__(self, effect: Effect, condition):
+        self.effect = effect
+        self.condition = condition
+
+
+    def applies_to(self, character):
+        return self.condition(character)
+
+    def _apply(self, character, source=None):
+        self.effect.apply(character, source)
 
 # DERIVED STAT EFFECTS
 
@@ -83,7 +106,7 @@ class DerivedStatBonus(Effect):
         self.stat = stat
         self.amount = amount
 
-    def apply(self, character, source: str | None = None):
+    def _apply(self, character, source: str | None = None):
         character._derived_bonuses[self.stat] = (
             character._derived_bonuses.get(self.stat, 0) + self.amount
         )
@@ -110,7 +133,7 @@ class DerivedStatOverride(Effect):
         self.amount = amount
         self.priority = 100  # overrides should run last
 
-    def apply(self, character, source: str | None = None):
+    def _apply(self, character, source: str | None = None):
         if character._derived_overrides is None:
             character._derived_overrides = {}
 

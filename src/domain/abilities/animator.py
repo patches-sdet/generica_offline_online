@@ -2,19 +2,24 @@ from domain.abilities import make_ability
 from domain.effects import MultiStatIncrease
 
 
-def creators_guardians_effect(c):
-    level = c.ability_levels.get("Creator's Guardians", 1)
-    will = c.attributes.willpower
+def creators_guardians_execute(caster, targets):
+    level = caster.ability_levels.get("Creator's Guardians", 1)
+    will = caster.attributes.willpower
 
     bonus = (will + level) // 10
 
-    stats = {
-        attr: bonus
-        for attr, value in vars(c.attributes).items()
-        if value > 0
-    }
+    for target in targets:
+        if not is_construct_or_animi(target):
+            continue
 
-    return [MultiStatIncrease(stats)]
+        for attr, value in vars(target.attributes).items():
+            if value > 0:
+                target.add_attribute(attr, bonus, source="Creator's Guardians")
+
+def is_construct_or_animi(character):
+    return (getattr(character.race, "is_construct", False)
+            or getattr(character.race, "is_animi", False)
+            )
 
 # Level 1
 
@@ -53,8 +58,10 @@ def register():
             and c.adventure_job.name == "Animator"
             and c.adventure_level >= 1
         ),
+        duration = "Passive Constant",
         description = "Enhances animi in the creator's party, boosting all non-zero attributes. The amount is the creator's Willpower and Creator's Guardians skill level, divided by 10.",
-        effect_generator=creators_guardians_effect,
+        execute=creators_guardians_execute,
+        is_passive=False,
     )
 
     make_ability(

@@ -46,15 +46,15 @@ def run():
     # -------------------------
 
     print("\nAvailable races:")
-    for race_name in sorted(RACES.keys()):
-        print(f"- {race_name}")
+    for race in sorted(RACES.keys()):
+        print(f"- {race}")
 
     race_lookup = {r.lower(): r for r in RACES.keys()}
 
-    race_name = choose_from_mapping("Choose a race: ", race_lookup)
-    race = resolve_race(race_name)
+    race = choose_from_mapping("Choose a race: ", race_lookup)
+    race = resolve_race(race)
 
-    base_race_name = None
+    base_race = None
     material = None
 
     if race.requires_material:
@@ -70,7 +70,7 @@ def run():
         for name in base_race_lookup.values():
             print(f"- {name}")
 
-        base_race_name = choose_from_mapping(
+        base_race = choose_from_mapping(
             "Choose base race: ",
             base_race_lookup
         )
@@ -102,7 +102,7 @@ def run():
             print(f"  - {job.name} ({bonuses})")
             valid_jobs[job.name.lower()] = job.name
 
-    job_name = choose_from_mapping("Choose a job: ", valid_jobs)
+    job = choose_from_mapping("Choose a job: ", valid_jobs)
 
     # -------------------------
     # Profession
@@ -118,7 +118,7 @@ def run():
         print(f"- {prof.name} ({bonuses})")
         valid_professions[prof.name.lower()] = prof.name
 
-    profession_name = choose_from_mapping(
+    profession = choose_from_mapping(
         "Choose a profession: ",
         valid_professions
     )
@@ -129,10 +129,10 @@ def run():
 
     character = create_character(
         char_name,
-        race_name,
-        job_name,
-        profession_name,
-        base_race_name=base_race_name,
+        race,
+        job,
+        profession,
+        base_race=base_race,
         material=material
     )
 

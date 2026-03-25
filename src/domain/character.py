@@ -5,6 +5,7 @@ from collections import defaultdict
 from domain.attributes import Attributes
 from domain.race import Race
 from domain.adventure import AdventureJob
+from domain.effects import Effect
 
 if TYPE_CHECKING:
     from domain.abilities import Ability
@@ -23,8 +24,9 @@ class Character:
 
     profession_job: Optional[AdventureJob] = None
     profession_level: int = 0
-
-    attributes: Optional[Attributes] = None
+    
+    attributes: Attributes | None = field(default=None, init=False)
+    attribute_effects: list[Effect] = field(default_factory=list)
 
     # Base snapshot for delta display
     _base_attributes: dict = field(default_factory=dict, init=False)

@@ -73,4 +73,5 @@ def execute_ability(character, ability_name: str):
 
     # Run ability logic
     if ability.execute:
-        ability.execute(character)
+        targets = getattr(character, "party", [character])
+        ability.execute(character, targets)

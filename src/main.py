@@ -3,8 +3,8 @@ import json, os
 from application.character_creation import create_character, MATERIAL_EFFECTS
 from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
 from domain.race import RACES, resolve_race
-from domain.adventure import get_jobs_grouped_by_class
-from domain.profession import get_all_professions
+from domain.adventure import get_jobs_grouped_by_class, resolve_job
+from domain.profession import get_all_professions, resolve_profession
 from domain.effects import StatIncrease
 from domain.runtime import execute_ability
 
@@ -55,8 +55,8 @@ def main():
     # -------------------------
 
     print("Available races:")
-    for race_name in sorted(RACES.keys()):
-        print(f"- {race_name}")
+    for r_name in sorted(RACES.keys()):
+        print(f"- {r_name}")
 
     race_lookup = {r.lower(): r for r in RACES.keys()}
 
@@ -65,22 +65,28 @@ def main():
         race_lookup
     )
 
-    race = resolve_race(race_name)
+    race = resolve_race(race_input)
 
-    base_race_name = None
+    base_race = None
     material = None
 
     if race.requires_material:
         print("\nThis race requires a base race and material.")
         print("\nAvailable base races:")
+        
         base_race_lookup = {
-                r.name.lower(): r.name
-        for r in RACES.values()
-        if not r.requires_material
+            r.name.lower(): r.name
+            for r in RACES.values()
+            if r.can_be_base
         }
 
+        for name in base_race_lookup.values():
+            print(f"- {name}")
+
         base_race_name = choose_from_mapping("Choose base race: ", base_race_lookup)
-        
+
+        base_race = resolve_race(base_race_name)
+
         print("\nAvailable materials:")
         material_lookup = {
                 m.lower(): m 
@@ -91,9 +97,7 @@ def main():
 
         material = choose_from_mapping("Choose material: ", material_lookup)
 
-    # -------------------------
     # JOB
-    # -------------------------
 
     jobs_by_class = get_jobs_grouped_by_class()
     print("Available Jobs:")
@@ -108,11 +112,13 @@ def main():
 
             valid_jobs[job.name.lower()] = job.name
 
-    job_name = choose_from_mapping(
+    job_input = choose_from_mapping(
         "Choose a job: ",
         valid_jobs
     )
 
+    job = resolve_job(job_input)
+    
     # Professions
 
     professions = get_all_professions()
@@ -126,28 +132,31 @@ def main():
         print(f"- {prof.name} ({bonuses})")
         valid_professions[prof.name.lower()] = prof.name
 
-    profession_name = choose_from_mapping(
+    profession_input = choose_from_mapping(
             "Choose a profession: ",
              valid_professions
             )
 
-    # -------------------------
-    # CREATE CHARACTER
-    # -------------------------
+    profession = resolve_profession(profession_input)
+
+    # Character Creation Block
+    
+    if base_race is not None and not hasattr(base_race, "name"):
+        raise TypeError(
+                f"base_race must be Race, got {type(base_race)}"
+                )
 
     character = create_character(char_name,
-                                 race_name,
-                                 job_name,
-                                 profession_name,
-                                 base_race_name=base_race_name,
+                                 race=race,
+                                 job=job,
+                                 profession=profession,
+                                 base_race=base_race,
                                  material=material
                                  )
 
     print("=== Character Created ===")
 
-    # -------------------------
     # INTERACTION LOOP
-    # -------------------------
     
     should_save = False
 

@@ -48,7 +48,7 @@ def register():
         name="Lay of the Land",
         unlock_condition=lambda c: (
             c.adventure_job
-            and c.adventure_job.name == "Archer"
+            and c.adventure_job.name == "Bandit"
             and c.adventure_level >= 1
         ),
         cost = 5,

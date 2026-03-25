@@ -2,11 +2,11 @@ import random, copy
 
 from domain.attributes import Attributes, DEFAULT_STATS
 from domain.character import Character
-from domain.race import resolve_race, Race
-from domain.adventure import resolve_job
-from domain.profession import resolve_profession, get_all_professions
+from domain.race import Race, resolve_race
+from domain.adventure import AdventureJob
+from domain.profession import ProfessionJob, get_all_professions
 from domain.calculations import calculate_pools, recalculate
-from domain.effects import DerivedStatOverride
+from domain.effects import DerivedStatOverride, Effect, StatIncrease
 
 # =========================
 # ROLLING
@@ -16,12 +16,17 @@ def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
 
 
-def roll_attributes() -> Attributes:
-    rolled = {
-        stat: DEFAULT_STATS[stat] + roll_2d10()
-        for stat in DEFAULT_STATS
-    }
-    return Attributes(**rolled)
+def roll_attributes() -> list[Effect]:
+    effects = []
+
+    for stat in DEFAULT_STATS:
+        roll = roll_2d10()
+
+        effects.append(
+                StatIncrease(stat, roll)
+                )
+
+    return effects
 
 
 # =========================
@@ -73,30 +78,35 @@ def list_professions():
 
 def create_character(
     name: str,
-    race_name: str,
-    job_name: str,
-    profession_name: str,
-    base_race_name: str | None = None,
+    race: Race,
+    job: AdventureJob,
+    profession: ProfessionJob,
+    base_race: Race | None = None,
     material: str | None = None,
 ) -> Character:
     """
     Pure character creation (no input/print).
     """
 
-    race = resolve_race(race_name)
-
     # Handle material-based races
-    if race.requires_material:
-        if not base_race_name or not material:
-            raise ValueError("Material races require base_race_name and material")
 
-        base_race = resolve_race(base_race_name)
+    if race.requires_material:
+        if base_race is None or material is None:
+            raise ValueError(
+                    f"{race} requires base_race and material, "
+                    f"but got base_race={base_race}, material={material}"
+                    )
+
         race = apply_material_to_race(copy.deepcopy(race), base_race, material)
 
-    job = resolve_job(job_name)
-    profession = resolve_profession(profession_name)
+    else:
+        if base_race is not None or material is not None:
+            raise ValueError(
+                    f"{race} does not support base_race/material, "
+                    f"but got base_race={base_race}, material={material}"
+                    )
 
-    attrs = roll_attributes()
+    roll_effects = roll_attributes()
 
     character = Character(
         name=name,
@@ -107,9 +117,10 @@ def create_character(
         adventure_level=1,
         profession_job=profession,
         profession_level=1,
-        attributes=attrs,
     )
 
+    character.attribute_effects = roll_effects
+    
     # Build full state
     recalculate(character)
 

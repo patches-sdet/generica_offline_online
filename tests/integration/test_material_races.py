@@ -4,7 +4,7 @@ def test_golem_character_creation():
         "Golem",
         "Archer",
         "Farmer",
-        base_race_name="Human",
+        base_race="Human",
         material="metal"
     )
 

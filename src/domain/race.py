@@ -18,6 +18,7 @@ class Race:
 
     requires_material: bool = False
     material: Optional[str] = None
+    can_be_base: bool = True
     base_race: Optional[str] = None
 
     def get_display_name(self) -> str:
@@ -81,6 +82,7 @@ RACES = {
         name="Doll Haunter",
         effects_on_acquire=[],
         requires_material=True,
+        can_be_base = False
     ),
 
     "Dwarf": Race(
@@ -95,6 +97,8 @@ RACES = {
             willpower=10,
             perception=-10,
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Elf": Race(
@@ -110,6 +114,8 @@ RACES = {
             perception=5,
             luck=5,
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Frosted Giant": Race(
@@ -133,6 +139,8 @@ RACES = {
                 DerivedStatBonus("cool", 10),
             ]
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Gribbit": Race(
@@ -155,6 +163,8 @@ RACES = {
                 DerivedStatBonus("endurance", 5),
             ]
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Halven": Race(
@@ -170,11 +180,15 @@ RACES = {
             perception=-10,
             luck=10,
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Human": Race(
         name="Human",
         effects_on_acquire=[],
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Raccant": Race(
@@ -196,6 +210,8 @@ RACES = {
                 DerivedStatBonus("endurance", 5),
             ]
         ),
+        requires_material=False,
+        can_be_base=True
     ),
 
     "Toy Golem": Race(
@@ -203,6 +219,7 @@ RACES = {
         base_race="Human",
         effects_on_acquire=[],
         requires_material=True,
+        can_be_base=False
     ),
 }
 
@@ -217,11 +234,11 @@ def get_race(name: str) -> Race:
     return copy.deepcopy(RACES[name])
 
 
-def resolve_race(race_name: str) -> Race:
+def resolve_race(race: str) -> Race:
     """
     Resolve race including base race inheritance via effects.
     """
-    race = get_race(race_name)
+    race = get_race(race)
 
     if not race.base_race:
         return race

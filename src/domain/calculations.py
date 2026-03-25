@@ -112,6 +112,11 @@ def recalculate(character: Character):
     race, jobs, profession, abilities.
     """
 
+    if character._base_attributes is None:
+        raise ValueError(
+                f"{character.name} has no base attributes initialized"
+                )
+
     # -------------------------
     # RESET STATE
     # -------------------------
@@ -123,25 +128,22 @@ def recalculate(character: Character):
     character._derived_bonuses = defaultdict(int)
     character._derived_overrides = {}
 
-    # -------------------------
-    # APPLY RACE EFFECTS
-    # -------------------------
+    # Apply dice rolls to Attributes
+
+    for effect in getattr(character, "attribute_effects", []):
+        effect.apply(character, source="roll")
+
+    # Apply Racial Job Attribute Modifiers
 
     for effect in character.race.get_effects(character.race_level):
         effect.apply(character, source="race")
-    
-    character._base_attributes = copy.deepcopy(vars(character.attributes))
 
-    # -------------------------
-    # APPLY ADVENTURE JOB EFFECTS
-    # -------------------------
+    # Apply Adventure Job Attribute Modifiers
 
     for effect in character.adventure_job.get_effects(character.adventure_level):
         effect.apply(character, source=f"job:{character.adventure_job.name}")
 
-    # -------------------------
-    # APPLY PROFESSION EFFECTS
-    # -------------------------
+    # Apply Profession Job Attribute Modifiers
 
     if character.profession_job:
         for effect in character.profession_job.get_effects(character.profession_level):
@@ -170,6 +172,9 @@ def recalculate(character: Character):
     ability_effects = []
 
     for ability in character.abilities:
+        if not ability.is_passive:
+            continue
+
         for effect in ability.get_effects(character):
             ability_effects.append((effect, ability.name))
 
