@@ -6,6 +6,7 @@ from domain.attributes import Attributes
 from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.effects import Effect
+from domain.profession import ProfessionJob
 
 if TYPE_CHECKING:
     from domain.abilities import Ability
@@ -16,14 +17,14 @@ class Character:
     name: str
 
     race: Race
-    race_level: int
-    base_race_level: int
+    race_levels: dict[str, int] = field(default_factory=dict)
+    base_race_levels: dict[str, int] = field(default_factory=dict)
 
-    adventure_job: AdventureJob
-    adventure_level: int
+    adventure_jobs: list[AdventureJob] = field(default_factory=list)
+    adventure_levels: dict[str, int] = field(default_factory=dict)
 
-    profession_job: Optional[AdventureJob] = None
-    profession_level: int = 0
+    profession_jobs: list[ProfessionJob] = field(default_factory=list)
+    profession_levels: dict[str, int] = field(default_factory=dict)
     
     attributes: Attributes | None = field(default=None, init=False)
     attribute_effects: list[Effect] = field(default_factory=list)
@@ -43,6 +44,9 @@ class Character:
     current_stamina: int = 0
     current_moxie: int = 0
     current_fortune: int = 0
+
+    # Skill Management
+    skills: dict[str,int] = field(default_factory=dict)
 
     # Abilities
     abilities: List["Ability"] = field(default_factory=list)
@@ -72,18 +76,28 @@ class Character:
         return {
             "name": self.name,
             "race": self.race.to_dict(),
-            "race_level": self.race_level,
-            "adventure_job": self.adventure_job.to_dict(),
-            "adventure_level": self.adventure_level,
-            "profession_job": (
-                self.profession_job.to_dict() if self.profession_job else None
-            ),
-            "profession_level": self.profession_level,
+            "race_levels": self.race_levels,
+            "adventure_jobs": self.adventure_jobs.to_dict(),
+            "adventure_levels": self.adventure_levels,
+            "profession_jobs": self.profession_jobs.to_dict(),
+            "profession_levels": self.profession_levels,
             "attributes": self.attributes.to_dict(),
-
+            "skills": self.skills,
             "current_hp": self.current_hp,
             "current_sanity": self.current_sanity,
             "current_stamina": self.current_stamina,
             "current_moxie": self.current_moxie,
             "current_fortune": self.current_fortune,
         }
+
+    def get_skill(self, name: str) -> int:
+        return self.skills.get(name, 0)
+
+    def get_race_level(self) -> int:
+        return self.race_levels.get(self.race.name, 1)
+
+    def has_adventure_job(self, job_name: str) -> bool:
+        return any(job.name == job_name for job in self.adventure_jobs)
+
+    def get_adventure_level_by_name(self, job_name: str) -> int:
+        return self.adventure_levels.get(job_name, 0)

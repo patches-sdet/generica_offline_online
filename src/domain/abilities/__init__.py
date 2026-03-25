@@ -12,6 +12,7 @@ class Ability:
     unlock_condition: Callable[["Character"], bool]
     effects: list[Effect] = field(default_factory=list)
     is_passive: bool = True
+    is_skill: bool = False
     effect_generator: Callable[["Character"], List[Effect]] | None = None
 
     cost: int | None = None
@@ -39,6 +40,13 @@ ALL_ABILITIES = []
 def register_ability(ability):
     ALL_ABILITIES.append(ability)
 
+def requires_job(job_name: str, min_level: int = 1):
+    def condition(c):
+        return (
+                any(job.name == job_name for job in c.adventure_jobs)
+                and c.adventure_levels.get(job_name, 0) >= min_level
+                )
+    return condition
 
 def make_ability(*, 
                  name: str, 
@@ -50,7 +58,8 @@ def make_ability(*,
                  duration=None, 
                  description=None,
                  execute=None,
-                 is_passive=True):
+                 is_passive=True,
+                 is_skill=False):
     ability = Ability(
         name=name,
         unlock_condition=unlock_condition,
@@ -62,6 +71,7 @@ def make_ability(*,
         description=description,
         execute=execute,
         is_passive=is_passive,
+        is_skill=is_skill,
     )
     register_ability(ability)
     return ability

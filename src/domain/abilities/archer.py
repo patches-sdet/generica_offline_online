@@ -12,9 +12,8 @@ def register():
     make_ability(
         name="Aim",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Archer"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Archer")
+            and c.get_adventure_level_by_name("Archer") >= 1
         ),
         cost = 10,
         cost_pool = "fortune",
@@ -25,9 +24,8 @@ def register():
     make_ability(
         name="Missile Mastery",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Archer"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Archer")
+            and c.get_adventure_level_by_name("Archer") >= 1
         ),
         description = "When attacking with ranged weapons, Archers may substitute half of their highest ranged weapon skill, instead of the skill they would normally use.\n     The experience roll for this attack uses the skill that this skill replaces. Affected skill groups are Archery, Magic Bolts, Throwing, Guns, and Siege Engines. This skill has no levels."
     )
@@ -35,9 +33,8 @@ def register():
     make_ability(
         name="Quickdraw",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Archer"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Archer")
+            and c.get_adventure_level_by_name("Archer") >= 1
         ),
         cost = 5,
         cost_pool = "stamina",
@@ -48,9 +45,8 @@ def register():
     make_ability(
         name="Rapid Fire",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Archer"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Archer")
+            and c.get_adventure_level_by_name("Archer") >= 1
         ),
         cost = 10,
         cost_pool = "stamina",
@@ -60,9 +56,8 @@ def register():
     make_ability(
         name="Ricochet Shot",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Archer"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Archer")
+            and c.get_adventure_level_by_name("Archer") >= 1
         ),
         cost = 5,
         cost_pool = "fortune",

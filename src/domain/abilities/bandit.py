@@ -8,9 +8,8 @@ def register():
     make_ability(
         name="Ambush",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Bandit"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Bandit")
+            and c.get_adventure_level_by_name("Bandit") >= 1
         ),
         cost = 10,
         cost_pool = "stamina",
@@ -21,9 +20,8 @@ def register():
     make_ability(
         name="Band O' Bastards",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Bandit"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Bandit")
+            and c.get_adventure_level_by_name("Bandit") >= 1
         ),
         cost = 10,
         cost_pool = "sanity",
@@ -34,9 +32,8 @@ def register():
     make_ability(
         name="Keep the Boys in Line",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Bandit"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Bandit")
+            and c.get_adventure_level_by_name("Bandit") >= 1
         ),
         cost = 10,
         cost_pool = "sanity",
@@ -47,9 +44,8 @@ def register():
     make_ability(
         name="Lay of the Land",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Bandit"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Bandit")
+            and c.get_adventure_level_by_name("Bandit") >= 1
         ),
         cost = 5,
         cost_pool = "stamina",

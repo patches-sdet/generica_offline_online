@@ -8,9 +8,8 @@ def register():
     make_ability(
         name="Backstab",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Assassin"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Assassin")
+            and c.get_adventure_level_by_name("Assassin") >= 1
         ),
         cost = 10,
         cost_pool = "stamina",
@@ -21,9 +20,8 @@ def register():
     make_ability(
         name="Cold Read",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Assassin"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Assassin")
+            and c.get_adventure_level_by_name("Assassin") >= 1
         ),
         cost = 5,
         cost_pool = "moxie",
@@ -34,9 +32,8 @@ def register():
     make_ability(
         name="Fast as Death",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Assassin"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Assassin")
+            and c.get_adventure_level_by_name("Assassin") >= 1
         ),
         cost = 10,
         cost_pool = "stamina",
@@ -47,9 +44,8 @@ def register():
     make_ability(
         name="Quickdraw",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Assassin"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Assassin")
+            and c.get_adventure_level_by_name("Assassin") >= 1
         ),
         cost = 5,
         cost_pool = "stamina",
@@ -60,9 +56,8 @@ def register():
     make_ability(
         name="Unobstrusive",
         unlock_condition=lambda c: (
-            c.adventure_job
-            and c.adventure_job.name == "Assassin"
-            and c.adventure_level >= 1
+            c.has_adventure_job ("Assassin")
+            and c.get_adventure_level_by_name("Assassin") >= 1
         ),
         cost = 10,
         cost_pool = "moxie",

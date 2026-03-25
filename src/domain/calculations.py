@@ -112,6 +112,8 @@ def recalculate(character: Character):
     race, jobs, profession, abilities.
     """
 
+    race_level = character.get_race_level()
+
     if character._base_attributes is None:
         raise ValueError(
                 f"{character.name} has no base attributes initialized"
@@ -121,12 +123,13 @@ def recalculate(character: Character):
     # RESET STATE
     # -------------------------
 
-    character.attributes = character.race.get_base_attributes(character.race_level)
+    character.attributes = character.race.get_base_attributes(race_level)
 
     # Reset tracking
     character._attribute_sources = defaultdict(lambda: defaultdict(int))
     character._derived_bonuses = defaultdict(int)
     character._derived_overrides = {}
+    character.skills = defaultdict(int)
 
     # Apply dice rolls to Attributes
 
@@ -135,44 +138,52 @@ def recalculate(character: Character):
 
     # Apply Racial Job Attribute Modifiers
 
-    for effect in character.race.get_effects(character.race_level):
+    for effect in character.race.get_effects(race_level):
         effect.apply(character, source="race")
+
+    character._base_attributes = copy.deepcopy(vars(character.attributes))
 
     # Apply Adventure Job Attribute Modifiers
 
-    for effect in character.adventure_job.get_effects(character.adventure_level):
-        effect.apply(character, source=f"job:{character.adventure_job.name}")
+    for job in character.adventure_jobs:
+        level = character.adventure_levels.get(job.name, 1)
+        
+        for effect in job.get_effects(level):
+            effect.apply(character, source=f"job:{job.name}")
 
     # Apply Profession Job Attribute Modifiers
 
-    if character.profession_job:
-        for effect in character.profession_job.get_effects(character.profession_level):
-            effect.apply(character, source=f"profession:{character.profession_job.name}")
+    for job in character.profession_jobs:
+        level = character.profession_levels.get(job.name, 1)
 
-    # -------------------------
-    # ABILITY UNLOCK
-    # -------------------------
+        for effect in job.get_effects(level):
+            effect.apply(character, source=f"profession:{job.name}")
+
+    # Ability unlock controls
 
     from domain.abilities import ALL_ABILITIES
 
-    new_abilities = [
+    character.abilities = [
         ability for ability in ALL_ABILITIES
         if ability.unlock_condition(character)
     ]
 
-    character.abilities = new_abilities
-
     for ability in character.abilities:
         character.ability_levels.setdefault(ability.name, 1)
 
-    # -------------------------
-    # APPLY ABILITY EFFECTS
-    # -------------------------
+    # Apply ability levels as skill levels as needed
+
+    for ability in character.abilities:
+        if getattr(ability, "is_skill", False):
+            level = character.ability_levels.get(ability.name, 1)
+            character.skills[ability.name] += level
+
+    # Apply ability effects
 
     ability_effects = []
 
     for ability in character.abilities:
-        if not ability.is_passive:
+        if not getattr(ability, "is_passive", True):
             continue
 
         for effect in ability.get_effects(character):

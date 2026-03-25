@@ -44,13 +44,17 @@ DEFENSE_NAMES = {
     "fate": "Fate",
 }
 
+# -------------------------
 # HELPERS
+# -------------------------
 
 def divider(title):
     print(f"\n--- {title.upper()} ---")
 
+
 def format_name(key, name_map):
     return name_map.get(key, key.replace("_", " ").title())
+
 
 def format_source_name(source: str) -> str:
     if ":" in source:
@@ -58,7 +62,10 @@ def format_source_name(source: str) -> str:
         return name
     return source
 
+
+# -------------------------
 # ATTRIBUTE BLOCK
+# -------------------------
 
 def print_attribute_block(character: Character):
     divider("Attributes")
@@ -68,9 +75,6 @@ def print_attribute_block(character: Character):
     sources = getattr(character, "_attribute_sources", {})
 
     for key, value in current.items():
-        if key in ["race", "material"]:
-            continue
-
         pretty_name = format_name(key, ATTRIBUTE_NAMES)
 
         base_value = base.get(key, value)
@@ -87,7 +91,10 @@ def print_attribute_block(character: Character):
         else:
             print(f"{pretty_name}: {value}")
 
+
+# -------------------------
 # GENERIC STAT BLOCK
+# -------------------------
 
 def print_stat_block(title, stats: dict, name_map: dict,
                      hide_keys=None, color_map=None):
@@ -110,7 +117,106 @@ def print_stat_block(title, stats: dict, name_map: dict,
         else:
             print(f"{color}{pretty_name}: {value}{RESET_COLOR}")
 
+
+# -------------------------
+# JOB DISPLAY
+# -------------------------
+
+def print_jobs(character: Character):
+    print("\n==============================")
+    print("         JOBS")
+    print("==============================")
+
+    # Adventure Jobs
+    if character.adventure_jobs:
+        print("Adventure Jobs:")
+        for job in character.adventure_jobs:
+            level = character.adventure_levels.get(job.name, 1)
+            print(f"  - {job.name} (Lv. {level})")
+    else:
+        print("Adventure Jobs: None")
+
+    # Profession Jobs
+    if character.profession_jobs:
+        print("\nProfessions:")
+        for job in character.profession_jobs:
+            level = character.profession_levels.get(job.name, 1)
+            print(f"  - {job.name} (Lv. {level})")
+    else:
+        print("\nProfessions: None")
+
+
+# -------------------------
+# RACE DISPLAY
+# -------------------------
+
+def print_race(character: Character):
+    race = character.race
+    race_display = race.get_display_name()
+
+    race_level = character.race_levels.get(race.name, 1)
+
+    if race.base_race:
+        base_name = race.base_race.name
+        base_level = character.base_race_levels.get(base_name, 1)
+
+        print(
+            f"Race: {race_display} "
+            f"(Lv. {race_level} / Base Lv. {base_level})"
+        )
+    else:
+        print(f"Race: {race_display} (Lv. {race_level})")
+
+
+# -------------------------
+# SKILLS
+# -------------------------
+
+def print_skills(character: Character):
+    divider("Skills")
+
+    if not getattr(character, "skills", None):
+        print("None")
+        return
+
+    for skill, level in sorted(character.skills.items()):
+        print(f"{skill}: {level}")
+
+
+# -------------------------
+# ABILITIES
+# -------------------------
+
+def print_abilities(character: Character):
+    print("\n==============================")
+    print("        ABILITIES")
+    print("==============================")
+
+    if not character.abilities:
+        print("None")
+        return
+
+    for ability in character.abilities:
+        level = character.ability_levels.get(ability.name, 1)
+
+        line = f"- {ability.name:<25} (Lv. {level})"
+
+        if ability.cost:
+            pool = ability.cost_pool or "resource"
+            line += f" | Cost: {ability.cost} {pool.capitalize()}"
+
+        if ability.duration:
+            line += f" | Duration: {ability.duration}"
+
+        print(line)
+
+        if ability.description:
+            print(f"    {ability.description}\n")
+
+
+# -------------------------
 # MAIN CHARACTER SHEET
+# -------------------------
 
 def debug_print_character(character: Character):
 
@@ -120,42 +226,14 @@ def debug_print_character(character: Character):
 
     print(f"Name: {character.name}")
 
-    race_display = character.race.get_display_name()
-    
-    if character.race.base_race:
-        print(
-                f"Race: {race_display} "
-                f"(Lv. {character.race_level} / Base Lv. {character.base_race_level})"
-                )
-    else:
-        print(f"Race: {race_display} (Lv. {character.race_level})")
+    print_race(character)
+    print_jobs(character)
 
-    print("\n==============================")
-    print("         JOBS")
-    print("==============================")
-
-    print(
-        f"Adventure Job: "
-        f"{character.adventure_job.name} "
-        f"Lv. {character.adventure_level}"
-    )
-
-    if character.profession_job:
-        print(
-            f"Profession: "
-            f"{character.profession_job.name} "
-            f"Lv. {character.profession_level}"
-        )
-    else:
-        print("Profession: None")
-
-    # DERIVED VALUES
-
+    # Derived values
     pools = calculate_pools(character)
     defenses = calculate_defenses(character)
 
-    # STATS
-
+    # Stats
     print_attribute_block(character)
 
     print_stat_block(
@@ -171,35 +249,10 @@ def debug_print_character(character: Character):
         DEFENSE_NAMES
     )
 
-    print("\n==============================")
-    print("        ABILITIES")
-    print("==============================")
+    # Skills (NEW)
+    print_skills(character)
 
-    if character.abilities:
-        for ability in character.abilities:
-            level = character.ability_levels.get(ability.name, 1)
-
-            line = f"- {ability.name:<25} (Lv. {level})"
-
-            cost = getattr(ability, "cost", None)
-            cost_pool = getattr(ability, "cost_pool", None)
-            duration = getattr(ability, "duration", None)
-            description = getattr(ability, "description", None)
-
-            if cost:
-                if cost_pool:
-                    line += f" | Cost: {cost} {cost_pool.capitalize()}"
-                else:
-                    line += f" | Cost: {cost}"
-
-            if duration:
-                line += f" | Duration: {duration}"
-
-            print(line)
-
-            if description:
-                print(f"    {description}\n")
-    else:
-        print("None")
+    # Abilities
+    print_abilities(character)
 
     print("==============================\n")

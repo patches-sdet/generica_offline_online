@@ -15,6 +15,9 @@ class Race:
     name: str
     effects_on_acquire: List[Effect] = field(default_factory=list)
     effects_per_level: List[Effect] = field(default_factory=list)
+    
+    max_adventure_jobs: int = 1
+    max_profession_jobs: int = 1
 
     requires_material: bool = False
     material: Optional[str] = None
@@ -97,6 +100,8 @@ RACES = {
             willpower=10,
             perception=-10,
         ),
+        max_adventure_jobs = 5,
+        max_profession_jobs = 5,
         requires_material=False,
         can_be_base=True
     ),

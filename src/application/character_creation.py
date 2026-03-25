@@ -79,8 +79,8 @@ def list_professions():
 def create_character(
     name: str,
     race: Race,
-    job: AdventureJob,
-    profession: ProfessionJob,
+    jobs: list[AdventureJob],
+    professions: list[ProfessionJob],
     base_race: Race | None = None,
     material: str | None = None,
 ) -> Character:
@@ -93,7 +93,7 @@ def create_character(
     if race.requires_material:
         if base_race is None or material is None:
             raise ValueError(
-                    f"{race} requires base_race and material, "
+                    f"{race.name} requires base_race and material, "
                     f"but got base_race={base_race}, material={material}"
                     )
 
@@ -102,21 +102,43 @@ def create_character(
     else:
         if base_race is not None or material is not None:
             raise ValueError(
-                    f"{race} does not support base_race/material, "
+                    f"{race.name} does not support base_race/material, "
                     f"but got base_race={base_race}, material={material}"
                     )
+    
+    if len(jobs) > race.max_adventure_jobs:
+        raise ValueError (
+                f"{race.name} allows only {race.max_adventure_jobs} adventure jobs."
+                )
+
+    if len(professions) > race.max_profession_jobs:
+        raise ValueError (
+                f"{race.name} allows only {race.max_profession_jobs} profession jobs."
+                )
+    
+    adventure_levels = {
+            job.name: 1 for job in jobs
+            }
+
+    profession_levels = {
+            prof.name: 1 for prof in professions
+            }
 
     roll_effects = roll_attributes()
+
+    # Construct the Character
 
     character = Character(
         name=name,
         race=race,
-        race_level=1,
-        base_race_level=1,
-        adventure_job=job,
-        adventure_level=1,
-        profession_job=profession,
-        profession_level=1,
+        race_levels={race.name: 1},
+        base_race_levels=(
+            {base_race.name: 1} if base_race else {}
+            ),
+        adventure_jobs=jobs,
+        adventure_levels=adventure_levels,
+        profession_jobs=professions,
+        profession_levels=profession_levels,
     )
 
     character.attribute_effects = roll_effects
