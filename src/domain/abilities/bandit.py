@@ -52,3 +52,15 @@ def register():
         duration = "1 minute",
         description = "The Bandit can examine a site to determine if it can be used for an ambush. The Bandit can then make a Perception plus Lay of the Land roll against a difficulty set by the GM.",
     )
+
+    make_ability(
+        name="Subdue",
+        unlock_condition=lambda c: (
+        c.has_adventure_job ("Bandit")
+        and c.get_adventure_level_by_name("Bandit") >= 1
+        ),
+        cost = 5,
+        cost_pool = "stamina",
+        duration = "1 turn/level",
+        description = "The Bandit can convert their lethal damage to nonlethal, dealing stamina damage instead of HP without any penalties.",
+        )
