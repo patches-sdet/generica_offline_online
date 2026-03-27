@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List
 
 from domain.effects.base import Effect
-from domain.effects.stat import StatIncrease
+from domain.effects.stat_effects import StatIncrease
 
 
 # =========================================================
@@ -63,6 +63,15 @@ class AdventureJob:
     effects_per_level: List[Effect] = field(default_factory=list)
 
     tags: List[str] = field(default_factory=list)
+
+    def get_effects(self, level: int):
+        level = max(1, level)
+
+        effects = []
+        effects.extend(self.effects_on_acquire)
+        effects.extend(self.effects_per_level * (level - 1))
+
+        return effects
 
     # -------------------------
     # CLASS HELPERS
@@ -130,6 +139,7 @@ def make_job(name: str, stats: dict, tags: List[str]) -> AdventureJob:
     job = AdventureJob(
         name=name,
         effects_on_acquire=make_effects(**stats),
+        effects_per_level=make_effects(**stats),
         tags=tags,
     )
 

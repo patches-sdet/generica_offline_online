@@ -293,9 +293,7 @@ def debug_print_character(character: Character):
     print_stat_block(
         "Defenses",
         vars(defenses),
-        DEFENSE_NAMES = {
-            key: key.replace("_", " ").title()
-            for key in DEFENSE_KEYS
+        name_map = DEFENSE_NAMES
     )
 
     print_tags(character)

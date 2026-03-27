@@ -8,9 +8,9 @@ def rebuild_attributes(character: Character):
     No derived stats here.
     """
 
-    race_level = character.get_race_level()
+    race_level = character.get_race_levels()
 
-    character.attributes = character.race.get_base_attributes(race_level)
+#    character.attributes = character.race.get_base_attributes(race_level)
 
     # Reset tracking
     character._attribute_sources.clear()
@@ -28,9 +28,14 @@ def rebuild_attributes(character: Character):
     # RACE EFFECTS
     # -------------------------
 
-    context = EffectContext(source="race", targets=[character])
+    race_level = character.get_race_levels()
+    
+    context = EffectContext(
+            source="race", 
+            targets=[character]
+        )
 
-    for effect in character.race.get_effects(race_level):
+    for effect in (character.race.get_effects(race_level)):
         effect.apply(context)
 
     # Snapshot base AFTER race

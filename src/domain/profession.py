@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
 
-from domain.effects import Effect, make_effects
+from domain.effects import Effect, MultiStatIncrease
 
 # =========================
 # CORE DATACLASS
@@ -23,13 +23,12 @@ class ProfessionJob:
     # REQUIRED FOR ENGINE
     # -------------------------
 
-    def get_effects(self, level: int) -> List[Effect]:
+    def get_effects(self, level: int):
+        level = max(1, level)
+
         effects = []
-
         effects.extend(self.effects_on_acquire)
-
-        for _ in range(level - 1):
-            effects.extend(self.effects_per_level)
+        effects.extend(self.effects_per_level * (level - 1))
 
         return effects
 
@@ -78,8 +77,8 @@ def make_profession(
 
     job = ProfessionJob(
         name=name,
-        effects_on_acquire=make_effects(**stats),
-        effects_per_level=make_effects(**stats),  # consistent scaling
+        effects_on_acquire=[MultiStatIncrease(stats)],
+        effects_per_level=[MultiStatIncrease(stats)],
         crafting_tags=crafting or [],
         gathering_tags=gathering or [],
         economic_tags=economic or [],

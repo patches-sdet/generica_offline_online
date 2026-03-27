@@ -1,6 +1,9 @@
+from dataclasses import dataclass
 from domain.effects.base import Effect, EffectContext
 from domain.attributes import DEFENSE_KEYS
 
+
+@dataclass
 class StatIncrease(Effect):
     def __init__(self, stat: str, amount: int):
         self.stat = stat
@@ -10,21 +13,25 @@ class StatIncrease(Effect):
         for target in context.targets:
             target.add_stat(self.stat, self.amount)
 
-
+@dataclass
 class MultiStatIncrease(Effect):
     def __init__(self, stats: dict, scale: int = 1):
         self.stats = stats
         self.scale = scale
+
+    def describe(self):
+        return [f"+{v} {k}" for k, v in self.stats.items()]
 
     def apply(self, context):
         for target in context.targets:
             for stat, value in self.stats.items():
                 target.add_stat(stat, value * self.scale)
 
+@dataclass
 class DerivedStatBonus(Effect):
-    stat = str
-    amount = int
-    priority = int = 0
+    stat: str
+    amount: int
+    priority: int = 0
 
     def apply(self, context: EffectContext):
         if self.stat not in DEFENSE_KEYS:
@@ -40,10 +47,11 @@ class DerivedStatBonus(Effect):
             "amount": self.amount,
         }
 
+@dataclass
 class DerivedStatOverride(Effect):
-    stat = str
-    value = int
-    priority = int = 100  # overrides should apply AFTER bonuses
+    stat: str
+    value: int
+    priority: int = 100  # overrides should apply AFTER bonuses
 
     def apply(self, context: EffectContext):
         if self.stat not in DEFENSE_KEYS:

@@ -3,6 +3,7 @@ from .base import Effect, EffectContext
 # Core stat effects
 from .stat_effects import (
     StatIncrease,
+    MultiStatIncrease,
     DerivedStatBonus,
     DerivedStatOverride,
 )
@@ -24,6 +25,7 @@ __all__ = [
 
     # Stat effects
     "StatIncrease",
+    "MultiStatIncrease",
     "DerivedStatBonus",
     "DerivedStatOverride",
 

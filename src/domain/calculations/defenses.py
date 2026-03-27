@@ -1,4 +1,4 @@
-from domain.attributes import Defenses
+from domain.attributes import Defenses, DEFENSE_KEYS
 from .derived import get_derived_bonus, get_derived_override
 
 
@@ -8,9 +8,9 @@ def calculate_defenses(character):
         override = get_derived_override(character, stat)
         if override is not None:
             return override
+        base = 0
         return base + get_derived_bonus(character, stat)
 
     values = {key: resolve(key) for key in DEFENSE_KEYS}
 
-    return Defenses(**values),
-    )
+    return Defenses(**values)

@@ -1,12 +1,12 @@
 import json, os
 
 from application.character_creation import create_character, MATERIAL_EFFECTS
-from presentation.character_sheet import debug_print_character
-from domain.race import resolve_race, get_all_races
+from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
+from domain.race import resolve_race, get_all_races, RACES
 from domain.adventure import get_jobs_grouped_by_class, resolve_job
 from domain.profession import get_all_professions, resolve_profession
 from domain.effects import StatIncrease
-from domain.runtime import execute_ability
+from application.runtime import execute_ability
 from domain.calculations import recalculate
 
 PERSISTENCE_DIR = "src/persistence"
@@ -20,9 +20,15 @@ def format_effects(effects):
     parts = []
 
     for effect in effects:
-        if isinstance(effect, StatIncrease):
-            parts.append(f"+{effect.amount} {effect.stat.upper()}")
+        if hasattr(effect, "stats"):
+            for stat, value in effect.stats.items():
+                name = ATTRIBUTE_NAMES.get(stat, stat.title())
+                parts.append(f"{value:+d} {name}")
 
+        elif hasattr(effect, "stat") and hasattr(effect, "amount"):
+            name = ATTRIBUTE_NAMES.get(effect.stat, effect.stat.title())
+            parts.append(f"{effect.amount:+d} {name}")
+    
     return ", ".join(parts)
 
 
@@ -44,7 +50,7 @@ def choose_race():
     print("Available races:")
     race_lookup = {}
 
-    for race in races:
+    for race in RACES.values():
         print(f"- {race.name}")
         race_lookup[race.name.lower()] = race.name
 

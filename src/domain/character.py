@@ -111,36 +111,36 @@ class Character:
     # =========================================================
 
     def modify_resource(self, pool: str, amount: int) -> bool:
-    attr = f"current_{pool}"
+        attr = f"current_{pool}"
 
-    if not hasattr(self, attr):
-        raise ValueError(f"Invalid resource pool: {pool}")
+        if not hasattr(self, attr):
+            raise ValueError(f"Invalid resource pool: {pool}")
 
-    current = getattr(self, attr)
-    new_value = current + amount
+        current = getattr(self, attr)
+        new_value = current + amount
 
-    # Prevent going below 0
-    if new_value < 0:
-        return False
+        # Prevent going below 0
+        if new_value < 0:
+            return False
 
-    # OPTIONAL: clamp to max
-    max_attr = f"max_{pool}"
-    if hasattr(self, max_attr):
-        new_value = min(new_value, getattr(self, max_attr))
+        # OPTIONAL: clamp to max
+        max_attr = f"max_{pool}"
+        if hasattr(self, max_attr):
+            new_value = min(new_value, getattr(self, max_attr))
 
-    setattr(self, attr, new_value)
-    return True
+        setattr(self, attr, new_value)
+        return True
 
 
-def spend_resource(self, pool: str, amount: int) -> bool:
-    def apply(self, context: EffectContext):
-        for target in context.targets:
-            success = target.modify_resource(self.pool, -self.amount)
+    def spend_resource(self, pool: str, amount: int) -> bool:
+        def apply(self, context: EffectContext):
+            for target in context.targets:
+                success = target.modify_resource(self.pool, -self.amount)
 
-            if not success:
-                raise ValueError(f"Not enough {self.pool} to spend {self.amount}")
+                if not success:
+                    raise ValueError(f"Not enough {self.pool} to spend {self.amount}")
 
-    return self.modify_resource(pool, -amount)
+        return self.modify_resource(pool, -amount)
 
     # =========================================================
     # HELPERS
@@ -149,7 +149,7 @@ def spend_resource(self, pool: str, amount: int) -> bool:
     def get_skill(self, name: str) -> int:
         return self.skills.get(name, 0)
 
-    def get_race_level(self) -> int:
+    def get_race_levels(self) -> int:
         return self.race_levels.get(self.race.name, 1)
 
     def has_adventure_job(self, job_name: str) -> bool:

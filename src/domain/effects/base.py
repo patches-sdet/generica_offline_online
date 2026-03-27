@@ -8,7 +8,7 @@ class EffectContext:
     targets: List[Any]
     metadata: dict = None
 
-
+@dataclass
 class Effect:
     def apply(self, context: EffectContext):
         raise NotImplementedError

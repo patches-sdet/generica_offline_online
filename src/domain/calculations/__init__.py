@@ -2,7 +2,9 @@ from .attributes import rebuild_attributes
 from .derived import reset_derived
 from .pools import calculate_pools
 from .defenses import calculate_defenses
-
+from .abilities import rebuild_abilities
+from .skills import rebuild_skills
+from .tags import rebuild_tags
 
 def recalculate(character):
     """
@@ -19,33 +21,14 @@ def recalculate(character):
     reset_derived(character)
     character.skills.clear()
 
-    # -------------------------
-    # ATTRIBUTES
-    # -------------------------
-
+    # Rebuild Character
     rebuild_attributes(character)
-
-    # -------------------------
-    # ABILITIES
-    # -------------------------
-
-    from domain.abilities import ALL_ABILITIES
-
-    character.abilities = [
-        ability for ability in ALL_ABILITIES
-        if ability.unlock_condition(character)
-    ]
-
-    for ability in character.abilities:
-        character.ability_levels.setdefault(ability.name, 1)
-
-    # -------------------------
-    # SKILLS
-    # -------------------------
-
-    for ability in character.abilities:
-        if getattr(ability, "is_skill", False):
-            character.skills[ability.name] += character.ability_levels.get(ability.name, 1)
+    calculate_pools(character)
+    calculate_defenses(character)
+    rebuild_tags(character)
+    rebuild_abilities(character)
+    rebuild_skills(character)
+    reset_derived(character)
 
     # -------------------------
     # PASSIVES
