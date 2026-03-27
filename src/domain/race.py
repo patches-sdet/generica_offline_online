@@ -2,90 +2,81 @@ import copy
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from domain.effects import StatIncrease, Effect, DerivedStatBonus
-from domain.attributes import Attributes, DEFAULT_STATS
+from domain.effects.base import Effect
+from domain.effects.stat import StatIncrease
+from domain.effects.derived import DerivedStatBonus
 
 
-# -------------------------
+# =========================================================
 # CORE RACE MODEL
-# -------------------------
+# =========================================================
 
 @dataclass(frozen=True)
 class Race:
     name: str
+
+    # Effects
     effects_on_acquire: List[Effect] = field(default_factory=list)
     effects_per_level: List[Effect] = field(default_factory=list)
-    
+
+    # Tags (NEW - IMPORTANT)
+    tags: List[str] = field(default_factory=list)
+
+    # Limits
     max_adventure_jobs: int = 1
     max_profession_jobs: int = 1
 
+    # Material system
     requires_material: bool = False
     material: Optional[str] = None
     can_be_base: bool = True
     base_race: Optional[str] = None
 
+    # -------------------------
+    # DISPLAY
+    # -------------------------
+
     def get_display_name(self) -> str:
         if self.base_race and self.material:
-            return (f"{self.name} ({self.material.title()} {self.base_race})")
+            return f"{self.name} ({self.material.title()} {self.base_race})"
         elif self.material:
-            return (f"{self.name} ({self.material.titel()})")
+            return f"{self.name} ({self.material.title()})"
         return self.name
 
     # -------------------------
-    # BASE ATTRIBUTES
-    # -------------------------
-
-    def get_base_attributes(self, level: int) -> Attributes:
-        """
-        Base attributes are universal.
-        Races modify via effects only.
-        """
-        return Attributes(**DEFAULT_STATS)
-
-    # -------------------------
-
-    def get_effects(self, level: int) -> List[Effect]:
-        """
-        Combine acquire + per-level effects.
-        """
-        effects = list(self.effects_on_acquire)
-
-        for _ in range(level):
-            effects.extend(self.effects_per_level)
-
-        return effects
-
+    # SERIALIZATION
     # -------------------------
 
     def to_dict(self):
         return {
             "name": self.name,
-            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
-            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
+            "effects_on_acquire": [str(e) for e in self.effects_on_acquire],
+            "effects_per_level": [str(e) for e in self.effects_per_level],
+            "tags": self.tags,
             "requires_material": self.requires_material,
             "material": self.material,
             "base_race": self.base_race,
         }
 
 
-# -------------------------
-# EFFECT HELPERS
-# -------------------------
+# =========================================================
+# HELPERS
+# =========================================================
 
 def make_effects(**mods):
     return [StatIncrease(stat, value) for stat, value in mods.items()]
 
 
-# -------------------------
-# RACE DEFINITIONS (ALPHABETICAL)
-# -------------------------
+# =========================================================
+# RACE DEFINITIONS
+# =========================================================
 
 RACES = {
     "Doll Haunter": Race(
         name="Doll Haunter",
-        effects_on_acquire=[],
         requires_material=True,
-        can_be_base = False
+        can_be_base=False,
+        tags=["construct"],
     ),
 
     "Dwarf": Race(
@@ -100,10 +91,9 @@ RACES = {
             willpower=10,
             perception=-10,
         ),
-        max_adventure_jobs = 5,
-        max_profession_jobs = 5,
-        requires_material=False,
-        can_be_base=True
+        max_adventure_jobs=5,
+        max_profession_jobs=5,
+        tags=["humanoid"],
     ),
 
     "Elf": Race(
@@ -119,8 +109,7 @@ RACES = {
             perception=5,
             luck=5,
         ),
-        requires_material=False,
-        can_be_base=True
+        tags=["humanoid"],
     ),
 
     "Frosted Giant": Race(
@@ -144,8 +133,7 @@ RACES = {
                 DerivedStatBonus("cool", 10),
             ]
         ),
-        requires_material=False,
-        can_be_base=True
+        tags=["giant"],
     ),
 
     "Gribbit": Race(
@@ -168,8 +156,7 @@ RACES = {
                 DerivedStatBonus("endurance", 5),
             ]
         ),
-        requires_material=False,
-        can_be_base=True
+        tags=["amphibian"],
     ),
 
     "Halven": Race(
@@ -185,15 +172,12 @@ RACES = {
             perception=-10,
             luck=10,
         ),
-        requires_material=False,
-        can_be_base=True
+        tags=["humanoid"],
     ),
 
     "Human": Race(
         name="Human",
-        effects_on_acquire=[],
-        requires_material=False,
-        can_be_base=True
+        tags=["humanoid"],
     ),
 
     "Raccant": Race(
@@ -215,23 +199,22 @@ RACES = {
                 DerivedStatBonus("endurance", 5),
             ]
         ),
-        requires_material=False,
-        can_be_base=True
+        tags=["beast"],
     ),
 
     "Toy Golem": Race(
         name="Toy Golem",
         base_race="Human",
-        effects_on_acquire=[],
         requires_material=True,
-        can_be_base=False
+        can_be_base=False,
+        tags=["construct"],
     ),
 }
 
 
-# -------------------------
-# RACE RESOLUTION
-# -------------------------
+# =========================================================
+# RESOLUTION
+# =========================================================
 
 def get_race(name: str) -> Race:
     if name not in RACES:
@@ -239,11 +222,8 @@ def get_race(name: str) -> Race:
     return copy.deepcopy(RACES[name])
 
 
-def resolve_race(race: str) -> Race:
-    """
-    Resolve race including base race inheritance via effects.
-    """
-    race = get_race(race)
+def resolve_race(name: str) -> Race:
+    race = get_race(name)
 
     if not race.base_race:
         return race
@@ -254,6 +234,7 @@ def resolve_race(race: str) -> Race:
         name=race.name,
         effects_on_acquire=base.effects_on_acquire + race.effects_on_acquire,
         effects_per_level=base.effects_per_level + race.effects_per_level,
+        tags=list(set(base.tags + race.tags)),
         requires_material=race.requires_material,
         material=race.material,
         base_race=base.name,

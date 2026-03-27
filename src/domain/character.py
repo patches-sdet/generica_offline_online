@@ -1,20 +1,24 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, TYPE_CHECKING, DefaultDict
+from typing import List, TYPE_CHECKING, DefaultDict, Any
 from collections import defaultdict
 
 from domain.attributes import Attributes
 from domain.race import Race
 from domain.adventure import AdventureJob
-from domain.effects import Effect
 from domain.profession import ProfessionJob
+from domain.effects.base import Effect
 
 if TYPE_CHECKING:
-    from domain.abilities import Ability
+    from domain.abilities.factory import Ability
 
 
 @dataclass(slots=True)
 class Character:
     name: str
+
+    # =========================================================
+    # IDENTITY
+    # =========================================================
 
     race: Race
     race_levels: dict[str, int] = field(default_factory=dict)
@@ -25,70 +29,122 @@ class Character:
 
     profession_jobs: list[ProfessionJob] = field(default_factory=list)
     profession_levels: dict[str, int] = field(default_factory=dict)
-    
-    attributes: Attributes | None = field(default=None, init=False)
+
+    # =========================================================
+    # CORE STATS
+    # =========================================================
+
+    attributes: Attributes = field(default_factory=Attributes)
     attribute_effects: list[Effect] = field(default_factory=list)
 
-    # Base snapshot for delta display
+    # Snapshot (for debug/diff)
     _base_attributes: dict = field(default_factory=dict, init=False)
 
-    # Source tracking (FIXED)
+    # Source tracking (your original feature ✅ preserved)
     _attribute_sources: DefaultDict[str, DefaultDict[str, int]] = field(
         default_factory=lambda: defaultdict(lambda: defaultdict(int)),
         init=False
     )
 
-    # Current resource pools
+    # =========================================================
+    # RUNTIME SYSTEMS (NEW)
+    # =========================================================
+
+    states: dict[str, Any] = field(default_factory=dict)
+    tags: set = field(default_factory=set)
+    event_listeners: list[Any] = field(default_factory=list)
+
+    # Combat modifiers
+    next_attack_modifiers: list[Any] = field(default_factory=list)
+    extra_attacks: int = 0
+    bonus_damage: int = 0
+    damage_conversion: Any = None
+
+    # Inventory
+    inventory: list[Any] = field(default_factory=list)
+
+    # =========================================================
+    # RESOURCES
+    # =========================================================
+
     current_hp: int = 0
     current_sanity: int = 0
     current_stamina: int = 0
     current_moxie: int = 0
     current_fortune: int = 0
 
-    # Skill Management
-    skills: dict[str,int] = field(default_factory=dict)
+    # =========================================================
+    # SKILLS & ABILITIES
+    # =========================================================
 
-    # Abilities
+    skills: dict[str, int] = field(default_factory=dict)
+
+    # NOTE: abilities list is optional now (registry is primary)
     abilities: List["Ability"] = field(default_factory=list)
     ability_levels: dict[str, int] = field(default_factory=dict)
 
-    # Derived stat tracking
+    # =========================================================
+    # DERIVED STAT TRACKING
+    # =========================================================
+
     _derived_bonuses: dict = field(default_factory=dict, init=False)
     _derived_overrides: dict = field(default_factory=dict, init=False)
 
-    # -------------------------
-    # ATTRIBUTE MUTATION API
-    # -------------------------
+    # =========================================================
+    # ATTRIBUTE API
+    # =========================================================
 
-    def add_attribute(self, attr: str, value: int, source: str | None = None):
-        if not hasattr(self.attributes, attr):
-            raise ValueError(f"Invalid attribute: {attr}")
-
-        current = getattr(self.attributes, attr)
-        setattr(self.attributes, attr, current + value)
+    def add_stat(self, stat: str, value: int, source: str | None = None):
+        self.attributes.add(stat, value)
 
         if source:
-            self._attribute_sources[attr][source] += value
+            self._attribute_sources[stat][source] += value
 
-    # -------------------------
+    def set_stat(self, stat: str, value: int):
+        self.attributes.set(stat, value)
 
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "race": self.race.to_dict(),
-            "race_levels": self.race_levels,
-            "adventure_jobs": self.adventure_jobs.to_dict(),
-            "adventure_levels": self.adventure_levels,
-            "profession_jobs": self.profession_jobs.to_dict(),
-            "profession_levels": self.profession_levels,
-            "attributes": self.attributes.to_dict(),
-            "skills": self.skills,
-            "current_hp": self.current_hp,
-            "current_sanity": self.current_sanity,
-            "current_stamina": self.current_stamina,
-            "current_moxie": self.current_moxie,
-            "current_fortune": self.current_fortune,
-        }
+    def get_stat(self, stat: str) -> int:
+        return self.attributes.get(stat)
+
+    # =========================================================
+    # RESOURCE API
+    # =========================================================
+
+    def modify_resource(self, pool: str, amount: int) -> bool:
+    attr = f"current_{pool}"
+
+    if not hasattr(self, attr):
+        raise ValueError(f"Invalid resource pool: {pool}")
+
+    current = getattr(self, attr)
+    new_value = current + amount
+
+    # Prevent going below 0
+    if new_value < 0:
+        return False
+
+    # OPTIONAL: clamp to max
+    max_attr = f"max_{pool}"
+    if hasattr(self, max_attr):
+        new_value = min(new_value, getattr(self, max_attr))
+
+    setattr(self, attr, new_value)
+    return True
+
+
+def spend_resource(self, pool: str, amount: int) -> bool:
+    def apply(self, context: EffectContext):
+        for target in context.targets:
+            success = target.modify_resource(self.pool, -self.amount)
+
+            if not success:
+                raise ValueError(f"Not enough {self.pool} to spend {self.amount}")
+
+    return self.modify_resource(pool, -amount)
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
 
     def get_skill(self, name: str) -> int:
         return self.skills.get(name, 0)
@@ -101,3 +157,30 @@ class Character:
 
     def get_adventure_level_by_name(self, job_name: str) -> int:
         return self.adventure_levels.get(job_name, 0)
+
+    def get_profession_level_by_name(self, job_name: str) -> int:
+        return self.profession_levels.get(job_name, 0)
+
+    # =========================================================
+    # SERIALIZATION (FIXED)
+    # =========================================================
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "race": self.race.name,
+            "race_levels": self.race_levels,
+            "adventure_jobs": [job.name for job in self.adventure_jobs],
+            "adventure_levels": self.adventure_levels,
+            "profession_jobs": [job.name for job in self.profession_jobs],
+            "profession_levels": self.profession_levels,
+            "attributes": self.attributes.to_dict(),
+            "skills": self.skills,
+            "resources": {
+                "hp": self.current_hp,
+                "sanity": self.current_sanity,
+                "stamina": self.current_stamina,
+                "moxie": self.current_moxie,
+                "fortune": self.current_fortune,
+            },
+        }

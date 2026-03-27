@@ -1,23 +1,28 @@
-```python
-from application.character_creation import create_character
-from presentation.character_sheet import debug_print_character, ATTRIBUTE_NAMES
-from domain.race import RACES, resolve_race
-from domain.adventure import get_jobs_grouped_by_class
-from domain.profession import get_all_professions
+import json, os
+
+from application.character_creation import create_character, MATERIAL_EFFECTS
+from presentation.character_sheet import debug_print_character
+from domain.race import resolve_race, get_all_races
+from domain.adventure import get_jobs_grouped_by_class, resolve_job
+from domain.profession import get_all_professions, resolve_profession
 from domain.effects import StatIncrease
-from domain.materials import MATERIAL_EFFECTS
+from domain.runtime import execute_ability
+from domain.calculations import recalculate
+
+PERSISTENCE_DIR = "src/persistence"
 
 
 # -------------------------
-# Helpers
+# HELPERS
 # -------------------------
 
 def format_effects(effects):
     parts = []
+
     for effect in effects:
         if isinstance(effect, StatIncrease):
-            stat_name = ATTRIBUTE_NAMES.get(effect.stat, effect.stat.upper())
-            parts.append(f"+{effect.amount} {stat_name}")
+            parts.append(f"+{effect.amount} {effect.stat.upper()}")
+
     return ", ".join(parts)
 
 
@@ -30,29 +35,21 @@ def choose_from_mapping(prompt, options_dict):
 
 
 # -------------------------
-# CLI ENTRY
+# RACE SELECTION
 # -------------------------
 
-def run():
-    print("=== Tabletop RPG Character Creator ===\n")
+def choose_race():
+    races = get_all_races()
 
-    # Name
-    char_name = input("Enter character name: ").strip()
-    while not char_name:
-        char_name = input("Please enter a valid character name: ").strip()
+    print("Available races:")
+    race_lookup = {}
 
-    # -------------------------
-    # Race
-    # -------------------------
+    for race in races:
+        print(f"- {race.name}")
+        race_lookup[race.name.lower()] = race.name
 
-    print("\nAvailable races:")
-    for race in sorted(RACES.keys()):
-        print(f"- {race}")
-
-    race_lookup = {r.lower(): r for r in RACES.keys()}
-
-    race = choose_from_mapping("Choose a race: ", race_lookup)
-    race = resolve_race(race)
+    race_input = choose_from_mapping("Choose a race: ", race_lookup)
+    race = resolve_race(race_input)
 
     base_race = None
     material = None
@@ -60,83 +57,197 @@ def run():
     if race.requires_material:
         print("\nThis race requires a base race and material.")
 
-        base_race_lookup = {
-            r.name.lower(): r.name
-            for r in RACES.values()
-            if not r.requires_material
-        }
+        # Base race selection
+        base_candidates = [r for r in races if r.can_be_base]
 
+        base_lookup = {}
         print("\nAvailable base races:")
-        for name in base_race_lookup.values():
-            print(f"- {name}")
+        for r in base_candidates:
+            print(f"- {r.name}")
+            base_lookup[r.name.lower()] = r.name
 
-        base_race = choose_from_mapping(
-            "Choose base race: ",
-            base_race_lookup
-        )
+        base_name = choose_from_mapping("Choose base race: ", base_lookup)
+        base_race = resolve_race(base_name)
 
-        material_lookup = {m.lower(): m for m in MATERIAL_EFFECTS.keys()}
-
+        # Material selection
         print("\nAvailable materials:")
-        for mat in MATERIAL_EFFECTS.keys():
+        material_lookup = {m.lower(): m for m in MATERIAL_EFFECTS}
+
+        for mat in MATERIAL_EFFECTS:
             print(f"- {mat}")
 
-        material = choose_from_mapping(
-            "Choose material: ",
-            material_lookup
-        )
+        material = choose_from_mapping("Choose material: ", material_lookup)
 
-    # -------------------------
-    # Job
-    # -------------------------
+    return race, base_race, material
 
+
+# -------------------------
+# JOB SELECTION
+# -------------------------
+
+def choose_job():
     jobs_by_class = get_jobs_grouped_by_class()
-    print("\nAvailable Jobs:")
 
+    print("Available Jobs:")
     valid_jobs = {}
 
-    for job_class in sorted(jobs_by_class.keys()):
+    for job_class in sorted(jobs_by_class):
         print(f"{job_class}:")
         for job in jobs_by_class[job_class]:
             bonuses = format_effects(job.effects_on_acquire)
             print(f"  - {job.name} ({bonuses})")
             valid_jobs[job.name.lower()] = job.name
 
-    job = choose_from_mapping("Choose a job: ", valid_jobs)
+    job_input = choose_from_mapping("Choose a job: ", valid_jobs)
+    return resolve_job(job_input)
 
-    # -------------------------
-    # Profession
-    # -------------------------
 
+# -------------------------
+# PROFESSION SELECTION
+# -------------------------
+
+def choose_profession():
     professions = get_all_professions()
 
-    print("\nAvailable Professions:")
-    valid_professions = {}
+    print("Available Professions:")
+    valid = {}
 
     for prof in professions:
         bonuses = format_effects(prof.effects_on_acquire)
         print(f"- {prof.name} ({bonuses})")
-        valid_professions[prof.name.lower()] = prof.name
+        valid[prof.name.lower()] = prof.name
 
-    profession = choose_from_mapping(
-        "Choose a profession: ",
-        valid_professions
-    )
+    choice = choose_from_mapping("Choose a profession: ", valid)
+    return resolve_profession(choice)
 
-    # -------------------------
-    # Create + Display
-    # -------------------------
+
+# -------------------------
+# CHARACTER CREATION
+# -------------------------
+
+def build_character():
+    print("=== Generica Offline Character Creator ===\n")
+
+    name = input("Enter character name: ").strip()
+    while not name:
+        name = input("Please enter a valid name: ").strip()
+
+    race, base_race, material = choose_race()
+    job = choose_job()
+    profession = choose_profession()
 
     character = create_character(
-        char_name,
-        race,
-        job,
-        profession,
+        name,
+        race=race,
+        jobs=[job],
+        professions=[profession],
         base_race=base_race,
-        material=material
+        material=material,
     )
 
-    print("\n=== Character Created ===\n")
-    debug_print_character(character)
-```
+    print("=== Character Created ===")
+    return character
 
+
+# -------------------------
+# ABILITY HANDLING
+# -------------------------
+
+def handle_ability_use(character):
+    if not character.abilities:
+        print("No abilities available.")
+        return
+
+    print("Available Abilities:")
+    for i, ability in enumerate(character.abilities, 1):
+        print(f"{i}. {ability.name}")
+
+    choice = input("Choose ability #: ").strip()
+
+    if not choice.isdigit():
+        print("Invalid input.")
+        return
+
+    idx = int(choice) - 1
+
+    if not (0 <= idx < len(character.abilities)):
+        print("Invalid selection.")
+        return
+
+    ability = character.abilities[idx]
+
+    try:
+        execute_ability(character, ability.name)
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+# -------------------------
+# LOOP
+# -------------------------
+
+def interaction_loop(character):
+    should_save = False
+
+    while True:
+        debug_print_character(character)
+
+        print("Options:")
+        print("1. Use Ability")
+        print("2. Rebuild Character State")
+        print("3. Save & Exit")
+        print("4. Exit Without Saving")
+
+        choice = input("> ").strip()
+
+        if choice == "1":
+            handle_ability_use(character)
+
+        elif choice == "2":
+            recalculate(character)
+            print("Character rebuilt.")
+
+        elif choice == "3":
+            should_save = True
+            break
+
+        elif choice == "4":
+            confirm = input("Exit without saving? (y/n): ").strip().lower()
+            if confirm == "y":
+                break
+
+        else:
+            print("Invalid option.")
+
+    return should_save
+
+
+# -------------------------
+# SAVE
+# -------------------------
+
+def save_character(character):
+    os.makedirs(PERSISTENCE_DIR, exist_ok=True)
+
+    filename = f"{character.name.replace(' ', '_').lower()}_character.json"
+    path = os.path.join(PERSISTENCE_DIR, filename)
+
+    with open(path, "w") as f:
+        json.dump(character.to_dict(), f, indent=4)
+
+    print(f"Character saved to: {filename}")
+
+
+# -------------------------
+# ENTRY
+# -------------------------
+
+def run_cli():
+    character = build_character()
+
+    should_save = interaction_loop(character)
+
+    if should_save:
+        save_character(character)
+    else:
+        print("Exited without saving.")

@@ -1,7 +1,10 @@
 from domain.character import Character
 from domain.calculations import calculate_pools, calculate_defenses
+from domain.attributes import DEFENSE_KEYS
 
+# =========================================================
 # COLORS
+# =========================================================
 
 POOL_COLORS = {
     "hp": "\033[91m",
@@ -13,7 +16,10 @@ POOL_COLORS = {
 
 RESET_COLOR = "\033[0m"
 
+
+# =========================================================
 # DISPLAY NAME MAPPINGS
+# =========================================================
 
 ATTRIBUTE_NAMES = {
     "strength": "STR",
@@ -44,9 +50,10 @@ DEFENSE_NAMES = {
     "fate": "Fate",
 }
 
-# -------------------------
+
+# =========================================================
 # HELPERS
-# -------------------------
+# =========================================================
 
 def divider(title):
     print(f"\n--- {title.upper()} ---")
@@ -63,9 +70,9 @@ def format_source_name(source: str) -> str:
     return source
 
 
-# -------------------------
+# =========================================================
 # ATTRIBUTE BLOCK
-# -------------------------
+# =========================================================
 
 def print_attribute_block(character: Character):
     divider("Attributes")
@@ -80,21 +87,43 @@ def print_attribute_block(character: Character):
         base_value = base.get(key, value)
         attr_sources = sources.get(key, {})
 
-        parts = []
-        for source, amount in attr_sources.items():
-            if amount != 0:
-                parts.append(f"{amount:+d} {format_source_name(source)}")
+        parts = [
+            f"{amount:+d} {format_source_name(source)}"
+            for source, amount in attr_sources.items()
+            if amount != 0
+        ]
 
         if parts:
-            breakdown = " ".join(parts)
-            print(f"{pretty_name}: {value} ({base_value} {breakdown})")
+            breakdown = " | ".join(parts)
+            print(f"{pretty_name}: {value} ({base_value} → {breakdown})")
         else:
             print(f"{pretty_name}: {value}")
 
 
-# -------------------------
+# =========================================================
+# DERIVED STATS
+# =========================================================
+
+def print_derived(character: Character):
+    divider("Derived Bonuses")
+
+    bonuses = getattr(character, "_derived_bonuses", {})
+    overrides = getattr(character, "_derived_overrides", {})
+
+    if not bonuses and not overrides:
+        print("None")
+        return
+
+    for stat, value in bonuses.items():
+        print(f"{stat}: +{value}")
+
+    for stat, value in overrides.items():
+        print(f"{stat}: {value} (override)")
+
+
+# =========================================================
 # GENERIC STAT BLOCK
-# -------------------------
+# =========================================================
 
 def print_stat_block(title, stats: dict, name_map: dict,
                      hide_keys=None, color_map=None):
@@ -118,16 +147,34 @@ def print_stat_block(title, stats: dict, name_map: dict,
             print(f"{color}{pretty_name}: {value}{RESET_COLOR}")
 
 
-# -------------------------
+# =========================================================
+# TAG DISPLAY
+# =========================================================
+
+def print_tags(character: Character):
+    divider("Tags")
+
+    tag_sets = {
+        "General": getattr(character, "tags", set()),
+        "Crafting": getattr(character, "crafting_tags", set()),
+        "Gathering": getattr(character, "gathering_tags", set()),
+        "Economic": getattr(character, "economic_tags", set()),
+    }
+
+    for category, tags in tag_sets.items():
+        if tags:
+            print(f"{category}: {', '.join(sorted(tags))}")
+
+
+# =========================================================
 # JOB DISPLAY
-# -------------------------
+# =========================================================
 
 def print_jobs(character: Character):
     print("\n==============================")
     print("         JOBS")
     print("==============================")
 
-    # Adventure Jobs
     if character.adventure_jobs:
         print("Adventure Jobs:")
         for job in character.adventure_jobs:
@@ -136,7 +183,6 @@ def print_jobs(character: Character):
     else:
         print("Adventure Jobs: None")
 
-    # Profession Jobs
     if character.profession_jobs:
         print("\nProfessions:")
         for job in character.profession_jobs:
@@ -146,9 +192,9 @@ def print_jobs(character: Character):
         print("\nProfessions: None")
 
 
-# -------------------------
-# RACE DISPLAY
-# -------------------------
+# =========================================================
+# RACE DISPLAY (FIXED)
+# =========================================================
 
 def print_race(character: Character):
     race = character.race
@@ -157,8 +203,7 @@ def print_race(character: Character):
     race_level = character.race_levels.get(race.name, 1)
 
     if race.base_race:
-        base_name = race.base_race.name
-        base_level = character.base_race_levels.get(base_name, 1)
+        base_level = character.base_race_levels.get(race.base_race, 1)
 
         print(
             f"Race: {race_display} "
@@ -168,14 +213,14 @@ def print_race(character: Character):
         print(f"Race: {race_display} (Lv. {race_level})")
 
 
-# -------------------------
+# =========================================================
 # SKILLS
-# -------------------------
+# =========================================================
 
 def print_skills(character: Character):
     divider("Skills")
 
-    if not getattr(character, "skills", None):
+    if not character.skills:
         print("None")
         return
 
@@ -183,9 +228,9 @@ def print_skills(character: Character):
         print(f"{skill}: {level}")
 
 
-# -------------------------
+# =========================================================
 # ABILITIES
-# -------------------------
+# =========================================================
 
 def print_abilities(character: Character):
     print("\n==============================")
@@ -199,7 +244,10 @@ def print_abilities(character: Character):
     for ability in character.abilities:
         level = character.ability_levels.get(ability.name, 1)
 
-        line = f"- {ability.name:<25} (Lv. {level})"
+        type_tag = "[Passive]" if ability.is_passive else "[Active]"
+        skill_tag = "[Skill]" if ability.is_skill else ""
+
+        line = f"- {ability.name:<25} {type_tag} {skill_tag} (Lv. {level})"
 
         if ability.cost:
             pool = ability.cost_pool or "resource"
@@ -214,9 +262,9 @@ def print_abilities(character: Character):
             print(f"    {ability.description}\n")
 
 
-# -------------------------
+# =========================================================
 # MAIN CHARACTER SHEET
-# -------------------------
+# =========================================================
 
 def debug_print_character(character: Character):
 
@@ -229,12 +277,11 @@ def debug_print_character(character: Character):
     print_race(character)
     print_jobs(character)
 
-    # Derived values
     pools = calculate_pools(character)
     defenses = calculate_defenses(character)
 
-    # Stats
     print_attribute_block(character)
+    print_derived(character)
 
     print_stat_block(
         "Pools",
@@ -246,13 +293,13 @@ def debug_print_character(character: Character):
     print_stat_block(
         "Defenses",
         vars(defenses),
-        DEFENSE_NAMES
+        DEFENSE_NAMES = {
+            key: key.replace("_", " ").title()
+            for key in DEFENSE_KEYS
     )
 
-    # Skills (NEW)
+    print_tags(character)
     print_skills(character)
-
-    # Abilities
     print_abilities(character)
 
     print("==============================\n")

@@ -1,16 +1,23 @@
-import random, copy
+import random
+import copy
 
-from domain.attributes import Attributes, DEFAULT_STATS
+from domain.attributes import DEFAULT_STATS
 from domain.character import Character
-from domain.race import Race, resolve_race
+from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob, get_all_professions
-from domain.calculations import calculate_pools, recalculate
-from domain.effects import DerivedStatOverride, Effect, StatIncrease
 
-# =========================
+from domain.calculations import calculate_pools, recalculate
+
+from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
+from domain.effects.special.damage import ConvertDamageEffect, BonusDamageEffect  # future-safe
+from domain.effects.special.state import ApplyStateEffect
+from domain.effects.special.tag import ApplyTagEffect
+from domain.effects.base import Effect
+
+# =========================================================
 # ROLLING
-# =========================
+# =========================================================
 
 def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
@@ -21,17 +28,18 @@ def roll_attributes() -> list[Effect]:
 
     for stat in DEFAULT_STATS:
         roll = roll_2d10()
-
-        effects.append(
-                StatIncrease(stat, roll)
-                )
+        effects.append(StatIncrease(stat, roll))
 
     return effects
 
 
-# =========================
+# =========================================================
 # MATERIAL SYSTEM
-# =========================
+# =========================================================
+
+# DerivedStatOverride
+from domain.effects import DerivedStatOverride
+
 
 MATERIAL_EFFECTS = {
     "cloth": [
@@ -60,21 +68,17 @@ def apply_material_to_race(race: Race, base_race: Race, material: str) -> Race:
     )
 
 
-# =========================
-# PROFESSION SELECTION (LOGIC ONLY)
-# =========================
-
-def get_profession_by_name(name: str):
-    return resolve_profession(name)
-
+# =========================================================
+# PROFESSION HELPERS
+# =========================================================
 
 def list_professions():
     return get_all_professions()
 
 
-# =========================
+# =========================================================
 # CORE CREATION
-# =========================
+# =========================================================
 
 def create_character(
     name: str,
@@ -84,69 +88,92 @@ def create_character(
     base_race: Race | None = None,
     material: str | None = None,
 ) -> Character:
-    """
-    Pure character creation (no input/print).
-    """
 
-    # Handle material-based races
+    # -------------------------
+    # MATERIAL HANDLING
+    # -------------------------
 
     if race.requires_material:
         if base_race is None or material is None:
             raise ValueError(
-                    f"{race.name} requires base_race and material, "
-                    f"but got base_race={base_race}, material={material}"
-                    )
+                f"{race.name} requires base_race and material"
+            )
 
         race = apply_material_to_race(copy.deepcopy(race), base_race, material)
 
     else:
-        if base_race is not None or material is not None:
-            raise ValueError(
-                    f"{race.name} does not support base_race/material, "
-                    f"but got base_race={base_race}, material={material}"
-                    )
-    
+        if base_race or material:
+            raise ValueError(f"{race.name} does not support material")
+
+    # -------------------------
+    # VALIDATION
+    # -------------------------
+
     if len(jobs) > race.max_adventure_jobs:
-        raise ValueError (
-                f"{race.name} allows only {race.max_adventure_jobs} adventure jobs."
-                )
+        raise ValueError(f"{race.name} allows only {race.max_adventure_jobs} jobs")
 
     if len(professions) > race.max_profession_jobs:
-        raise ValueError (
-                f"{race.name} allows only {race.max_profession_jobs} profession jobs."
-                )
-    
-    adventure_levels = {
-            job.name: 1 for job in jobs
-            }
+        raise ValueError(f"{race.name} allows only {race.max_profession_jobs} professions")
 
-    profession_levels = {
-            prof.name: 1 for prof in professions
-            }
+    # -------------------------
+    # LEVEL STRUCTURES
+    # -------------------------
 
-    roll_effects = roll_attributes()
+    adventure_levels = {job.name: 1 for job in jobs}
+    profession_levels = {prof.name: 1 for prof in professions}
 
-    # Construct the Character
+    # -------------------------
+    # ATTRIBUTE EFFECTS
+    # -------------------------
+
+    attribute_effects = roll_attributes()
+
+    # -------------------------
+    # CHARACTER INIT
+    # -------------------------
 
     character = Character(
         name=name,
         race=race,
         race_levels={race.name: 1},
-        base_race_levels=(
-            {base_race.name: 1} if base_race else {}
-            ),
+        base_race_levels={base_race.name: 1} if base_race else {},
         adventure_jobs=jobs,
         adventure_levels=adventure_levels,
         profession_jobs=professions,
         profession_levels=profession_levels,
     )
 
-    character.attribute_effects = roll_effects
-    
-    # Build full state
+    # -------------------------
+    # NEW: RUNTIME SYSTEM INIT
+    # -------------------------
+
+    character.states = {}
+    character.tags = set()
+    character.event_listeners = []
+
+    character.next_attack_modifiers = []
+    character.extra_attacks = 0
+    character.bonus_damage = 0
+    character.damage_conversion = None
+
+    character.inventory = []
+
+    # -------------------------
+    # APPLY ATTRIBUTE EFFECTS
+    # -------------------------
+
+    character.attribute_effects = attribute_effects
+
+    # -------------------------
+    # FULL REBUILD
+    # -------------------------
+
     recalculate(character)
 
-    # Initialize pools to max
+    # -------------------------
+    # RESOURCE INITIALIZATION
+    # -------------------------
+
     pools = calculate_pools(character)
 
     character.current_hp = pools.hp[1]

@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
 
-from domain.effects import Effect, make_effects
+from domain.effects.base import Effect
+from domain.effects.stat import StatIncrease
 
-# =========================
-# CLASS REGISTRY
-# =========================
+
+# =========================================================
+# CLASS SYSTEM
+# =========================================================
 
 CLASS_REGISTRY = {
     "S": "Sage",
@@ -16,10 +18,6 @@ CLASS_REGISTRY = {
     "P": "Priest",
     "E": "Wanderer",
 }
-
-# =========================
-# JOB → CLASS MAP
-# =========================
 
 JOB_CLASS_MAP = {
     "Alchemist": "S",
@@ -52,31 +50,22 @@ JOB_CLASS_MAP = {
     "Wizard": "S",
 }
 
-# =========================
-# CORE DATACLASS
-# =========================
+
+# =========================================================
+# CORE JOB MODEL
+# =========================================================
 
 @dataclass(frozen=True)
 class AdventureJob:
     name: str
+
     effects_on_acquire: List[Effect] = field(default_factory=list)
     effects_per_level: List[Effect] = field(default_factory=list)
+
     tags: List[str] = field(default_factory=list)
 
     # -------------------------
-    # REQUIRED FOR ENGINE
-    # -------------------------
-
-    def get_effects(self, level: int) -> List[Effect]:
-        effects = []
-
-        effects.extend(self.effects_on_acquire)
-
-        for _ in range(level - 1):
-            effects.extend(self.effects_per_level)
-
-        return effects
-
+    # CLASS HELPERS
     # -------------------------
 
     @property
@@ -87,18 +76,30 @@ class AdventureJob:
     def job_class(self) -> str:
         return CLASS_REGISTRY[self.class_code]
 
+    # -------------------------
+    # SERIALIZATION
+    # -------------------------
+
     def to_dict(self):
         return {
             "name": self.name,
-            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
-            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
+            "effects_on_acquire": [str(e) for e in self.effects_on_acquire],
+            "effects_per_level": [str(e) for e in self.effects_per_level],
             "tags": self.tags,
         }
 
 
-# =========================
+# =========================================================
+# HELPERS
+# =========================================================
+
+def make_effects(**mods):
+    return [StatIncrease(stat, value) for stat, value in mods.items()]
+
+
+# =========================================================
 # REGISTRY
-# =========================
+# =========================================================
 
 JOB_REGISTRY: Dict[str, AdventureJob] = {}
 
@@ -114,9 +115,13 @@ def resolve_job(name: str) -> AdventureJob:
     return job
 
 
-# =========================
+def get_all_jobs() -> List[AdventureJob]:
+    return list(JOB_REGISTRY.values())
+
+
+# =========================================================
 # FACTORY
-# =========================
+# =========================================================
 
 def make_job(name: str, stats: dict, tags: List[str]) -> AdventureJob:
     if name not in JOB_CLASS_MAP:
@@ -132,77 +137,64 @@ def make_job(name: str, stats: dict, tags: List[str]) -> AdventureJob:
     return job
 
 
-# =========================
-# JOB DEFINITIONS (CLEAN)
-# =========================
+# =========================================================
+# JOB DEFINITIONS
+# =========================================================
 
 JOB_DATA = {
-    # Creator
     "Animator": dict(stats=dict(dexterity=3, intelligence=3, willpower=3), tags=["ranged"]),
     "Conjuror": dict(stats=dict(charisma=3, intelligence=3, willpower=3), tags=["ranged"]),
     "Elementalist": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["ranged"]),
     "Necromancer": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["ranged"]),
 
-    # Diva
     "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["ranged"]),
     "Model": dict(stats=dict(agility=3, charisma=3, perception=3), tags=["ranged"]),
     "Ruler": dict(stats=dict(charisma=3, wisdom=3, luck=3), tags=["defensive"]),
     "Sensate": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["defensive"]),
 
-    # Wanderer
     "Explorer": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["ranged"]),
     "Merchant": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["utility"]),
     "Mercenary": dict(stats=dict(dexterity=3, perception=3, strength=3), tags=["melee"]),
     "Scout": dict(stats=dict(agility=3, perception=3, wisdom=3), tags=["utility"]),
 
-    # Priest
     "Cleric": dict(stats=dict(constitution=3, luck=3, wisdom=3), tags=["support"]),
     "Cultist": dict(stats=dict(charisma=3, intelligence=3, luck=3), tags=["aggressive"]),
     "Oracle": dict(stats=dict(charisma=3, luck=3, wisdom=3), tags=["support"]),
     "Shaman": dict(stats=dict(luck=3, strength=3, wisdom=3), tags=["support"]),
 
-    # Rogue
     "Assassin": dict(stats=dict(agility=3, charisma=3, dexterity=3), tags=["precision"]),
     "Bandit": dict(stats=dict(agility=3, strength=3, wisdom=3), tags=["aggressive"]),
     "Burglar": dict(stats=dict(dexterity=3, perception=3, agility=3), tags=["precision"]),
     "Grifter": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["utility"]),
 
-    # Sage
     "Alchemist": dict(stats=dict(constitution=3, intelligence=3, dexterity=3), tags=["utility"]),
     "Enchanter": dict(stats=dict(dexterity=3, intelligence=3, willpower=3), tags=["aggressive"]),
     "Tamer": dict(stats=dict(charisma=3, perception=3, constitution=3), tags=["utility"]),
     "Wizard": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["caster"]),
 
-    # Warrior
     "Archer": dict(stats=dict(dexterity=3, perception=3, strength=3), tags=["ranged"]),
     "Berserker": dict(stats=dict(constitution=3, strength=3, willpower=3), tags=["aggressive"]),
     "Duelist": dict(stats=dict(agility=3, dexterity=3, strength=3), tags=["precision"]),
     "Knight": dict(stats=dict(charisma=3, constitution=3, strength=3), tags=["defensive"]),
 }
 
-# Build all jobs
+
+# Build registry
 
 for name, data in JOB_DATA.items():
     make_job(name, stats=data["stats"], tags=data["tags"])
 
 
-# =========================
+# =========================================================
 # UTILITIES
-# =========================
+# =========================================================
 
 def get_jobs_by_class(class_code: str) -> List[AdventureJob]:
-    return [
-        job for job in JOB_REGISTRY.values()
-        if job.class_code == class_code
-    ]
-
-
-def get_all_jobs() -> List[AdventureJob]:
-    return list(JOB_REGISTRY.values())
+    return [job for job in JOB_REGISTRY.values() if job.class_code == class_code]
 
 
 def get_jobs_grouped_by_class() -> Dict[str, List[AdventureJob]]:
-    grouped = {}
+    grouped: Dict[str, List[AdventureJob]] = {}
 
     for job in JOB_REGISTRY.values():
         grouped.setdefault(job.job_class, []).append(job)
