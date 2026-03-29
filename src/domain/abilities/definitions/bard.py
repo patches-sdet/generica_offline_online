@@ -89,7 +89,7 @@ def register():
             c.has_adventure_job("Bard")
             and c.get_adventure_level_by_name("Bard") >= 1
         ),
-        description="A Bard may 'replce' this skill with any other Tier One, level one Adventuring Job skill. Once chosen, it cannot be reset. Godspells and darkspells may NOT be chosen.",
+        description="A Bard may 'replace' this skill with any other Tier One, level one Adventuring Job skill. Once chosen, it cannot be reset. Godspells and darkspells may NOT be chosen.",
         is_passive=False,
         is_skill=False,
     )
@@ -139,6 +139,7 @@ def register():
         description="Bards are so cool that they gain a bonus to their Cool equal to their Bard Level. This skill has no levels.",
         is_passive=True,
         is_skill=False,
+        target_type = "self"
     )
 
     make_ability(

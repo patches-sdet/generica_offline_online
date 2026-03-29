@@ -1,5 +1,3 @@
-# domain/abilities/patterns.py
-
 from typing import Callable, Dict, List
 
 from domain.effects import (

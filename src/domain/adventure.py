@@ -157,7 +157,7 @@ JOB_DATA = {
     "Elementalist": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["ranged"]),
     "Necromancer": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["ranged"]),
 
-    "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["ranged"]),
+    "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["support", "buff", "debuff"]),
     "Model": dict(stats=dict(agility=3, charisma=3, perception=3), tags=["ranged"]),
     "Ruler": dict(stats=dict(charisma=3, wisdom=3, luck=3), tags=["defensive"]),
     "Sensate": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["defensive"]),
