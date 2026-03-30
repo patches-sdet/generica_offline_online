@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
-
 from domain.effects.base import Effect
 
 
@@ -14,7 +13,7 @@ class Ability:
     effect_generator: Optional[Callable] = None
 
     # Metadata
-    cost: int = 0
+    cost: Optional[int] = 0
     cost_pool: Optional[str] = None
     duration: Optional[str] = None
     description: str = ""
@@ -25,6 +24,8 @@ class Ability:
     target_type: str = "self"
 
 # Factory
+    def is_unlocked(self, character):
+        return self.unlock_condition(character)
 
 def make_ability(
     *,
@@ -32,7 +33,7 @@ def make_ability(
     unlock_condition: Callable,
     execute: Optional[Callable] = None,
     effect_generator: Optional[Callable] = None,
-    cost: int = 0,
+    cost: Optional[int] = 0,
     cost_pool: Optional[str] = None,
     duration: Optional[str] = None,
     description: str = "",

@@ -137,8 +137,8 @@ JOB_DATA = {
     "Elementalist": dict(stats=dict(constitution=3, intelligence=3, willpower=3), tags=["damage", "minions", "support"]),
     "Necromancer": dict(stats=dict(intelligence=3, willpower=3, wisdom=3), tags=["creation", "minions", "support"]),
 
-    "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["support", "buff", "debuff"]),
-    "Model": dict(stats=dict(agility=3, charisma=3, perception=3), tags=["buff", "social"]),
+    "Bard": dict(stats=dict(charisma=3, dexterity=3, luck=3), tags=["support", "buffs", "debuff"]),
+    "Model": dict(stats=dict(agility=3, charisma=3, perception=3), tags=["buffs", "social"]),
     "Ruler": dict(stats=dict(charisma=3, wisdom=3, luck=3), tags=["defensive"]),
     "Sensate": dict(stats=dict(charisma=3, intelligence=3, perception=3), tags=["defensive"]),
 
@@ -147,7 +147,7 @@ JOB_DATA = {
     "Mercenary": dict(stats=dict(dexterity=3, perception=3, strength=3), tags=["melee"]),
     "Scout": dict(stats=dict(agility=3, perception=3, wisdom=3), tags=["utility"]),
 
-    "Cleric": dict(stats=dict(constitution=3, luck=3, wisdom=3), tags=["support"]),
+    "Cleric": dict(stats=dict(constitution=3, luck=3, wisdom=3), tags=["support", "healer", "buffs"]),
     "Cultist": dict(stats=dict(charisma=3, intelligence=3, luck=3), tags=["aggressive"]),
     "Oracle": dict(stats=dict(charisma=3, luck=3, wisdom=3), tags=["support"]),
     "Shaman": dict(stats=dict(luck=3, strength=3, wisdom=3), tags=["support"]),

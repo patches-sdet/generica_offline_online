@@ -1,6 +1,4 @@
-# domain/calculations/tags.py
-
-def rebuild_tags(character):
+def rebuild_tags(character, effects=None):
     tags = set()
 
     # Race

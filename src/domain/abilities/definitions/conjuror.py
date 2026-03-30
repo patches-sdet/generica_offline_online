@@ -1,20 +1,7 @@
-from domain.abilities import make_ability
+from domain.abilities.factory import make_ability
 from domain.effects import StatIncrease
-from domain.abilities.patterns import (
-    buff,
-    conditional_effect,
-    create_item,
-    heal,
-    inspect,
-    scaled_stat_buff,
-    skill_check,
-    summon,
-)
-
-from domain.conditions import (
-    IS_ALLY,
-    IS_ENEMY,
-)
+from domain.abilities.patterns import buff, conditional_effect, create_item, heal, inspect, scaled_stat_buff, skill_check, summon
+from domain.conditions import IS_ALLY, IS_ENEMY
 
 # Conjuror's Eye — Inspect / Analyze
 
@@ -24,54 +11,61 @@ def conjuror_eye_execute(caster, targets):
             skill="Conjuror's Eye",
             stat="intelligence",
             difficulty=lambda ctx, target: target.roll_willpower(),
-        on_success=inspect(
-            reveal_fn=lambda target: {
-                "type": getattr(target, "type", None),
-                "hp": getattr(target, "hp", None),
-                "attributes": getattr(target, "attributes", None),
-                "adventure_jobs": getattr(target, "adventure_jobs", None),
-                "adventure_levels": getattr(target, "adventure_levels", None),
-                "profession_jobs": getattr(target, "profession_jobs", None),
-                "profession_levels": getattr(target, "profession_levels", None),
-            },
+            on_success=inspect(
+                reveal_fn=lambda caster, target: {
+                    "type": getattr(target, "type", None),
+                    "hp": getattr(target, "hp", None),
+                    "attributes": getattr(target, "attributes", None),
+                    "adventure_jobs": getattr(target, "adventure_jobs", None),
+                    "adventure_levels": getattr(target, "adventure_levels", None),
+                    "profession_jobs": getattr(target, "profession_jobs", None),
+                    "profession_levels": getattr(target, "profession_levels", None),
+                },
             ),
         )
     ]
 
-def dimensional_pocket_execute(caster, targets): # this is going to be really tricky to implement in a way that works with the inventory system, 
-    # so for now this is just a placeholder that applies a buff to the character that would need to be checked when they try to pick up or interact with items
+def dimensional_pocket_execute(caster, targets):
     return [
-            buff(
-                scale_fn=lambda c: c.skills.get("Lootbag", 0),
-                stats={
-                    "strength": 1,
-                },
-                target=caster,
-            ),
+        buff(
+            scale_fn=lambda c: c.skills.get("Dimensional Pocket", 0),
+            stats={"capacity": 1},  # placeholder stat
+        ),
     ]
 
-def handy_creation_execute(character):
+def handy_creation_execute(caster, targets):
     return [
             create_item(
                 factory_fn=lambda c: {
                     "name": "Rough Object",
-                    "description": "A summoned object of common materials."
-                    "weight": f"Maximum {c.get_adventure_level_by_name("Conjuror", 0)} pounds", # this needs to be implemented in a way that allows the player to choose the item type when they use the skill, and then that choice needs to be stored in the item so it can be created correctly  
-            )
+                    "description": "A summoned object of common materials.",
+                    "weight": f"Maximum {c.get_adventure_level_by_name('Conjuror', 0)} pounds", # this needs to be implemented in a way that allows the player to choose the item type when they use the skill, and then that choice needs to be stored in the item so it can be created correctly  
+            }
+        )
     ]
 
+def magic_snack_execute(caster, targets):
+    return [
+        create_item(
+            factory_fn=lambda c, target: {
+                "name": "Magic Snack",
+                "effect": "restores hunger",
+            }
+        )
+    ]
 
 def summon_least_execute(caster, targets):
     return [
         skill_check(
             skill="Summon Least",
-            stat="charisma",
             difficulty=100,
-            on_success=summon(factory_fn=lambda c: {
-                "name": "Lesser Conjuration",
-                "type": "Daemon, Djinn, Elemental, Manabeast, or Old One",
-                "description": "A summoned Class One creature of the chosen type, equal to the Conjuror's level in power. The creature is friendly to the caster and obeys their commands.",
-            }),
+            on_success=summon(
+                factory_fn=lambda c, target: {
+                    "name": "Lesser Conjuration",
+                    "type": "Arcane Creature",
+                    "level": c.get_adventure_level_by_name("Conjuror", 0),
+                }
+            ),
         )
     ]
 
@@ -136,6 +130,7 @@ def register():
         cost=10,
         cost_pool="sanity",
         duration="1 Meal",
+        execute=magic_snack_execute,
         description="Magic Snack provides a quick, bland but nourishing snack that is filling for anyone who eats it. This skill has no levels. This skill is a spell.",
         is_passive=False,
         is_skill=False,
@@ -156,20 +151,4 @@ def register():
         is_passive=False,
         is_skill=True,
         target_type="self",
-    )
-
-    make_ability(
-        name="Shield of Divinity",
-        unlock_condition=lambda c: (
-            c.has_adventure_job("Conjuror")
-            and c.get_adventure_level_by_name("Conjuror") >= 1
-        ),
-        execute=divinity_shield_execute,
-        cost=5,
-        cost_pool="sanity",
-        duration="1 Action",
-        description="You can buff the armor of a target by an amount equal to the level of this skill. You can only apply this buff to a single target at a time. This skill is a spell.",
-        is_passive=False,
-        is_skill=True,
-        target_type="ally or self",
     )

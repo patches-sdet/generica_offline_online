@@ -1,19 +1,9 @@
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    buff,
-    debuff,
-    heal,
-    aura,
-)
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import buff, debuff, heal, aura
+from domain.conditions import IS_ALLY, IS_ENEMY
+from domain.effects.special.roll import RollModifierEffect
 
-from domain.conditions import (
-    IS_ALLY,
-    IS_ENEMY,
-)
-
-# =========================================================
 # Passive — Just That Cool
-# =========================================================
 
 def just_that_cool_effects(character):
     return [
@@ -23,10 +13,7 @@ def just_that_cool_effects(character):
         )
     ]
 
-
-# =========================================================
 # Songs (Auras)
-# =========================================================
 
 def distracting_song_execute(caster, targets):
     return [
@@ -48,14 +35,18 @@ def distracting_song_execute(caster, targets):
 def heartening_song_execute(caster, targets):
     return [
         aura(
-            buff(
-                scale_fn=lambda c: c.skills.get("Heartening Song", 0),
-                stats={
-                    "strength": 1,
-                    "attack": 1,  # assuming this maps to a derived stat
-                },
-                condition=IS_ALLY,
-            ),
+            [
+                buff(
+                    scale_fn=lambda c: c.skills.get("Heartening Song", 0),
+                    stats={"strength": 1},
+                    condition=IS_ALLY,
+                ),
+                RollModifierEffect(
+                    scale_fn=lambda c: c.skills.get("Heartening Song", 0),
+                    source_tag="heartening_song",
+                    condition=IS_ALLY,
+                ),
+            ],
             aura_id="bard_song",
         )
     ]
@@ -64,24 +55,20 @@ def heartening_song_execute(caster, targets):
 def rejuvenating_song_execute(caster, targets):
     return [
         aura(
-            heal(
-                scale_fn=lambda c: c.skills.get("Rejuvenating Song", 0),
-                condition=IS_ALLY,
-            ),
-            aura_id="bard_song",
-        )
+            [heal(scale_fn=lambda c: c.skills.get("Rejuvenating Song", 0), 
+                  pool="hp", condition=IS_ALLY),
+             heal(scale_fn=lambda c: c.skills.get("Rejuvenating Song", 0), 
+                  pool="stamina", condition=IS_ALLY),
+            ],
+    aura_id="bard_song",
+)
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 
-    # -------------------------
     # Borrowed Skill (Special Case)
-    # -------------------------
 
     make_ability(
         name="Borrowed Skill 1",
@@ -90,13 +77,11 @@ def register():
             and c.get_adventure_level_by_name("Bard") >= 1
         ),
         description="A Bard may 'replace' this skill with any other Tier One, level one Adventuring Job skill. Once chosen, it cannot be reset. Godspells and darkspells may NOT be chosen.",
-        is_passive=False,
+        is_passive=True, # Placeholder until I figure out how to implement this
         is_skill=False,
     )
 
-    # -------------------------
     # Songs
-    # -------------------------
 
     make_ability(
         name="Distracting Song",

@@ -24,9 +24,7 @@ ATTRIBUTE_NAMES = list(DEFAULT_STATS.keys())
 class Attributes:
     values: Dict[str, int] = field(default_factory=dict)
 
-    # -------------------------
-    # INIT
-    # -------------------------
+    # INITIALIZATION
 
     def __post_init__(self):
         # Initialize missing stats from defaults

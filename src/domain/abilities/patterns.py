@@ -1,13 +1,13 @@
-from typing import Callable, Dict, List, Union
-
+from typing import Callable, Dict, Union
 from domain.effects import (
-    StatIncrease,
-    ResourceEffect,
-    MultiStatIncrease,
-    CompositeEffect,
-    TargetFilterEffect,
-    ScalingEffect,
-    ConditionalEffect,
+    StatIncrease, 
+    MultiStatIncrease, 
+    CompositeEffect, 
+    TargetFilterEffect, 
+    ConditionalEffect, 
+    ResourceEffect, 
+    ScalingEffect, 
+    DerivedStatBonus
 )
 
 # Optional imports (you may centralize later)
@@ -30,7 +30,6 @@ def scaled_stat_buff(
         return TargetFilterEffect(effect, condition=condition)
 
     return effect
-
 
 def scaled_resource_effect(
     scale_fn: Callable,
@@ -162,13 +161,11 @@ def buff(
     scale_fn: Callable,
     stats: Dict[str, int],
     condition: Callable = None,
-    targets = Callable = None,
 ):
     return scaled_stat_buff(
         scale_fn=scale_fn,
         stats=stats,
         condition=condition,
-        targets=targets,
         )
 
 
@@ -195,6 +192,27 @@ def aura(effect):
     aura_id = aura_id
     effect.aura_id = aura_id
     return effect
+
+def scaled_derived_buff(
+    *,
+    scale_fn: Callable,
+    stat: str,
+    condition: Callable = None,
+):
+    def effect_generator(character):
+        amount = scale_fn(character)
+
+        effect = DerivedStatBonus(
+            stat=stat,
+            amount=int(amount)
+        )
+
+        if condition and not condition(character):
+            return []
+
+        return [effect]
+
+    return effect_generator
 
 # Conditional (Opposed Rolls, etc.)
 

@@ -1,35 +1,27 @@
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    heal,
-    buff,
-    summon,
-    control,
-    inspect,
-    on_success,
-    filtered,
-    skill_check
-)
-
-from domain.conditions import (
-    IS_CONSTRUCT,
-    IS_OBJECT,
-    NOT_IN_PARTY,
-)
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import heal, buff, summon, control, inspect, skill_check
+from domain.conditions.entity import IS_CONSTRUCT, IS_OBJECT, NOT_IN_PARTY
 
 # Animus — Summon / Create Animi
 
 def animus_execute(caster, targets):
     return [
-        summon(
-            factory_fn=lambda caster, obj: create_animi_from_object(
-                caster=caster,
-                obj=obj,
-                power=(
-                    caster.attributes.intelligence +
-                    caster.skills.get("Animus", 0)
+        skill_check(
+            skill="Animus",
+            difficulty=lambda ctx, target: target.animus_difficulty,
+            on_success=[
+                summon(
+                    factory_fn=lambda caster, obj: create_animi_from_object(
+                        caster=caster,
+                        obj=obj,
+                        power=(
+                            caster.get_stat("intelligence") +
+                            caster.skills.get("Animus", 0)
+                        ),
+                    ),
+                    condition=IS_OBJECT,
                 )
-            ),
-            condition=IS_OBJECT,
+            ],
         )
     ]
 
@@ -37,18 +29,19 @@ def animus_execute(caster, targets):
 
 def command_animus_execute(caster, targets):
     return [
-        filtered(
-            skill_check(
-                skill="Command Animus",
-                difficulty=lambda ctx, target: target.roll_willpower(),
-                on_success=(SetControllerEffect(duration="1 command"), 
-                            success_condition(ctx, targets),
-                            condition: lambda ctx, target: (
-                                IS_CONSTRUCT(ctx, target) and NOT_IN_PARTY(ctx.source, target)
+        skill_check(
+            skill="Command Animus",
+            difficulty=lambda ctx, target: target.roll_willpower(),
+            on_success=[
+                control(
+                    duration="1 command",
+                    condition=lambda ctx, target: (
+                        IS_CONSTRUCT(ctx, target)
+                        and NOT_IN_PARTY(ctx.source, target)
                     ),
-                ),
-            ),
-        ),
+                )
+            ],
+        )
     ]
 
 # Creator's Guardians — Passive Aura Buff
@@ -56,15 +49,22 @@ def command_animus_execute(caster, targets):
 def creators_guardians_effects(character):
     return [
         buff(
-            buffed_guardians = scale_fn # this is a hack to get the buff amount applied to the condition
             scale_fn=lambda c: (
-                c.attributes.willpower +
+                c.get_stat("willpower") +
                 c.ability_levels.get("Creator's Guardians", 0)
-                ) // 10,
+            ) // 10,
             stats={
-                "all": scale_fn, # this is a hack to apply the same buff amount to all non-zero attributes
-                # TODO: a non-hacked version of this would need to check each attribute and only apply the buff to non-zero ones
-                },
+                "strength": 1,
+                "constitution": 1,
+                "dexterity": 1,
+                "agility": 1,
+                "intelligence": 1,
+                "wisdom": 1,
+                "willpower": 1,
+                "perception": 1,
+                "charisma": 1,
+                "luck": 1,
+            },
             condition=IS_CONSTRUCT,
         )
     ]
@@ -73,16 +73,22 @@ def creators_guardians_effects(character):
 
 def eye_for_detail_execute(caster, targets):
     return [
-        inspect(
-            reveal_fn=lambda caster, target: {
-                "type": getattr(target, "type", None),
-                "hp": getattr(target, "hp", None),
-                "attributes": getattr(target, "attributes", None),
-                "animus_potential": estimate_animus_value(target),
-            },
-            condition=lambda ctx, target: (
-                IS_CONSTRUCT(ctx, target) or IS_OBJECT(ctx, target)
-            ),
+        skill_check(
+            skill="Eye for Detail",
+            difficulty=lambda ctx, target: target.roll_willpower(),
+            on_success=[
+                inspect(
+                    reveal_fn=lambda caster, target: {
+                        "type": getattr(target, "type", None),
+                        "hp": getattr(target, "hp", None),
+                        "attributes": getattr(target, "attributes", None),
+                        "animus_potential": estimate_animus_value(target),
+                    },
+                    condition=lambda ctx, target: (
+                        IS_CONSTRUCT(ctx, target) or IS_OBJECT(ctx, target)
+                    ),
+                )
+            ],
         )
     ]
 

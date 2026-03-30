@@ -1,8 +1,8 @@
 from domain.character import Character
-from domain.effects import EffectContext
+from domain.effects import EffectContext, Effect
 
 
-def rebuild_attributes(character: Character):
+def rebuild_attributes(character: Character, effects: list):
     """
     Fully rebuild base + additive attributes ONLY.
     No derived stats here.
@@ -31,7 +31,7 @@ def rebuild_attributes(character: Character):
             targets=[character]
         )
 
-    for effect in (character.race.get_effects(race_level)):
+    for effect in character.race.get_effects(race_level):
         effect.apply(context)
 
     # Snapshot base AFTER race

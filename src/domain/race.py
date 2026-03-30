@@ -5,10 +5,7 @@ from typing import List, Optional, Tuple
 from domain.effects.base import Effect
 from domain.effects.stat_effects import StatIncrease, MultiStatIncrease, DerivedStatBonus, DerivedStatOverride
 
-
-# =========================================================
 # CORE RACE MODEL
-# =========================================================
 
 @dataclass(frozen=True)
 class Race:
@@ -40,10 +37,7 @@ class Race:
 
         return effects
 
-
-    # -------------------------
     # DISPLAY
-    # -------------------------
 
     def get_display_name(self) -> str:
         if self.base_race and self.material:
@@ -52,9 +46,7 @@ class Race:
             return f"{self.name} ({self.material.title()})"
         return self.name
 
-    # -------------------------
     # SERIALIZATION
-    # -------------------------
 
     def to_dict(self):
         return {
@@ -67,18 +59,12 @@ class Race:
             "base_race": self.base_race,
         }
 
-
-# =========================================================
 # HELPERS
-# =========================================================
 
 def make_effects(**mods):
     return [StatIncrease(stat, value) for stat, value in mods.items()]
 
-
-# =========================================================
 # RACE DEFINITIONS
-# =========================================================
 
 RACES = {
     "Doll Haunter": Race(
@@ -225,10 +211,7 @@ RACES = {
     ),
 }
 
-
-# =========================================================
 # RESOLUTION
-# =========================================================
 
 def get_all_races():
     return RACES.values()

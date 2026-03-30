@@ -1,10 +1,9 @@
-# domain/calculations/skills.py
-
-def rebuild_skills(character):
-    skills = set()
+def rebuild_skills(character, effects=None):
+    skills = {}
 
     for ability in getattr(character, "abilities", []):
-        if hasattr(ability, "is_skill") and ability.is_skill == True:
-            skills.update(ability.skills)
+        if ability.is_skill:
+            base = skills.get(ability.name, 0)
+            skills[ability.name] = max(base, 1)
 
     character.skills = skills

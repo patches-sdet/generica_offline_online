@@ -1,11 +1,7 @@
 from dataclasses import dataclass
-
 from .base import Effect, EffectContext
 
-
-# -------------------------
 # BASE RESOURCE EFFECT
-# -------------------------
 
 @dataclass
 class ResourceEffect(Effect):
@@ -23,10 +19,7 @@ class ResourceEffect(Effect):
             "amount": self.amount,
         }
 
-
-# -------------------------
 # HEAL (POSITIVE GAIN)
-# -------------------------
 
 @dataclass
 class Heal(ResourceEffect):
@@ -45,10 +38,7 @@ class Heal(ResourceEffect):
             "amount": self.amount,
         }
 
-
-# -------------------------
 # DAMAGE (NEGATIVE HP)
-# -------------------------
 
 @dataclass
 class Damage(ResourceEffect):
@@ -67,10 +57,7 @@ class Damage(ResourceEffect):
             "amount": self.amount,
         }
 
-
-# -------------------------
 # SPEND RESOURCE (COST)
-# -------------------------
 
 @dataclass
 class SpendResource(ResourceEffect):

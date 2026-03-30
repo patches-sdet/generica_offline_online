@@ -8,6 +8,7 @@ from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob, get_all_professions
 
 from domain.calculations import calculate_pools, recalculate
+from domain.calculations.abilities import rebuild_abilities
 
 from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
 from domain.effects.special.damage import ConvertDamageEffect, BonusDamageEffect  # future-safe
@@ -15,9 +16,7 @@ from domain.effects.special.state import ApplyStateEffect
 from domain.effects.special.tag import ApplyTagEffect
 from domain.effects.base import Effect
 
-# =========================================================
 # ROLLING
-# =========================================================
 
 def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
@@ -32,10 +31,7 @@ def roll_attributes() -> list[Effect]:
 
     return effects
 
-
-# =========================================================
 # MATERIAL SYSTEM
-# =========================================================
 
 # DerivedStatOverride
 from domain.effects import DerivedStatOverride
@@ -67,18 +63,12 @@ def apply_material_to_race(race: Race, base_race: Race, material: str) -> Race:
         base_race=base_race.name,
     )
 
-
-# =========================================================
 # PROFESSION HELPERS
-# =========================================================
 
 def list_professions():
     return get_all_professions()
 
-
-# =========================================================
 # CORE CREATION
-# =========================================================
 
 def create_character(
     name: str,
@@ -89,9 +79,7 @@ def create_character(
     material: str | None = None,
 ) -> Character:
 
-    # -------------------------
     # MATERIAL HANDLING
-    # -------------------------
 
     if race.requires_material:
         if base_race is None or material is None:
@@ -105,9 +93,7 @@ def create_character(
         if base_race or material:
             raise ValueError(f"{race.name} does not support material")
 
-    # -------------------------
     # VALIDATION
-    # -------------------------
 
     if len(jobs) > race.max_adventure_jobs:
         raise ValueError(f"{race.name} allows only {race.max_adventure_jobs} jobs")
@@ -115,22 +101,16 @@ def create_character(
     if len(professions) > race.max_profession_jobs:
         raise ValueError(f"{race.name} allows only {race.max_profession_jobs} professions")
 
-    # -------------------------
     # LEVEL STRUCTURES
-    # -------------------------
 
     adventure_levels = {job.name: 1 for job in jobs}
     profession_levels = {prof.name: 1 for prof in professions}
 
-    # -------------------------
     # ATTRIBUTE EFFECTS
-    # -------------------------
 
     attribute_effects = roll_attributes()
 
-    # -------------------------
     # CHARACTER INIT
-    # -------------------------
 
     character = Character(
         name=name,
@@ -143,9 +123,7 @@ def create_character(
         profession_levels=profession_levels,
     )
 
-    # -------------------------
     # NEW: RUNTIME SYSTEM INIT
-    # -------------------------
 
     character.states = {}
     character.tags = set()
@@ -158,22 +136,14 @@ def create_character(
 
     character.inventory = []
 
-    # -------------------------
     # APPLY ATTRIBUTE EFFECTS
-    # -------------------------
 
     character.attribute_effects = attribute_effects
 
-    # -------------------------
     # FULL REBUILD
-    # -------------------------
 
     recalculate(character)
-
-    # -------------------------
-    # RESOURCE INITIALIZATION
-    # -------------------------
-
+    
     pools = calculate_pools(character)
 
     character.current_hp = pools.hp[1]

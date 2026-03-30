@@ -1,71 +1,86 @@
-from domain.attributes import ATTRIBUTE_NAMES
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    buff,
-    convert_damage,
-    damage,
-    skill_check    
-)
-
-from domain.conditions import (
-    IS_ENEMY,
-    HAS_STATE,
-)
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import apply_state, buff, convert_damage, damage, debuff, on_event, skill_check
+from domain.conditions import IS_ENEMY
+from domain.effects.special.roll import RollModifierEffect
 
 # Passive — Power From Pain
 
 def power_from_pain_effects(character):
     return [
-        buff(
-            scale_fn=lambda c: c.get_adventure_level_by_name("Berserker"), # need to base this on increments of current hp being 10 below max
-            stats={"strength": 1},
+        on_event(
+            event_name="hp_lost",
+            effect=buff(
+                scale_fn=lambda c: 1,
+                stats={"strength": 1},
+                duration="5 minutes",
+            ),
+            condition=lambda ctx: ctx.amount >= 10,
         )
     ]
 
 # Buffs / Debuffs
 
 def rage_execute(character):
-    return [
-            buff(
-                scale_fn=lambda c: c.skills.get("Rage", 0),
-                stats={
-                    "perception": -scale_fn=lambda c: c.get_adventure_level_by_name("Berserker"), #this isn't going to work
-                    "perception": -1, #add Berserker level to all other rolls!
-                },
-            ),
-        ]
+    effects = []
+
+    # Perception penalty
+    effects.extend(
+        debuff(
+            scale_fn=lambda c: c.get_adventure_level_by_name("Berserker"),
+            stats={
+                "perception": -1,
+            },
+        )
+    )
+    # Roll bonus
+    effects.append(
+    RollModifierEffect(
+        scale_fn=lambda c: c.get_adventure_level_by_name("Berserker"),
+        source_tag="rage",
+    )
+)
+
+    return effects
 
 
 def furious_strike_execute(caster, targets):
     return [
-            damage(
-                scale_fn=lambda c: c.skills.get("Furious Strike", 0),
-                scale_fn=lambda c: c.get_adventure_level_by_name("Berserker", 1),
-                stats={
-                    "damage": # this needs to be the sum of the skill and Berserker level and this will need to map to a derived stat
-                condition=IS_ENEMY,
-                },
+        damage(
+            scale_fn=lambda c: (
+                c.skills.get("Furious Strike", 0)
+                + c.get_adventure_level_by_name("Berserker")
             ),
+            condition=IS_ENEMY,
+        ),
     ]
 
 
-def headbutt_execute(caster, targets): # spend HP to deal HP and stun
+def headbutt_execute(caster, targets):
     return [
-            damage(
-                scale_fn=lambda c: c.skills.get("Headbutt", 0),
-                condition=HAS_STATE(stunned),
-            ),
+        damage(
+            scale_fn=lambda c: c.skills.get("Headbutt", 0),
+            condition=IS_ENEMY,
+        ),
+            skill_check(
+            skill="Headbutt",
+            difficulty=lambda ctx, target: target.roll_willpower(),
+            on_success=apply_state("stunned"),
+            condition=IS_ENEMY,
+        ),
     ]
 
 def growl_execute(caster, targets):
     return [
-        skill_check(skill="growl",
-                    stat="charisma",
-                    difficulty=lambda ctx, target: target.roll_willpower(),
-                    on_success=convert_damage(from_pool="hp", to_pool="moxie",  # difference between success roll and enemies willpower
-                    condition=IS_ENEMY),
-                    ),
-            ]
+        skill_check(
+            skill="Growl",
+            difficulty=lambda ctx, target: target.roll_willpower(),
+            on_success=convert_damage(
+                from_pool="hp",
+                to_pool="moxie",
+                condition=IS_ENEMY,
+            ),
+        ),
+    ]
 
 # Active Skills / Attacks
 

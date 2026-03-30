@@ -1,18 +1,7 @@
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    buff,
-    inspect,
-    skill_check,
-    conditional_damage,
-    action_override,
-    apply_state,
-)
-
-from domain.conditions import (
-    IS_SURPRISED,
-    IS_HELPLESS,
-    IS_ENEMY,
-)
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import buff, inspect, skill_check, conditional_damage, action_override, apply_state
+from domain.conditions.state import IS_SURPRISED, IS_HELPLESS
+from domain.conditions.combat import IS_ENEMY
 
 # Backstab — Conditional Bonus Damage
 
@@ -20,6 +9,7 @@ def backstab_execute(caster, targets):
     return [
         conditional_damage(
             scale_fn=lambda c: c.skills.get("Backstab", 0),
+            #applies_to="attack", once combat resolution is implemented
             condition=lambda ctx, target: (
                 IS_SURPRISED(ctx, target) or IS_HELPLESS(ctx, target)
             ),
@@ -32,15 +22,16 @@ def cold_read_execute(caster, targets):
     return [
         skill_check(
             skill="Cold Read",
-            stat="perception",
             difficulty=lambda ctx, target: target.roll_charisma(),
-            on_success=inspect(
-                reveal_fn=lambda caster, target: {
-                    "relative_power": compare_total_levels(caster, target),
-                    "vulnerabilities": get_vulnerabilities(target),
-                }
-            ),
-        )
+            on_success=[
+                inspect(
+                    reveal_fn=lambda caster, target: {
+                        "relative_power": compare_total_levels(caster, target),
+                        "vulnerabilities": get_vulnerabilities(target),
+                    }
+                ),
+            ],
+        ),
     ]
 
 # Fast as Death — Speed/Initiative Buff
@@ -48,10 +39,9 @@ def cold_read_execute(caster, targets):
 def fast_as_death_execute(caster, targets):
     return [
         buff(
-            scale_fn=lambda c: 50,  # flat bonus
             stats={
-                "initiative": 1,
-                "movement": 1,
+                "initiative": 50,
+                "movement": 50,
             },
         )
     ]
@@ -73,7 +63,10 @@ def unobtrusive_effects(character):
             scale_fn=lambda c: c.skills.get("Unobtrusive", 0),
             stats={"charisma": 1},
         ),
-        apply_state("low_profile"),
+        apply_state(
+            "low_profile",
+            target="self",
+        ),
     ]
 
 # Registration

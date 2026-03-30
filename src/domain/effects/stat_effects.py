@@ -11,7 +11,7 @@ class StatIncrease(Effect):
 
     def apply(self, context):
         for target in context.targets:
-            target.add_stat(self.stat, self.amount)
+            target.add_stat(self.stat, self.amount, source=context.source)
 
 @dataclass
 class MultiStatIncrease(Effect):
@@ -25,7 +25,7 @@ class MultiStatIncrease(Effect):
     def apply(self, context):
         for target in context.targets:
             for stat, value in self.stats.items():
-                target.add_stat(stat, value * self.scale)
+                target.add_stat(stat, value * self.scale, source=context.source)
 
 @dataclass
 class DerivedStatBonus(Effect):

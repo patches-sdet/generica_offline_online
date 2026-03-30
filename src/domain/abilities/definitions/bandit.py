@@ -1,4 +1,4 @@
-from domain.abilities import make_ability
+from domain.abilities.factory import make_ability
 from domain.abilities.patterns import (
     buff,
     skill_check,
@@ -9,9 +9,7 @@ from domain.abilities.patterns import (
     convert_damage,
 )
 
-from domain.conditions import (
-    IS_ALLY,
-)
+from domain.conditions import IS_ALLY
 
 # Ambush — Group Attack Buff
 
@@ -19,11 +17,11 @@ def ambush_execute(caster, targets):
     return [
         skill_check(
             skill="Ambush",
-            stat="stealth",
-            difficulty=50,  # or environment-based later
+            #precondition=lambda ctx, target: target.is_stealthed, GM should verify this
+            difficulty=50,
             on_success=buff(
                 scale_fn=lambda c: c.skills.get("Ambush", 0),
-                stats={"attack": {c.skills.get("Ambush", 0)}},
+                stats={"attack": 1},
                 condition=lambda ctx, target: (
                     IS_ALLY(ctx, target) or tagged("bastard")(ctx, target)
                 ),
@@ -38,7 +36,7 @@ def band_of_bastards_execute(caster, targets):
         apply_tag("bastard"),
         buff(
             scale_fn=lambda c: c.skills.get("Band O' Bastards", 0),
-            stats={"hp": {caster.skills.get("Band O' Bastards", 0)}},
+            stats={"hp": 1},
             condition=tagged("bastard"),
         ),
     ]
@@ -53,7 +51,7 @@ def keep_the_boys_effects(character):
                 skill="Keep the Boys in Line",
                 stat="strength",
                 difficulty=lambda ctx, target: target.roll_willpower(),
-                on_failure=convert_damage("moxie", "moxie"),  # damage applied directly
+                on_failure=convert_damage("moxie", "moxie"),
             ),
             condition=tagged("bastard"),
         )

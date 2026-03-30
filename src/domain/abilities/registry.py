@@ -1,5 +1,4 @@
 from typing import Dict, List
-
 from .factory import Ability
 
 _ABILITY_REGISTRY: Dict[str, Ability] = {}
@@ -12,7 +11,6 @@ def register_ability(ability: Ability):
                                                                         # or a non-skill active ability, and if the new ability is not a skill, 
                                                                         # then it should just ignore it
     _ABILITY_REGISTRY[ability.name] = ability
-
 
 def get_ability(name: str) -> Ability:
     return _ABILITY_REGISTRY[name]

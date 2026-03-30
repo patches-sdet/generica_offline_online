@@ -1,4 +1,4 @@
-from domain.abilities import make_ability
+from domain.abilities.factory import make_ability
 from domain.abilities.patterns import modify_next_attack, extra_attacks, passive_modifier, action_override
 
 # Aim — Buff Next Attack Accuracy
@@ -8,7 +8,7 @@ def aim_execute(caster, targets):
         modify_next_attack(
             lambda attack: attack.add_bonus(
                 "accuracy",
-                caster.skills.get("Aim", 0)
+                ctx.source.skills.get("Aim", 0)
             )
         )
     ]
@@ -20,7 +20,7 @@ def missile_mastery_effects(character):
         passive_modifier(
             lambda ctx: ctx.modify_attack_skill(
                 replacement=lambda original, character: (
-                    max(character.ranged_skills.values()) // 2
+                    max(getattr(character, "ranged_skills", {}).values(), default=0) // 2
                 )
             )
         )
@@ -47,8 +47,8 @@ def rapid_fire_execute(caster, targets):
 def ricochet_execute(caster, targets):
     return [
         modify_next_attack(
-            lambda attack: attack.reduce_penalty(
-                caster.skills.get("Ricochet Shot", 0)
+            lambda ctx, attack: attack.reduce_penalty(
+                ctx.source.skills.get("Ricochet Shot", 0)
             )
         )
     ]

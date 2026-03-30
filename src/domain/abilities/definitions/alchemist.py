@@ -1,16 +1,6 @@
-from abilities import make_ability
-from patterns import (
-    create_item,
-    damage,
-    inspect,
-    on_success,
-    skill_check,
-)
-
-from domain.conditions import (
-    IS_ENEMY,
-    IS_MATERIAL,
-)
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import create_item, damage, inspect, skill_check
+from domain.conditions import IS_ENEMY
 
 # Analyze — Inspect / Learn Properties
 
@@ -18,14 +8,16 @@ def analyze_execute(caster, targets):
     return [
         skill_check(
             skill="Analyze",
-            difficulty=lambda ctr, target: target.difficulty,
-            on_success=inspect(
+            difficulty=lambda ctx, target: target.difficulty,
+            on_success=[
+                inspect(
                 reveal_fn=lambda caster, target:{
-                "properties": getattr(target, "properties", None),
-                "rarity": getattr(target, "rarity", None),
-                "alchemy_value": estimate_alchemy_value(target),
-                },
-            ),
+                    "properties": getattr(target, "properties", None),
+                    "rarity": getattr(target, "rarity", None),
+                    "alchemy_value": estimate_alchemy_value(target),
+                    },
+                ),
+            ]     
         ),
     ]
 
@@ -49,28 +41,28 @@ def distill_execute(caster, targets):
         skill_check(
             skill="Distill",
             difficulty=lambda ctx, target: target.difficulty,
-            on_success=create_item(
+            on_success=[create_item(
                 factory_fn=lambda caster, target: create_distilled_material(
                     caster, target
-                )
-            ),
-        )
+                    )
+                ),
+            ],
+        ),
     ]
 
 # Healing Potion — Craft Healing Items
 
 def healing_potion_execute(caster, targets):
     return [
-        on_success(
-            success_condition=lambda ctx, target: (
-                ctx.source.roll_intelligence("Healing Potion") >= 100
-            ),
-            effect=create_item(
+        skill_check(
+            skill="Healing Potion",
+            difficulty=lambda ctx, target: 100, # base diffictuly
+            on_success=[create_item(
                 factory_fn=lambda caster, target: create_healing_potion(
                     caster=caster,
                     tier=determine_potion_tier(caster, "Healing Potion")
                 )
-            ),
+            )],
         )
     ]
 
@@ -78,16 +70,15 @@ def healing_potion_execute(caster, targets):
 
 def mana_potion_execute(caster, targets):
     return [
-        on_success(
-            success_condition=lambda ctx, target: (
-                ctx.source.roll_intelligence("Mana Potion") >= 100
-            ),
-            effect=create_item(
+        skill_check(
+            skill="Mana Potion",
+            difficulty=lambda ctx, target: 100, # base diffictuly
+            on_success=[create_item(
                 factory_fn=lambda caster, target: create_mana_potion(
                     caster=caster,
                     tier=determine_potion_tier(caster, "Mana Potion")
                 )
-            ),
+            )],
         )
     ]
 

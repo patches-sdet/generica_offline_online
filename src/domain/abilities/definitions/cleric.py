@@ -1,73 +1,54 @@
-from domain.abilities import make_ability
+from domain.abilities.factory import make_ability
 from domain.effects import StatIncrease
-from domain.abilities.patterns import (
-    buff,
-    heal,
-    scaled_stat_buff,    
-)
+from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.conditions import IS_ALLY#, IS_ENEMY # leave this here for the damaging version of Lesser Healing, which is still being worked on
+from domain.effects.stat_effects import DerivedStatBonus
 
-from domain.conditions import (
-    IS_ALLY,
-    IS_ENEMY, # leave this here for the damaging version of Lesser Healing, which is still being worked on
-)
-
-def blessing_execute(character):
+def blessing_execute(caster, targets):
     return [
-        scaled_stat_buff(
-            scale_fn=lambda c: c.get_adventure_level_by_name("Cleric"),
-            stats={"any": 1},
+        buff(
+            scale_fn=lambda c: c.pools.get("fortune", 0),
+            stats={"any": 1},  # placeholder until stat selection system exists
             condition=IS_ALLY,
-            effect_cls=StatIncrease,
-            scale_fn=lambda c: c.pools.spend("fortune", 0),
-            stats={"any": lambda c: c.pools.get("fortune", 0)},
-    # this needs to be implemented in a way that allows the player to choose which stat to apply it to when they use the skill,
-    # and then that choice needs to be stored in the buff so it can be applied correctly,
-    # AND it needs to be scaled by the amount of Fortune spent, which is also chosen at the time of use and needs to be stored in the buff
         )
     ]
 
-def faith_effects(caster, targets):
+def faith_effects(character):
     return [
-        buff(
+        scaled_derived_buff(
+            stat="fate",
             scale_fn=lambda c: c.get_adventure_level_by_name("Cleric", 0),
-            stats={
-                "fate": lambda c: c.get_adventure_level_by_name("Cleric", 0),
-            },
         )
     ]
 
-def holy_smite_execute(character):
+def holy_smite_execute(caster, targets):
     return [
         buff(
-            scale_fn=lambda c: c.ability_levels.get("Holy Smite", 0), 
-                 stats={
-                     "damage": lambda c: c.ability_levels.get("Holy Smite", 0),
-                 })
+            scale_fn=lambda c: c.skills.get("Holy Smite", 0),
+            stats={"damage": 1},
+        )
     ]
 
 
-def lesser_healing_execute(caster, targets): 
+def lesser_healing_execute(caster, targets):
     return [
-            heal(
-                scale_fn=lambda c: (
-                    caster.get_adventure_level_by_name("Cleric", 0) +
-                    caster.skills.get("Lesser Healing", 0),
-                ), // 2,
-                condition=IS_ALLY,
-                target=targets[0], # this needs to be implemented in a way that allows the player to choose the target when they use the skill, and then that target needs to be stored in the heal effect so it can be applied correctly
-            ),
+        heal(
+            scale_fn=lambda c: (
+                c.get_adventure_level_by_name("Cleric", 0)
+                + c.skills.get("Lesser Healing", 0)
+            ) // 2,
+            condition=IS_ALLY,
+        )
     ]
 
 
 def divinity_shield_execute(caster, targets):
     return [
-            buff(
-                scale_fn=lambda c: caster.skills.get("Shield of Divinity", 0),
-                stats={
-                    "armor": lambda c: caster.skills.get("Shield of Divinity", 0),
-                },
-                    target=targets[0], # this needs to be implemented in a way that allows the player to choose the target when they use the skill, and then that target needs to be stored in the buff so it can be applied correctly
-            )
+        buff(
+            scale_fn=lambda c: c.skills.get("Shield of Divinity", 0),
+            stats={"armor": 1},
+            condition=IS_ALLY,
+        )
     ]
 
 # Registration
@@ -77,7 +58,7 @@ def register():
     # Blessing
 
     make_ability(
-        name="Case the Joint",
+        name="Blessing",
         unlock_condition=lambda c: (
             c.has_adventure_job("Cleric")
             and c.get_adventure_level_by_name("Cleric") >= 1
@@ -116,7 +97,7 @@ def register():
             c.has_adventure_job("Cleric")
             and c.get_adventure_level_by_name("Cleric") >= 1
         ),
-        effect_generator=godspell_effects,
+        #effect_generator=godspell_effects,
         description="You can access to your chosen deity's Godspell, which is a unique ability that can only be used by Clerics of that deity. Each Godspell is unique and acts as its own skill. It may or may not be a Spell.",
         is_passive=True,
         is_skill=False,

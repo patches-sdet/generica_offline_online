@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, TYPE_CHECKING, DefaultDict, Any
 from collections import defaultdict
 
-from domain.attributes import Attributes
+from domain.attributes import Attributes, Defenses
 from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob
@@ -31,6 +31,7 @@ class Character:
     # CORE STATS
 
     attributes: Attributes = field(default_factory=Attributes)
+    defenses: Defenses = field(default=None)
     attribute_effects: list[Effect] = field(default_factory=list)
 
     # Snapshot (for debug/diff)
@@ -49,6 +50,7 @@ class Character:
     event_listeners: list[Any] = field(default_factory=list)
 
     # Combat modifiers
+    roll_modifiers: list[Any] = field(default_factory=list)
     next_attack_modifiers: list[Any] = field(default_factory=list)
     extra_attacks: int = 0
     bonus_damage: int = 0
@@ -75,7 +77,7 @@ class Character:
 
     # DERIVED STAT TRACKING
 
-    _derived_bonuses: dict = field(default_factory=dict, init=False)
+    _derived_bonuses: defaultdict[str, int] = field(default_factory=lambda: defaultdict(int), init=False)
     _derived_overrides: dict = field(default_factory=dict, init=False)
 
     # ATTRIBUTE API
@@ -137,11 +139,11 @@ class Character:
     def has_adventure_job(self, job_name: str) -> bool:
         return any(job.name == job_name for job in self.adventure_jobs)
 
-    def get_adventure_level_by_name(self, job_name: str) -> int:
-        return self.adventure_levels.get(job_name, 0)
+    def get_adventure_level_by_name(self, job_name: AdventureJob) -> int:
+        return self.adventure_levels.get(job_name, 1)
 
-    def get_profession_level_by_name(self, job_name: str) -> int:
-        return self.profession_levels.get(job_name, 0)
+    def get_profession_level_by_name(self, job_name: ProfessionJob) -> int:
+        return self.profession_levels.get(job_name, 1)
 
     # SERIALIZATION (FIXED)
 

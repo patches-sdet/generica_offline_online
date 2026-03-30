@@ -1,18 +1,6 @@
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    buff,
-    conditional_effect,
-    inspect,
-
-    
-)
-
-from domain.conditions import (
-    IS_ALLY,
-    IS_ENEMY,
-)
-
-# Passive — Just That Cool
+from domain.abilities.factory import make_ability
+from domain.abilities.patterns import buff, inspect, skill_check
+from domain.effects.special.roll import RollModifierEffect
 
 def case_the_joint_execute(character):
     return [
@@ -22,52 +10,38 @@ def case_the_joint_execute(character):
         )
     ]
 
-# Songs (Auras)
-
 def find_trap_execute(caster, targets):
     return [
-        inspect(
-            scale_fn=lambda c: c.skills.get("Find Trap", 0),
-            stats={
-                "perception": {caster.skills.get("Find Trap", 0)},  # this needs to be a roll that can be compared to trap difficulties
-            },
+        skill_check(
+            skill="Find Trap",
+            difficulty=lambda ctx, target: target.trap_difficulty,
+            on_success=[],
         )
     ]
 
 def locksmith_effects(character):
     return [
-        buff(
-            scale_fn=lambda c: 
-                 c.ability_levels.get("Locksmith", 0), 
-                 stats={
-                     skill_check_bonus: (scale_fn: lambda c: c.ability_levels.get("Locksmith", 0)) {character.skills.get("Lockpicking", 0): {character.ability_levels.get("Locksmith", 0)}}})]
-
+        RollModifierEffect(
+            scale_fn=lambda c: c.ability_levels.get("Locksmith", 0),
+            source_tag="locksmith",
+        )
+    ]
 
 def lootbag_execute(caster, targets): # this is going to be really tricky to implement in a way that works with the inventory system, 
     # so for now this is just a placeholder that applies a buff to the character that would need to be checked when they try to pick up or interact with items
     return [
             buff(
                 scale_fn=lambda c: c.skills.get("Lootbag", 0),
-                stats={
-                    "strength": 1,
-                },
-                target=caster,
+                stats={"strength": 1,},
             ),
     ]
 
-
 def stealthy_step_execute(caster, targets):
     return [
-            conditional_effect(
-                scale_fn=lambda c: c.skills.get("Stealthy Step", 0),
-                effect=buff(
-                    stats={
-                        "stealth": {caster.skills.get("Stealthy Step", 0)}, # this needs to be applied to all stealth checks, not just a single stat
-                    },
-                    target=caster,
-                ),
-                condition=IS_ALLY,
-            ),
+            RollModifierEffect(
+                scale_fn=lambda c: c.ability_levels.get("Stealthy Step", 0),
+                source_tag="stealthy_step",
+        )
     ]
 
 # Registration
@@ -131,7 +105,6 @@ def register():
         cost=10,
         cost_pool="fortune",
         duration="1 Hour",
-        duration="Passive Constant",
         description="You can temporarily enchant a bag or sack to carry one item or set of identical items per skill level, regardless of weight or size. The item(s) must be able to fit through the bag's opening. If the bag is destroyed, the item(s) are dropped in the bag's location.",
         is_passive=False,
         is_skill=True,
