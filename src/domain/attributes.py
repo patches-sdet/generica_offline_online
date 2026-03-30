@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Tuple
 
-# =========================================================
 # BASE ATTRIBUTE DEFINITIONS
-# =========================================================
 
 DEFAULT_STATS: Dict[str, int] = {
     "strength": 25,
@@ -20,10 +18,7 @@ DEFAULT_STATS: Dict[str, int] = {
 
 ATTRIBUTE_NAMES = list(DEFAULT_STATS.keys())
 
-
-# =========================================================
 # ATTRIBUTES CONTAINER (DYNAMIC)
-# =========================================================
 
 @dataclass
 class Attributes:
@@ -38,9 +33,7 @@ class Attributes:
         for stat, base in DEFAULT_STATS.items():
             self.values.setdefault(stat, base)
 
-    # -------------------------
     # CORE INTERFACE
-    # -------------------------
 
     def add(self, stat: str, amount: int):
         self.values[stat] = self.values.get(stat, 0) + amount
@@ -51,17 +44,12 @@ class Attributes:
     def get(self, stat: str) -> int:
         return self.values.get(stat, 0)
 
-    # -------------------------
     # DEBUG / DISPLAY
-    # -------------------------
 
     def to_dict(self):
         return dict(self.values)
-
-
-# =========================================================
+    
 # DERIVED STAT FORMULAS
-# =========================================================
 
 STAT_FORMULAS = {
     "hp": lambda a: a.get("strength") + a.get("constitution"),
@@ -71,10 +59,7 @@ STAT_FORMULAS = {
     "fortune": lambda a: a.get("perception") + a.get("luck"),
 }
 
-
-# =========================================================
 # RESOURCE POOLS
-# =========================================================
 
 @dataclass
 class Pools:
@@ -87,10 +72,7 @@ class Pools:
     def to_dict(self):
         return vars(self)
 
-
-# =========================================================
 # DEFENSES
-# =========================================================
 
 @dataclass
 class Defenses:

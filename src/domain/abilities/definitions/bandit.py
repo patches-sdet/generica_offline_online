@@ -13,9 +13,7 @@ from domain.conditions import (
     IS_ALLY,
 )
 
-# =========================================================
-# Ambush — Group Attack Buff (Conditional)
-# =========================================================
+# Ambush — Group Attack Buff
 
 def ambush_execute(caster, targets):
     return [
@@ -25,7 +23,7 @@ def ambush_execute(caster, targets):
             difficulty=50,  # or environment-based later
             on_success=buff(
                 scale_fn=lambda c: c.skills.get("Ambush", 0),
-                stats={"attack": 1},
+                stats={"attack": {c.skills.get("Ambush", 0)}},
                 condition=lambda ctx, target: (
                     IS_ALLY(ctx, target) or tagged("bastard")(ctx, target)
                 ),
@@ -33,25 +31,19 @@ def ambush_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
-# Band O' Bastards — Tag + Buff
-# =========================================================
+# Band O' Bastards
 
 def band_of_bastards_execute(caster, targets):
     return [
         apply_tag("bastard"),
         buff(
             scale_fn=lambda c: c.skills.get("Band O' Bastards", 0),
-            stats={"hp": 1},
+            stats={"hp": {caster.skills.get("Band O' Bastards", 0)}},
             condition=tagged("bastard"),
         ),
     ]
 
-
-# =========================================================
 # Keep the Boys in Line — Reactive Punishment
-# =========================================================
 
 def keep_the_boys_effects(character):
     return [
@@ -67,10 +59,7 @@ def keep_the_boys_effects(character):
         )
     ]
 
-
-# =========================================================
 # Lay of the Land — Environmental Analysis
-# =========================================================
 
 def lay_of_the_land_execute(caster, targets):
     return [
@@ -87,20 +76,14 @@ def lay_of_the_land_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Subdue — Damage Conversion
-# =========================================================
 
 def subdue_execute(caster, targets):
     return [
         convert_damage("hp", "stamina")
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 
@@ -114,7 +97,7 @@ def register():
         cost=10,
         cost_pool="stamina",
         duration="1 turn",
-        description="This skill allows an Assassin to blend in with a crowd, reducing the chance that their motives or presence will be questioned, or possibly even being noticed. This provides a bonus equalt to its level to Charisma when applicable.\n     After a successful stealth roll, the Bandit may call an Ambush, and every 'Bastard' or party member gains a bonus to their attack roll equal to the level of this skill.\n     This is a buff.",
+        description="After a successful stealth roll, the Bandit may call an Ambush, and every 'Bastard' or party member gains a bonus to their attack roll equal to the level of this skill.\n     This is a buff.",
         is_passive=False,
         is_skill=True,
     )
@@ -129,7 +112,7 @@ def register():
         cost=10,
         cost_pool="sanity",
         duration="1 day",
-        description="The Bandit may choose any number of creatures to become a part of his Band O' Bastards. If the creatures chosen have a job level higher than the Bandit, they cannot benefit from this skill. Bastards gain a buff to their Hit Points equal to thelevel of this skill.\n     Being a Bastard also allows other Bandit buffs to apply.",
+        description="The Bandit may choose any number of creatures to become a part of his Band O' Bastards. If the creatures chosen have a job level higher than the Bandit, they cannot benefit from this skill. Bastards gain a buff to their Hit Points equal to the level of this skill.\n     Being a Bastard also allows other Bandit buffs to apply.",
         is_passive=False,
         is_skill=True,
     )

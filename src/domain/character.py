@@ -6,7 +6,7 @@ from domain.attributes import Attributes
 from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob
-from domain.effects.base import Effect
+from domain.effects.base import Effect, EffectContext
 
 if TYPE_CHECKING:
     from domain.abilities.factory import Ability
@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 class Character:
     name: str
 
-    # =========================================================
     # IDENTITY
-    # =========================================================
 
     race: Race
     race_levels: dict[str, int] = field(default_factory=dict)
@@ -30,9 +28,7 @@ class Character:
     profession_jobs: list[ProfessionJob] = field(default_factory=list)
     profession_levels: dict[str, int] = field(default_factory=dict)
 
-    # =========================================================
     # CORE STATS
-    # =========================================================
 
     attributes: Attributes = field(default_factory=Attributes)
     attribute_effects: list[Effect] = field(default_factory=list)
@@ -40,15 +36,13 @@ class Character:
     # Snapshot (for debug/diff)
     _base_attributes: dict = field(default_factory=dict, init=False)
 
-    # Source tracking (your original feature ✅ preserved)
+    # Source tracking (your original feature preserved)
     _attribute_sources: DefaultDict[str, DefaultDict[str, int]] = field(
         default_factory=lambda: defaultdict(lambda: defaultdict(int)),
         init=False
     )
 
-    # =========================================================
-    # RUNTIME SYSTEMS (NEW)
-    # =========================================================
+    # RUNTIME SYSTEMS
 
     states: dict[str, Any] = field(default_factory=dict)
     tags: set = field(default_factory=set)
@@ -63,9 +57,7 @@ class Character:
     # Inventory
     inventory: list[Any] = field(default_factory=list)
 
-    # =========================================================
     # RESOURCES
-    # =========================================================
 
     current_hp: int = 0
     current_sanity: int = 0
@@ -73,9 +65,7 @@ class Character:
     current_moxie: int = 0
     current_fortune: int = 0
 
-    # =========================================================
     # SKILLS & ABILITIES
-    # =========================================================
 
     skills: dict[str, int] = field(default_factory=dict)
 
@@ -83,16 +73,12 @@ class Character:
     abilities: List["Ability"] = field(default_factory=list)
     ability_levels: dict[str, int] = field(default_factory=dict)
 
-    # =========================================================
     # DERIVED STAT TRACKING
-    # =========================================================
 
     _derived_bonuses: dict = field(default_factory=dict, init=False)
     _derived_overrides: dict = field(default_factory=dict, init=False)
 
-    # =========================================================
     # ATTRIBUTE API
-    # =========================================================
 
     def add_stat(self, stat: str, value: int, source: str | None = None):
         self.attributes.add(stat, value)
@@ -106,9 +92,7 @@ class Character:
     def get_stat(self, stat: str) -> int:
         return self.attributes.get(stat)
 
-    # =========================================================
     # RESOURCE API
-    # =========================================================
 
     def modify_resource(self, pool: str, amount: int) -> bool:
         attr = f"current_{pool}"
@@ -142,9 +126,7 @@ class Character:
 
         return self.modify_resource(pool, -amount)
 
-    # =========================================================
     # HELPERS
-    # =========================================================
 
     def get_skill(self, name: str) -> int:
         return self.skills.get(name, 0)
@@ -161,9 +143,7 @@ class Character:
     def get_profession_level_by_name(self, job_name: str) -> int:
         return self.profession_levels.get(job_name, 0)
 
-    # =========================================================
     # SERIALIZATION (FIXED)
-    # =========================================================
 
     def to_dict(self):
         return {

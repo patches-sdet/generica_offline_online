@@ -1,15 +1,7 @@
 from domain.abilities import make_ability
-from domain.abilities.patterns import (
-    buff,
-    modify_next_attack,
-    extra_attacks,
-    passive_modifier,
-    action_override,
-)
+from domain.abilities.patterns import modify_next_attack, extra_attacks, passive_modifier, action_override
 
-# =========================================================
 # Aim — Buff Next Attack Accuracy
-# =========================================================
 
 def aim_execute(caster, targets):
     return [
@@ -21,10 +13,7 @@ def aim_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Missile Mastery — Passive Skill Substitution
-# =========================================================
 
 def missile_mastery_effects(character):
     return [
@@ -37,10 +26,7 @@ def missile_mastery_effects(character):
         )
     ]
 
-
-# =========================================================
 # Quickdraw — Action Economy Override
-# =========================================================
 
 def quickdraw_execute(caster, targets):
     return [
@@ -49,20 +35,14 @@ def quickdraw_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Rapid Fire — Extra Attacks
-# =========================================================
 
 def rapid_fire_execute(caster, targets):
     return [
         extra_attacks(1)  # +1 attack (total = 2)
     ]
 
-
-# =========================================================
 # Ricochet Shot — Ignore Penalties
-# =========================================================
 
 def ricochet_execute(caster, targets):
     return [
@@ -73,10 +53,7 @@ def ricochet_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 

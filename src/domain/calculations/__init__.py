@@ -14,9 +14,7 @@ def recalculate(character):
     if character._base_attributes is None:
         raise ValueError(f"{character.name} has no base attributes initialized")
 
-    # -------------------------
     # RESET STATE
-    # -------------------------
 
     reset_derived(character)
     character.skills.clear()
@@ -30,9 +28,7 @@ def recalculate(character):
     rebuild_skills(character)
     reset_derived(character)
 
-    # -------------------------
     # PASSIVES
-    # -------------------------
 
     from domain.effects import EffectContext
 

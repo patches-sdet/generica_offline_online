@@ -16,9 +16,7 @@ from domain.conditions import (
     NOT_IN_PARTY,
 )
 
-# =========================================================
 # Animus — Summon / Create Animi
-# =========================================================
 
 def animus_execute(caster, targets):
     return [
@@ -35,10 +33,7 @@ def animus_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Command Animus — Control External Construct
-# =========================================================
 
 def command_animus_execute(caster, targets):
     return [
@@ -46,40 +41,35 @@ def command_animus_execute(caster, targets):
             skill_check(
                 skill="Command Animus",
                 difficulty=lambda ctx, target: target.roll_willpower(),
-                on_success=SetControllerEffect(duration="1 command"),
-                    success_condition=lambda ctx, target: True,  # already gated above
+                on_success=(SetControllerEffect(duration="1 command"), 
+                            success_condition(ctx, targets),
+                            condition: lambda ctx, target: (
+                                IS_CONSTRUCT(ctx, target) and NOT_IN_PARTY(ctx.source, target)
+                    ),
                 ),
-            condition=lambda ctx, target: (
-                IS_CONSTRUCT(ctx, target) and NOT_IN_PARTY(ctx.source, target)
             ),
-        )
+        ),
     ]
 
-
-# =========================================================
 # Creator's Guardians — Passive Aura Buff
-# =========================================================
 
 def creators_guardians_effects(character):
     return [
         buff(
+            buffed_guardians = scale_fn # this is a hack to get the buff amount applied to the condition
             scale_fn=lambda c: (
                 c.attributes.willpower +
                 c.ability_levels.get("Creator's Guardians", 0)
-            ) // 10,
+                ) // 10,
             stats={
-                "strength": 1,
-                "dexterity": 1,
-                # TODO: expand to all non-zero attributes
-            },
+                "all": scale_fn, # this is a hack to apply the same buff amount to all non-zero attributes
+                # TODO: a non-hacked version of this would need to check each attribute and only apply the buff to non-zero ones
+                },
             condition=IS_CONSTRUCT,
         )
     ]
 
-
-# =========================================================
 # Eye for Detail — Inspect / Analyze
-# =========================================================
 
 def eye_for_detail_execute(caster, targets):
     return [
@@ -96,10 +86,7 @@ def eye_for_detail_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Mend — Construct Healing
-# =========================================================
 
 def mend_execute(caster, targets):
     return [
@@ -112,10 +99,7 @@ def mend_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 

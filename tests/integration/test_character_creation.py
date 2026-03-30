@@ -1,5 +1,4 @@
-```python
-from application.character_creation import create_character
+from src.application.character_creation import create_character
 
 
 def test_create_character_with_job_and_profession():
@@ -15,5 +14,4 @@ def test_create_character_with_job_and_profession():
 
     # Ensure attributes were modified (not just base values)
     assert character.attributes.strength > 25
-```
 

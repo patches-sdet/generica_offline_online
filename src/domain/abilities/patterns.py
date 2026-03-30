@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 from domain.effects import (
     StatIncrease,
@@ -13,10 +13,7 @@ from domain.effects import (
 # Optional imports (you may centralize later)
 from domain.conditions import *
 
-
-# =========================================================
 # CORE PATTERN BUILDERS
-# =========================================================
 
 def scaled_stat_buff(
     scale_fn: Callable,
@@ -65,7 +62,6 @@ def conditional_effect(
 def composite(*effects):
     return CompositeEffect(list(effects))
 
-
 def filtered(effect, condition: Callable):
     return TargetFilterEffect(effect, condition=condition)
 
@@ -85,14 +81,7 @@ def on_event(event_name: str, effect, condition=None):
         condition=condition,
     )
 
-from typing import Callable, Union
-
-from domain.effects import ConditionalEffect
-
-
-# =========================================================
 # Skill Check Pattern
-# =========================================================
 
 def skill_check(
     skill: str,
@@ -140,13 +129,8 @@ def skill_check(
     from domain.effects import CompositeEffect
     return CompositeEffect([success_effect, failure_effect])
 
-# =========================================================
 # COMMON ABILITY PATTERNS
-# =========================================================
-
-# -------------------------
 # Damage / Heal
-# -------------------------
 
 def damage(
     scale_fn: Callable,
@@ -172,21 +156,20 @@ def heal(
         condition=condition,
     )
 
-
-# -------------------------
 # Buffs / Debuffs
-# -------------------------
 
 def buff(
     scale_fn: Callable,
     stats: Dict[str, int],
     condition: Callable = None,
+    targets = Callable = None,
 ):
     return scaled_stat_buff(
         scale_fn=scale_fn,
         stats=stats,
         condition=condition,
-    )
+        targets=targets,
+        )
 
 
 def debuff(
@@ -209,13 +192,11 @@ def aura(effect):
     - tick per turn/minute
     - handle radius / positioning
     """
+    aura_id = aura_id
     effect.aura_id = aura_id
     return effect
 
-
-# -------------------------
 # Conditional (Opposed Rolls, etc.)
-# -------------------------
 
 def on_success(
     success_condition: Callable,
@@ -250,18 +231,12 @@ def conditional_damage(scale_fn, condition):
         effect=BonusDamageEffect(scale_fn),
         condition=condition,
     )
-
-# -------------------------
 # Multi-Effect Abilities
-# -------------------------
 
 def multi(*effects):
     return CompositeEffect(list(effects))
 
-
-# =========================================================
 # ADVANCED / SPECIAL PATTERNS
-# =========================================================
 
 def summon(factory_fn, condition: Callable = None):
     from domain.effects.special import CreateEntityEffect

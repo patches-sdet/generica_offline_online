@@ -1,9 +1,10 @@
-from domain.abilities import make_ability
-from domain.abilities.patterns import (
+from abilities import make_ability
+from patterns import (
+    create_item,
     damage,
     inspect,
     on_success,
-    create_item,
+    skill_check,
 )
 
 from domain.conditions import (
@@ -11,9 +12,7 @@ from domain.conditions import (
     IS_MATERIAL,
 )
 
-# =========================================================
 # Analyze — Inspect / Learn Properties
-# =========================================================
 
 def analyze_execute(caster, targets):
     return [
@@ -25,14 +24,12 @@ def analyze_execute(caster, targets):
                 "properties": getattr(target, "properties", None),
                 "rarity": getattr(target, "rarity", None),
                 "alchemy_value": estimate_alchemy_value(target),
-            },
+                },
+            ),
         ),
     ]
 
-
-# =========================================================
 # Bomb — AoE Damage
-# =========================================================
 
 def bomb_execute(caster, targets):
     return [
@@ -45,10 +42,7 @@ def bomb_execute(caster, targets):
         # Later: add explicit radius/area pattern if needed
     ]
 
-
-# =========================================================
 # Distill — Craft Reagents / Crystals
-# =========================================================
 
 def distill_execute(caster, targets):
     return [
@@ -63,10 +57,7 @@ def distill_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Healing Potion — Craft Healing Items
-# =========================================================
 
 def healing_potion_execute(caster, targets):
     return [
@@ -83,10 +74,7 @@ def healing_potion_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Mana Potion — Craft Mana Items
-# =========================================================
 
 def mana_potion_execute(caster, targets):
     return [
@@ -103,10 +91,7 @@ def mana_potion_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 

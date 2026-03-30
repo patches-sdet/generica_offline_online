@@ -24,10 +24,7 @@ class Ability:
     is_skill: bool = False
     target_type: str = "self"
 
-
-# =========================================================
 # Factory
-# =========================================================
 
 def make_ability(
     *,
@@ -43,9 +40,7 @@ def make_ability(
     is_skill: bool = False,
     target_type: str = "self",
 ):
-    # ===============================
     # Validation
-    # ===============================
 
     if execute and effect_generator:
         raise ValueError(f"{name}: Cannot define both execute and effect_generator")

@@ -10,28 +10,23 @@ from domain.abilities.patterns import (
 
 from domain.conditions import (
     IS_SURPRISED,
-    IS_HELpless,
+    IS_HELPLESS,
     IS_ENEMY,
 )
 
-# =========================================================
 # Backstab — Conditional Bonus Damage
-# =========================================================
 
 def backstab_execute(caster, targets):
     return [
         conditional_damage(
             scale_fn=lambda c: c.skills.get("Backstab", 0),
             condition=lambda ctx, target: (
-                IS_SURPRISED(ctx, target) or IS_HELpless(ctx, target)
+                IS_SURPRISED(ctx, target) or IS_HELPLESS(ctx, target)
             ),
         )
     ]
 
-
-# =========================================================
 # Cold Read — Opposed Inspection
-# =========================================================
 
 def cold_read_execute(caster, targets):
     return [
@@ -41,17 +36,14 @@ def cold_read_execute(caster, targets):
             difficulty=lambda ctx, target: target.roll_charisma(),
             on_success=inspect(
                 reveal_fn=lambda caster, target: {
-                    "relative_power": compare_power(caster, target),
+                    "relative_power": compare_total_levels(caster, target),
                     "vulnerabilities": get_vulnerabilities(target),
                 }
             ),
         )
     ]
 
-
-# =========================================================
 # Fast as Death — Speed/Initiative Buff
-# =========================================================
 
 def fast_as_death_execute(caster, targets):
     return [
@@ -64,10 +56,7 @@ def fast_as_death_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
-# Quickdraw — Action Override (same pattern as Archer)
-# =========================================================
+# Quickdraw — Action Override (same pattern as Archer, but for all weapons/items and doesn't stack)
 
 def quickdraw_execute(caster, targets):
     return [
@@ -76,10 +65,7 @@ def quickdraw_execute(caster, targets):
         )
     ]
 
-
-# =========================================================
 # Unobtrusive — Passive Social Stealth
-# =========================================================
 
 def unobtrusive_effects(character):
     return [
@@ -90,10 +76,7 @@ def unobtrusive_effects(character):
         apply_state("low_profile"),
     ]
 
-
-# =========================================================
 # Registration
-# =========================================================
 
 def register():
 
