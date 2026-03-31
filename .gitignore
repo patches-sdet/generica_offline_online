@@ -7,6 +7,3 @@ __pycache__/
 .vscode/
 .idea/
 check_unbalanced.py
-check_unbalanced.pyc
-check_unbalanced.pyo
-check_unbalanced.pyd

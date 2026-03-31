@@ -11,10 +11,7 @@ from domain.calculations import recalculate
 
 PERSISTENCE_DIR = "src/persistence"
 
-
-# -------------------------
 # HELPERS
-# -------------------------
 
 def format_effects(effects):
     parts = []
@@ -39,10 +36,7 @@ def choose_from_mapping(prompt, options_dict):
             return options_dict[choice]
         print("Invalid choice. Try again.")
 
-
-# -------------------------
 # RACE SELECTION
-# -------------------------
 
 def choose_race():
     races = get_all_races()
@@ -86,10 +80,7 @@ def choose_race():
 
     return race, base_race, material
 
-
-# -------------------------
 # JOB SELECTION
-# -------------------------
 
 def choose_job():
     jobs_by_class = get_jobs_grouped_by_class()
@@ -107,10 +98,7 @@ def choose_job():
     job_input = choose_from_mapping("Choose a job: ", valid_jobs)
     return resolve_job(job_input)
 
-
-# -------------------------
 # PROFESSION SELECTION
-# -------------------------
 
 def choose_profession():
     professions = get_all_professions()
@@ -126,10 +114,7 @@ def choose_profession():
     choice = choose_from_mapping("Choose a profession: ", valid)
     return resolve_profession(choice)
 
-
-# -------------------------
 # CHARACTER CREATION
-# -------------------------
 
 def build_character():
     print("=== Generica Offline Character Creator ===\n")
@@ -154,10 +139,7 @@ def build_character():
     print("=== Character Created ===")
     return character
 
-
-# -------------------------
 # ABILITY HANDLING
-# -------------------------
 
 def handle_ability_use(character):
     if not character.abilities:
@@ -187,10 +169,7 @@ def handle_ability_use(character):
     except Exception as e:
         print(f"Error: {e}")
 
-
-# -------------------------
 # LOOP
-# -------------------------
 
 def interaction_loop(character):
     should_save = False
@@ -227,10 +206,7 @@ def interaction_loop(character):
 
     return should_save
 
-
-# -------------------------
 # SAVE
-# -------------------------
 
 def save_character(character):
     os.makedirs(PERSISTENCE_DIR, exist_ok=True)
@@ -243,10 +219,7 @@ def save_character(character):
 
     print(f"Character saved to: {filename}")
 
-
-# -------------------------
 # ENTRY
-# -------------------------
 
 def run_cli():
     character = build_character()
