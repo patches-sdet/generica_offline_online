@@ -1,5 +1,5 @@
 from collections import defaultdict
-from domain.effects import DerivedStatBonus, DerivedStatOverride
+from domain.effects.stat_effects import DerivedStatBonus, DerivedStatOverride
 
 
 def reset_derived(character):

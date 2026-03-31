@@ -139,12 +139,11 @@ class Character:
     def has_adventure_job(self, job_name: str) -> bool:
         return any(job.name == job_name for job in self.adventure_jobs)
 
-    def get_adventure_level_by_name(self, job_name: AdventureJob) -> int:
-        return self.adventure_levels.get(job_name, 1)
+    def get_adventure_level_by_name(self, job_name: AdventureJob, default: int = 0) -> int:
+        return self.adventure_levels.get(job_name, default)
 
-    def get_profession_level_by_name(self, job_name: ProfessionJob) -> int:
-        return self.profession_levels.get(job_name, 1)
-
+    def get_profession_level_by_name(self, job_name: ProfessionJob, default: int = 0) -> int:
+        return self.profession_levels.get(job_name, default)
     # SERIALIZATION (FIXED)
 
     def to_dict(self):

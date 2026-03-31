@@ -30,9 +30,9 @@ def recalculate(character):
     # Rebuild Character
     effects = collect_effects(character)  
     rebuild_attributes(character, effects)
-    apply_derived_effects(character, effects)
     calculate_pools(character)
     calculate_defenses(character)
+    apply_derived_effects(character, effects)
     rebuild_tags(character, effects)
 
     return character

@@ -1,5 +1,6 @@
 from typing import List, TYPE_CHECKING
 from domain.effects.base import Effect, EffectContext
+from domain.effects.stat_effects import DerivedStatBonus
 
 if TYPE_CHECKING:
     from domain.character import Character

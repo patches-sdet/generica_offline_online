@@ -8,7 +8,6 @@ from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob, get_all_professions
 
 from domain.calculations import calculate_pools, recalculate
-from domain.calculations.abilities import rebuild_abilities
 
 from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
 from domain.effects.special.damage import ConvertDamageEffect, BonusDamageEffect  # future-safe

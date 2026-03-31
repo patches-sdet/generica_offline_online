@@ -200,17 +200,17 @@ def scaled_derived_buff(
     condition: Callable = None,
 ):
     def effect_generator(character):
-        amount = scale_fn(character)
-
-        effect = DerivedStatBonus(
-            stat=stat,
-            amount=int(amount)
-        )
-
         if condition and not condition(character):
             return []
+        
+        amount = scale_fn(character)
 
-        return [effect]
+        return [
+            DerivedStatBonus(
+            stat=stat,
+            amount=int(amount)
+            )
+        ]
 
     return effect_generator
 

@@ -1,8 +1,6 @@
 from domain.abilities.factory import make_ability
-from domain.effects import StatIncrease
 from domain.abilities.patterns import buff, heal, scaled_derived_buff
 from domain.conditions import IS_ALLY#, IS_ENEMY # leave this here for the damaging version of Lesser Healing, which is still being worked on
-from domain.effects.stat_effects import DerivedStatBonus
 
 def blessing_execute(caster, targets):
     return [
@@ -14,12 +12,11 @@ def blessing_execute(caster, targets):
     ]
 
 def faith_effects(character):
-    return [
-        scaled_derived_buff(
+    amount = character.get_adventure_level_by_name("Cleric", 0)
+    return scaled_derived_buff(
             stat="fate",
             scale_fn=lambda c: c.get_adventure_level_by_name("Cleric", 0),
-        )
-    ]
+        )(character)
 
 def holy_smite_execute(caster, targets):
     return [
@@ -67,7 +64,7 @@ def register():
         cost=1,
         cost_pool="fortune",
         duration="Until Cancelled or Dispelled",
-        description="A Cleric can bless someone, spending at least 1 Fortune to increase a single attribute by an equal amount. The Cleric's Fortune remains at this level until they choose to cancel the spell.\n     A creature can only be under the influence of a single blessing at a time. \n     A Cleric can only bestor one blessing at a time. This skill is a spell.",
+        description="A Cleric can bless someone, spending at least 1 Fortune to increase a single attribute by an equal amount. The Cleric's Fortune remains at this level until they choose to cancel the spell.\n     A creature can only be under the influence of a single blessing at a time. \n     A Cleric can only bestow one blessing at a time. This skill is a spell.",
         is_passive=False,
         is_skill=True,
         target_type="ally",
@@ -87,7 +84,7 @@ def register():
         is_passive=True,
         is_skill=False,
         target_type="self",
-    )
+    ),
 
     make_ability(
         name="Godspell",    # this is going to be tricky, because there needs to be a sub-selection when you become a Cleric

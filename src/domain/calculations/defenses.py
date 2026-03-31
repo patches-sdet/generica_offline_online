@@ -14,5 +14,4 @@ def calculate_defenses(character):
     values = {key: resolve(key) for key in DEFENSE_KEYS}
 
     character.defenses = Defenses(**values)
-    
     return character.defenses
