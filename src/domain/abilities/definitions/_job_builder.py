@@ -16,13 +16,13 @@ def build_job(job_name: str, definitions: list):
         kind = ability_def.get("type", "active")  # active | passive | skill
 
         # Unlock condition
-        unlock_condition = ability_def.get(
-            "unlock",
-            lambda c, lvl=ability_def.get("level", 1): (
-                c.has_adventure_job(job_name)
-                and level(c) >= lvl
-            )
-        )
+        source_type = ability_def.get("source_type", "adventure")
+        required_level = ability_def.get("level", 1)
+
+        def default_unlock(c, st=source_type, lvl=required_level, name=job_name):
+            return c.get_progression_level(name, st) >= lvl
+
+        unlock_condition = ability_def.get("unlock", default_unlock)
 
         # PASSIVE
         if kind == "passive":

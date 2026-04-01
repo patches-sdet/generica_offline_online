@@ -1,3 +1,4 @@
+from multiprocessing import pool
 from domain.effects.base import EffectContext
 from domain.effects import SpendResource
 from domain.abilities.registry import get_ability
@@ -30,8 +31,11 @@ def execute_ability(character, ability_name: str, explicit_targets=None):
     effects = []
 
     # COST → now an effect
-    if ability.cost:
-        pool = ability.cost_pool or "fortune"
+    if ability.cost == "variable":
+        amount = get_player_input()  # or passed in
+        context.spent_amount = amount
+        effects.append(SpendResource(pool, amount))
+    elif ability.cost:
         effects.append(SpendResource(pool, ability.cost))
 
     # ABILITY EFFECTS

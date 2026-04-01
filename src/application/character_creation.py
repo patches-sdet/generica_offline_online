@@ -1,19 +1,16 @@
-import random
-import copy
-
+import random, copy
 from domain.attributes import DEFAULT_STATS
 from domain.character import Character
 from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob, get_all_professions
-
 from domain.calculations import calculate_pools, recalculate
-
 from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
 from domain.effects.special.damage import ConvertDamageEffect, BonusDamageEffect  # future-safe
 from domain.effects.special.state import ApplyStateEffect
 from domain.effects.special.tag import ApplyTagEffect
 from domain.effects.base import Effect
+from domain.progression import Progression
 
 # ROLLING
 
@@ -120,6 +117,28 @@ def create_character(
         adventure_levels=adventure_levels,
         profession_jobs=professions,
         profession_levels=profession_levels,
+    )
+
+    for job in character.adventure_jobs:
+        level = character.adventure_levels.get(job.name, 1)
+        character.progressions[("adventure", job.name)] = Progression(
+            name=job.name,
+            type="adventure",
+            level=level,
+        )
+
+    for job in character.profession_jobs:
+        level = character.profession_levels.get(job.name, 1)
+        character.progressions[("profession", job.name)] = Progression(
+            name=job.name,
+            type="profession",
+            level=level,
+        )
+
+    character.progressions[("race", character.race.name)] = Progression(
+        name=character.race.name,
+        type="race",
+        level=character.get_race_levels(),
     )
 
     # NEW: RUNTIME SYSTEM INIT

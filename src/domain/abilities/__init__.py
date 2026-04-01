@@ -1,9 +1,9 @@
 from .factory import make_ability
 from .registry import register_ability, get_all_abilities
 import pkgutil, importlib, os
-from . import definitions, professions, advanced
+from . import definitions, professions, races, advanced
 
-MODULE_GROUPS = [definitions, professions, advanced]
+MODULE_GROUPS = [definitions, professions, races, advanced]
 
 definitions_path = os.path.join(os.path.dirname(__file__), "definitions")
 
@@ -17,9 +17,6 @@ for group in MODULE_GROUPS:
             print(f"[Ability Loader] Importing {module_name}...")
             module = importlib.import_module(f"{group.__name__}.{module_name}")
             loaded += 1
-
-            if hasattr(module, "register"):
-                module.register()
 
         except Exception as e:
             print(f"[Ability Loader] FAILED to import {module_name}: {e}")

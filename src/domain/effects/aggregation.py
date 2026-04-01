@@ -1,6 +1,5 @@
 from typing import List, TYPE_CHECKING
-from domain.effects.base import Effect, EffectContext
-from domain.effects.stat_effects import DerivedStatBonus
+from domain.effects.base import Effect
 
 if TYPE_CHECKING:
     from domain.character import Character
@@ -9,41 +8,39 @@ def collect_effects(character: "Character") -> List[Effect]:
     """
     Centralized effect aggregation.
 
-    This is the ONLY place that knows where effects come from.
+    This is updated to a progression-based system:
+    - Removed legacy *level usages
+    - Removed legacy paramters specific to jobs
+    - Centralizing truth to Character.progressions
     """
     effects: List[Effect] = []
 
-    # --- Race Effects ---
-    if character.race:
-        race = character.race
-        level = character.get_race_levels()
+    for (ptype, name), progression in character.progressions.items():
+        level = progression.level
 
-        effects.extend(race.effects_on_acquire)
-        effects.extend(race.get_effects(level))
+        source = get_progression_source(ptype, name)
+        if not source:
+            continue
 
-        # Handle base race inheritance if applicable
-        if race.base_race:
-            base = race.base_race
-            base_level = character.base_race_levels.get(base.name, level)
-            effects.extend(base.effects_on_acquire)
-            effects.extend(base.get_effects(level))
+        if level >= 1 and hasattr(source, "effects_on_acquire"):
+            effects.extend(source.effects_on_acquire)
 
-    # --- Adventure Jobs ---
-    for job in character.adventure_jobs:
-        level = character.adventure_levels.get(job.name, 1)
-        effects.extend(job.get_effects(level))
+        if hasattr(source, "get_effects"):
+            effects.extend(source.get_effects(level))
 
-    # --- Professions ---
-    for profession in character.profession_jobs:
-        level = character.profession_levels.get(profession.name, 1)
-        effects.extend(profession.get_effects(level))
-
-    # --- Passive Effects ---
-    for ability in getattr(character, "abilities", []):
+    # --- Passive Abilities ---
+    for ability in character.abilities:
             if ability.is_passive and ability.effect_generator:
-                effects.extend(ability.effect_generator(character))
+                result = ability.effect_generator(character)
+                
+                if isinstance(result, list):
+                    effects.extend(result)
+                elif result:
+                    raise TypeError(
+                        f"{ability.name} returned non-list effect result: {type(result)}"
+                    )
 
-    # --- (Future) Equipment ---
+    # --- Future Equipment Implementation---
     for item in getattr(character, "equipment", []):
         if hasattr(item, "get_effects"):
             effects.extend(item.get_effects())

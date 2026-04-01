@@ -7,8 +7,9 @@ from domain.effects import (
     ConditionalEffect, 
     ResourceEffect, 
     ScalingEffect, 
-    DerivedStatBonus
+    DerivedStatBonus,
 )
+from domain.effects.special.damage import TransferEffect
 
 # Optional imports (you may centralize later)
 from domain.conditions import *
@@ -152,6 +153,12 @@ def heal(
     return scaled_resource_effect(
         scale_fn=scale_fn,
         pool="hp",
+        condition=condition,
+    )
+
+def transfer_stat(amount_fn, condition=None):
+    return TransferEffect(
+        amount_fn=amount_fn,
         condition=condition,
     )
 

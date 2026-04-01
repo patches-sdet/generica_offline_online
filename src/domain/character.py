@@ -6,7 +6,8 @@ from domain.attributes import Attributes, Defenses
 from domain.race import Race
 from domain.adventure import AdventureJob
 from domain.profession import ProfessionJob
-from domain.effects.base import Effect, EffectContext
+from domain.progression import Progression
+from domain.effects.base import Effect
 
 if TYPE_CHECKING:
     from domain.abilities.factory import Ability
@@ -17,16 +18,9 @@ class Character:
     name: str
 
     # IDENTITY
-
-    race: Race
-    race_levels: dict[str, int] = field(default_factory=dict)
-    base_race_levels: dict[str, int] = field(default_factory=dict)
-
-    adventure_jobs: list[AdventureJob] = field(default_factory=list)
-    adventure_levels: dict[str, int] = field(default_factory=dict)
-
-    profession_jobs: list[ProfessionJob] = field(default_factory=list)
-    profession_levels: dict[str, int] = field(default_factory=dict)
+    race_bases: List[str] = field(default_factory=list)
+    race_template: Optional[str] = None
+    progressions: dict[tuple[str, str], Progression] = field(default_factory=dict)
 
     # CORE STATS
 
@@ -119,32 +113,38 @@ class Character:
 
 
     def spend_resource(self, pool: str, amount: int) -> bool:
-        def apply(self, context: EffectContext):
-            for target in context.targets:
-                success = target.modify_resource(self.pool, -self.amount)
-
-                if not success:
-                    raise ValueError(f"Not enough {self.pool} to spend {self.amount}")
-
         return self.modify_resource(pool, -amount)
 
     # HELPERS
-
+    def get_progression_level(self, name: str, type: str) -> int:
+        p = self.progressions.get((type, name))
+        return p.level if p else 0
+    
     def get_skill(self, name: str) -> int:
         return self.skills.get(name, 0)
 
     def get_race_levels(self) -> int:
-        return self.race_levels.get(self.race.name, 1)
+        return self.get_race_level(self.race.name)
 
     def has_adventure_job(self, job_name: str) -> bool:
         return any(job.name == job_name for job in self.adventure_jobs)
+    
+    def get_race_level(self, race_name: str) -> int:
+        return self.get_progression_level(race_name, "race")
 
-    def get_adventure_level_by_name(self, job_name: AdventureJob, default: int = 0) -> int:
-        return self.adventure_levels.get(job_name, default)
+    def get_adventure_level_by_name(self, job_name, default=0):
+        level = self.get_progression_level(job_name, "adventure")
+        return level if level else default
 
-    def get_profession_level_by_name(self, job_name: ProfessionJob, default: int = 0) -> int:
-        return self.profession_levels.get(job_name, default)
-    # SERIALIZATION (FIXED)
+    def get_profession_level_by_name(self, job_name, default=0):
+        level = self.get_progression_level(job_name, "profession")
+        return level if level else default
+    
+    def get_advancecd_level_by_name(self, job_name, default=0):
+        level = self.get_progression_level(job_name, "advanced")
+        return level if level else default
+    
+    # SERIALIZATION
 
     def to_dict(self):
         return {

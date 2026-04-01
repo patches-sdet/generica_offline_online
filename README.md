@@ -1,383 +1,267 @@
-# Generica Offline Online — Stuff and Nonsense RPG Character Engine
+# 🧠 Generica Offline Online
 
-A modular, effect-driven RPG character engine built in Python, designed for **deterministic state, composability, and long-term extensibility**.
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Status](https://img.shields.io/badge/status-in--development-orange)
+![Architecture](https://img.shields.io/badge/architecture-effect--driven-success)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Originally inspired by the LitRPG series *Stuff and Nonsense* by Andrew Seiple, this project has evolved into a **fully architected simulation engine** capable of supporting character progression, resource systems, active abilities, and future combat mechanics.
+## A Data-Driven RPG Character Engine
+
+A modular, effect-driven RPG engine built in Python, designed for **deterministic state, composability, and long-term extensibility**.
+
+This project has evolved from a simple stat calculator into a **fully generic progression and simulation engine**, where all gameplay behavior is expressed through data and effects.
 
 ---
 
-## Core Idea
+## Table of Contents
+
+* [Core Philosophy](#-core-philosophy)
+* [Architecture Overview](#-architecture-overview)
+* [Getting Started](#-getting-started)
+* [Project Structure](#-project-structure)
+* [Calculation Pipeline](#-calculation-pipeline)
+* [Progression System](#-progression-system-in-transition)
+* [Key Concepts](#-key-concepts)
+* [Features](#-current-features)
+* [Roadmap](#-roadmap)
+* [Contributing](#-contributing)
+* [License](#-license)
+
+---
+
+# Core Philosophy
 
 ```text
-state = function(all inputs)
+Content → Abilities → Effects → Calculations → Final State
 ```
 
-All character state is:
+### Key Principle
 
-* **Fully recomputed from source data**
-* **Free of incremental mutation**
-* **Deterministic and reproducible**
+> **Everything in the system is expressed as Effects.**
 
-> No hidden state. No stat drift. No ambiguity.
-
----
-
-## ⚙️ Key Features
-
-* Deterministic stat pipeline (full rebuild on demand)
-* Effect-based stat modification system
-* Modular job and profession systems
-* Data-driven ability system (auto-registered)
-* Composite race system (Base Race + Material)
-* Source-aware attribute tracking
-* Runtime system for active abilities and resource usage
-* CLI interaction loop
-* JSON persistence
+* No direct stat mutation outside the calculation pipeline
+* All systems resolve into a unified effect model
+* Deterministic rebuild guarantees consistency and debuggability
 
 ---
 
-## Architecture
+# Architecture Overview
 
-This project loosely follows **hexagonal architecture**, separating pure domain logic from application flow and presentation.
+## Effect System (Foundation)
+
+Effects are the **single source of truth** for all gameplay logic.
+
+### Types of Effects
+
+* **Attribute Effects**
+
+  * `StatIncrease`
+  * `MultiStatIncrease`
+
+* **Derived Effects**
+
+  * `DerivedStatBonus`
+  * `DerivedStatOverride`
+
+* **Scaling Effects**
+
+  * `ScalingEffect`
+
+* **Runtime Effects**
+
+  * Damage, healing, conditions
+
+---
+
+## Layered Stat Model
 
 ```text
-src/
-├── application/      # Use-cases (character creation, orchestration)
-├── domain/           # Core systems (pure logic)
-├── presentation/     # Read-only display (character sheet)
-├── persistence/      # Save/load logic
-├── main.py           # CLI entry point
-├── cli.py            # (emerging alternate interface)
+Attributes → Derived Stats → Defenses / Pools
 ```
 
 ---
 
-## Deterministic Rebuild Pipeline
-
-All character state is rebuilt through a fixed pipeline:
-
-```text
-1. Attributes (apply all effects)
-2. Derived stats (bonuses + overrides)
-3. Resource pools
-4. Defenses
-5. Tags
-6. Abilities (resolved/unlocked)
-7. Skills (derived)
-```
-
-```text
-All stages operate on a fresh rebuild so there should be no incremental mutation between runs.
-```
-
-### Guarantees
-
-* No stat drift
-* Fully reproducible characters
-* Predictable debugging
-* Order-independent correctness (within stages)
-
----
-
-## Core Systems
-
----
-
-### Character Model
-
-The **single source of truth** for all state:
-
-* Race (with optional base race + material)
-* Adventure job + level
-* Profession job + level
-* Attributes (rebuilt every cycle)
-* Attribute source tracking
-* Derived stats (bonuses, overrides, pools, defenses)
-* Tags (aggregated)
-* Abilities (resolved dynamically)
-* Skills (derived from abilities)
-* Resource pools (current/max)
-
----
-
-### Effects System
-
-All state changes flow through effects:
+## Ability System
 
 ```python
-effect.apply(EffectContext(source, targets))
-```
-
-#### Core Effect Types
-
-* `StatIncrease`
-* `MultiStatIncrease`
-* `DerivedStatBonus`
-* `DerivedStatOverride`
-
-#### Principles
-
-* Effects are **declarative**
-* Effects describe **what happens**, not *when*
-* Fully composable and source-aware
-
-```text
-Effects = declarative state transformations  
-Calculations = deterministic orchestration pipeline
+Ability:
+    name
+    unlock_condition
+    execute OR effect_generator
+    flags (is_passive, is_skill)
 ```
 
 ---
 
-### Recalculation Engine
+## Ability Registry
 
-Central orchestration:
+* Central `_ABILITY_REGISTRY`
+* Populated via `make_ability()`
+* Auto-loaded via dynamic imports
+
+---
+
+## Job Builder (Content Compiler)
 
 ```python
-recalculate(character)
+build_job(job_name, definitions)
 ```
 
-Rebuilds state from:
-
-```text
-race → jobs → professions → abilities → derived systems
-```
+Transforms structured definitions into fully wired abilities.
 
 ---
 
-### Jobs System
+# Getting Started
 
-#### Adventure Jobs
-
-* Define character identity
-* Provide stat scaling
-* Unlock abilities
-
-#### Profession Jobs
-
-* Provide steady stat growth
-* Fully composable
-* Built from structured data
-
----
-
-### Ability System
-
-Data-driven and extensible:
-
-* Passive effects (applied during recalculation)
-* Active execution (via runtime)
-* Unlock conditions
-* Ability levels per character
-* Auto-registration via module loading
-
-#### Current Direction
-
-```text
-Ability → Effects + Targeting + Conditions → Runtime executes
-```
-
-Supports:
-
-* Passive bonuses
-* Resource costs (e.g., Fortune)
-* Event-driven extensions (future)
-
----
-
-### Runtime System
-
-Handles gameplay actions outside recalculation:
-
-* Ability execution
-* Resource spending
-* Temporary state changes
-
-```python
-execute_ability(character, ability_name)
-```
-
-> The runtime is evolving toward a **stateless executor of effects**, not a holder of game logic.
-
----
-
-### Race System (Composite)
-
-Supports layered race construction:
-
-```text
-Golem = Base Race + Material
-```
-
-Example:
-
-```text
-Golem (Metal Human)
-```
-
-* Base race provides scaling
-* Material provides modifiers
-* Composite defines identity
-
----
-
-### Derived Stats
-
-#### Resource Pools
-
-```text
-hp        = STR + CON
-sanity    = WIS + INT
-stamina   = CON + AGI
-moxie     = CHA + WIL
-fortune   = PER + LUK
-```
-
-Stored as:
-
-```text
-(current, max)
-```
-
----
-
-#### Defenses
-
-```text
-final = (override or 0) + bonus
-```
-
----
-
-## Character Creation Flow
-
-```text
-1. Choose race
-   → if applicable: choose base race + material
-2. Choose adventure job
-3. Choose profession
-4. Initialize attributes
-5. Recalculate (full rebuild)
-6. Enter interaction loop
-```
-
----
-
-## Interaction Loop
-
-Players can:
-
-```text
-1. Use ability
-2. Refresh character (recalculate)
-3. Save & exit
-4. Exit without saving
-```
-
----
-
-## Presentation Layer
-
-The character sheet displays:
-
-* Race (including composition)
-* Job + profession
-* Attributes with source breakdowns
-* Resource pools and defenses
-* Abilities with metadata
-
-Example:
-
-```text
-STR: 32 (29 base +2 Archer +1 Ability)
-Race: Golem (Metal Human)
-```
-
----
-
-## Persistence
-
-Characters are stored as JSON:
-
-```text
-src/persistence/<name>_character.json
-```
-
----
-
-## Current Status
-
-```text
-CORE ENGINE: STABLE
-DETERMINISTIC PIPELINE: COMPLETE
-EFFECT SYSTEM: UNIFIED
-ABILITY SYSTEM: PARTIALLY DECLARATIVE (IN TRANSITION)
-RUNTIME: FUNCTIONAL
-ATTRIBUTE TRACKING: IMPLEMENTED
-```
-
----
-
-## Roadmap
-
-### Near-Term
-
-* Load existing character sheets
-* Derived stat source tracking
-* Ability scaling improvements
-* Level-up system
-* Equipment system (scaffolded)
-
-### Mid-Term
-
-* Combat engine
-* Buff/debuff system
-* Turn system
-* Enemy + AI models
-
-### Long-Term
-
-* GUI or web frontend
-* Multiplayer synchronization
-* Modding support (external data definitions)
-
----
-
-## Design Principles
-
-* **Determinism first**
-* **Effects over mutation**
-* **Composition over inheritance**
-* **Separation of concerns**
-* **Systems over hardcoding**
-
----
-
-## Running the Project
+## 1. Clone the Repository
 
 ```bash
-./run.sh
+git clone https://github.com/yourusername/generica-offline-online.git
+cd generica-offline-online
 ```
 
-or:
+## 2. Install Requirements
 
 ```bash
-python src/main.py
+pip install -r requirements.txt
+```
+
+## 3. Run the Engine
+
+```bash
+python main.py
 ```
 
 ---
 
-## Why This Project Exists
+## Example: Creating a Character
 
-Most RPG systems fail at scale due to:
+```python
+from application.character_creation import create_character
 
-* Hidden state mutations
-* Hardcoded logic
-* Untraceable stat origins
+character = create_character(
+    name="Test",
+    race="Human",
+    jobs=[("Warrior", 5)],
+    professions=[("Blacksmith", 3)]
+)
 
-This engine avoids those pitfalls by making all state:
+character.recalculate()
 
-* **Explicit**
-* **Rebuildable**
-* **Inspectable**
+print(character.defenses.fate)
+```
 
 ---
+
+# Project Structure
+
+```text
+abilities/
+  definitions/     # Adventure jobs
+  professions/
+  races/
+  advanced/
+
+domain/
+application/
+presentation/
+```
+
+---
+
+# Calculation Pipeline
+
+```python
+def recalculate(character):
+    reset_derived()
+    rebuild_abilities(character)
+    rebuild_skills(character)
+    effects = collect_effects(character)
+    rebuild_attributes(character, effects)
+    apply_derived_effects(character, effects)
+    calculate_pools(character)
+    calculate_defenses(character)
+    rebuild_tags(character, effects)
+    return character
+```
+
+---
+
+# Progression System (In Transition)
+
+## New Model
+
+```python
+@dataclass
+class Progression:
+    name: str
+    type: str
+    level: int
+```
+
+## End Goal
+
+```text
+Character = base state + progressions
+```
+
+---
+
+# Key Concepts
+
+## Effect Contract
+
+> All ability outputs MUST resolve to a flat `List[Effect]`
+
+---
+
+## Static vs Runtime Effects
+
+* Static: race, jobs, professions, equipment
+* Runtime: temporary, event-driven
+
+---
+
+## Deterministic Simulation
+
+```text
+base state + effects → final state
+```
+
+---
+
+# Current Features
+
+* Effect system
+* Ability registry
+* Passive & active abilities
+* Skill system
+* Job builder DSL
+* Content generator
+
+---
+
+# Roadmap
+
+* Complete progression unification
+* Remove legacy level systems
+* Generic `collect_effects()`
+* Expand content library
+
+---
+
+# Contributing
+
+Contributions are welcome!
+
+### Guidelines
+
+* Follow the effect-driven architecture
+* Ensure all abilities return `List[Effect]`
+* Keep systems data-driven
+
+---
+
+# License
+
+This project is licensed under the MIT License.
