@@ -1,128 +1,102 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from domain.effects.base import Effect
+from domain.effects.stat_effects import StatIncrease
 
-from domain.effects import Effect, MultiStatIncrease
-
-# =========================
-# CORE DATACLASS
-# =========================
-
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ProfessionJob:
     name: str
+    effects_on_acquire: tuple[Effect, ...] = field(default_factory=tuple)
+    effects_per_level: tuple[Effect, ...] = field(default_factory=tuple)
+    tags: tuple[str, ...] = field(default_factory=tuple)
 
-    effects_on_acquire: List[Effect] = field(default_factory=list)
-    effects_per_level: List[Effect] = field(default_factory=list)
-
-    # Future systems
-    crafting_tags: List[str] = field(default_factory=list)
-    gathering_tags: List[str] = field(default_factory=list)
-    economic_tags: List[str] = field(default_factory=list)
-
-    # -------------------------
-    # REQUIRED FOR ENGINE
-    # -------------------------
-
-    def get_effects(self, level: int):
+    def get_effects(self, level: int) -> list[Effect]:
         level = max(1, level)
+        return list(self.effects_per_level) * max(0, level - 1)
 
-        effects = []
-        effects.extend(self.effects_on_acquire)
-        effects.extend(self.effects_per_level * (level - 1))
-
-        return effects
-
-    # -------------------------
-
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
-            "effects_on_acquire": [e.to_dict() for e in self.effects_on_acquire],
-            "effects_per_level": [e.to_dict() for e in self.effects_per_level],
-            "crafting_tags": self.crafting_tags,
-            "gathering_tags": self.gathering_tags,
-            "economic_tags": self.economic_tags,
+            "effects_on_acquire": [str(e) for e in self.effects_on_acquire],
+            "effects_per_level": [str(e) for e in self.effects_per_level],
+            "tags": list(self.tags),
         }
 
 
-# =========================
-# REGISTRY
-# =========================
-
-PROFESSION_REGISTRY: Dict[str, ProfessionJob] = {}
+def make_effects(**mods) -> tuple[Effect, ...]:
+    return tuple(StatIncrease(stat, value) for stat, value in mods.items())
 
 
-def register_profession(job: ProfessionJob):
-    PROFESSION_REGISTRY[job.name.lower()] = job
-
-
-def resolve_profession(name: str) -> ProfessionJob:
-    job = PROFESSION_REGISTRY.get(name.lower())
-    if not job:
-        raise ValueError(f"Unknown profession: {name}")
-    return job
-
-
-# =========================
-# FACTORY
-# =========================
-
-def make_profession(
-    name: str,
-    stats: dict,
-    crafting: List[str] = None,
-    gathering: List[str] = None,
-    economic: List[str] = None,
-) -> ProfessionJob:
-
-    job = ProfessionJob(
-        name=name,
-        effects_on_acquire=[MultiStatIncrease(stats)],
-        effects_per_level=[MultiStatIncrease(stats)],
-        crafting_tags=crafting or [],
-        gathering_tags=gathering or [],
-        economic_tags=economic or [],
-    )
-
-    register_profession(job)
-    return job
-
-
-# =========================
-# DATA (CLEAN + SCALABLE)
-# =========================
-
-PROFESSION_DATA = {
-    "Brewer": dict(stats=dict(constitution=1, perception=1), crafting=["brewing", "potions"]),
-    "Carpenter": dict(stats=dict(dexterity=1, strength=1), crafting=["wood", "structures"]),
-    "Cook": dict(stats=dict(luck=1, perception=1), crafting=["food"]),
-    "Farmer": dict(stats=dict(constitution=1, wisdom=1), gathering=["plants", "crops"]),
-    "Herbalist": dict(stats=dict(luck=1, wisdom=1), gathering=["herbs"], crafting=["potions"]),
-    "Mason": dict(stats=dict(constitution=1, strength=1), crafting=["stone", "structures"]),
-    "Midwife": dict(stats=dict(constitution=1, luck=1), crafting=["healing"]),
-    "Miner": dict(stats=dict(dexterity=1, strength=1), gathering=["ore", "stone"]),
-    "Sculptor": dict(stats=dict(dexterity=1, perception=1), crafting=["art", "stone"]),
-    "Smith": dict(stats=dict(constitution=1, strength=1), crafting=["metal", "weapons", "armor"]),
-    "Tailor": dict(stats=dict(dexterity=1, perception=1), crafting=["cloth", "armor"]),
-    "Tanner": dict(stats=dict(agility=1, dexterity=1), crafting=["leather", "armor"]),
-    "Tinker": dict(stats=dict(dexterity=1, intelligence=1), crafting=["tools", "gadgets"]),
-}
-
-# Build all professions
-
-for name, data in PROFESSION_DATA.items():
-    make_profession(
-        name=name,
-        stats=data["stats"],
-        crafting=data.get("crafting"),
-        gathering=data.get("gathering"),
-        economic=data.get("economic"),
-    )
-
-
-# =========================
-# UTILITIES
-# =========================
-
-def get_all_professions() -> List[ProfessionJob]:
-    return list(PROFESSION_REGISTRY.values())
+PROFESSION_JOB_DEFINITIONS: tuple[ProfessionJob, ...] = (
+    ProfessionJob(
+        name="Brewer",
+        effects_on_acquire=make_effects(constitution=1, perception=1),
+        effects_per_level=make_effects(constitution=1, perception=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Carpenter",
+        effects_on_acquire=make_effects(strength=1, dexterity=1),
+        effects_per_level=make_effects(strength=1, dexterity=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Cook",
+        effects_on_acquire=make_effects(perception=1, luck=1),
+        effects_per_level=make_effects(perception=1, luck=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Jeweler",
+        effects_on_acquire=make_effects(wisdom=1, luck=1),
+        effects_per_level=make_effects(wisdom=1, luck=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Mason",
+        effects_on_acquire=make_effects(strength=1, constitution=1),
+        effects_per_level=make_effects(strength=1, constitution=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Midwife",
+        effects_on_acquire=make_effects(constitution=1, luck=1),
+        effects_per_level=make_effects(constitution=1, luck=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Miner",
+        effects_on_acquire=make_effects(strength=1, dexterity=1),
+        effects_per_level=make_effects(strength=1, dexterity=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Sculptor",
+        effects_on_acquire=make_effects(dexterity=1, perception=1),
+        effects_per_level=make_effects(dexterity=1, perception=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Smith",
+        effects_on_acquire=make_effects(strength=1, constitution=1),
+        effects_per_level=make_effects(strength=1, constitution=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Tailor",
+        effects_on_acquire=make_effects(dexterity=1, perception=1),
+        effects_per_level=make_effects(dexterity=1, perception=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Tanner",
+        effects_on_acquire=make_effects(dexterity=1, agility=1),
+        effects_per_level=make_effects(dexterity=1, agility=1),
+        tags=("utility",),
+    ),
+    ProfessionJob(
+        name="Tinker",
+        effects_on_acquire=make_effects(dexterity=1, intelligence=1),
+        effects_per_level=make_effects(dexterity=1, intelligence=1),
+        tags=("utility",),
+    ),
+)

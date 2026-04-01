@@ -1,68 +1,58 @@
 from dataclasses import dataclass
 from domain.effects.base import Effect, EffectContext
-from domain.attributes import DEFENSE_KEYS
 
-
-@dataclass
+@dataclass(slots=True)
 class StatIncrease(Effect):
-    def __init__(self, stat: str, amount: int):
-        self.stat = stat
-        self.amount = amount
+    stat: str
+    amount: int
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             target.add_stat(self.stat, self.amount, source=context.source)
 
-@dataclass
+@dataclass(slots=True)
 class MultiStatIncrease(Effect):
-    def __init__(self, stats: dict, scale: int = 1):
-        self.stats = stats
-        self.scale = scale
+    stats: dict[str, int]
+    scale: int = 1
 
-    def describe(self):
+    def describe(self) -> list[str]:
         return [f"+{v} {k}" for k, v in self.stats.items()]
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             for stat, value in self.stats.items():
                 target.add_stat(stat, value * self.scale, source=context.source)
 
-@dataclass
+@dataclass(slots=True)
 class DerivedStatBonus(Effect):
     stat: str
     amount: int
     priority: int = 0
 
-    def apply(self, context: EffectContext):
-        if self.stat not in DEFENSE_KEYS:
-            raise ValueError(f"Invalid derived stat: {self.stat}")
-
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             target._derived_bonuses[self.stat] += self.amount
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "type": "DerivedStatBonus",
             "stat": self.stat,
             "amount": self.amount,
         }
 
-@dataclass
+@dataclass(slots=True)
 class DerivedStatOverride(Effect):
     stat: str
     value: int
-    priority: int = 100  # overrides should apply AFTER bonuses
+    priority: int = 100
 
-    def apply(self, context: EffectContext):
-        if self.stat not in DEFENSE_KEYS:
-            raise ValueError(f"Invalid derived stat: {self.stat}")
-
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             target._derived_overrides[self.stat] = self.value
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "type": "DerivedStatOverride",
             "stat": self.stat,
             "value": self.value,
-        }        
+        }

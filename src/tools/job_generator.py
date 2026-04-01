@@ -1,8 +1,7 @@
-import os
-import sys
+import os, sys
 
 TEMPLATE = """from domain.abilities.job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 build_job("{job}", [
@@ -15,9 +14,11 @@ build_job("{job}", [
         "type": "passive",
         "effects": lambda c: scaled_derived_buff(
             stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("{job}", 0),
+            scale_fn=lambda c: c.get_progression_level("{source_type}", "{job}", 0),
         )(c),
         "description": "Your Fate increases with {job} level.",
+        "source_type": "{source_type}",
+        "level": 1,
     }},
 
     # -------------------------
@@ -31,36 +32,40 @@ build_job("{job}", [
         "target": "ally",
         "effects": lambda caster, targets: [
             buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={{"any": 1}},
+                scale_fn=lambda c: c.get_progression_level("{source_type}", "{job}", 0),
+                stats={{"strength": 1}},
                 condition=IS_ALLY,
             )
         ],
+        "description": "Example scaling buff skill.",
+        "source_type": "{source_type}",
+        "level": 1,
     }},
 
 ])
 """
-
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python job_generator.py <JobName> [job|profession]")
+        print("Usage: python job_generator.py <JobName> [job|profession|advanced]")
         return
 
     job_name = sys.argv[1]
-    job_type = sys.argv[2] if len(sys.argv) > 2 else "job"
+    job_type = sys.argv[2].lower() if len(sys.argv) > 2 else "job"
     filename = job_name.lower().replace(" ", "_") + ".py"
 
-    BASE_PATH = ["src", "domain", "abilities"]
+    base_path = ["src", "domain", "abilities"]
 
     if job_type == "profession":
         subfolder = "professions"
+        source_type = "profession"
     elif job_type == "advanced":
         subfolder = "advanced"
+        source_type = "advanced"
     else:
         subfolder = "definitions"
-    
-    output_dir = os.path.join(*BASE_PATH, subfolder)
+        source_type = "adventure"
 
+    output_dir = os.path.join(*base_path, subfolder)
     os.makedirs(output_dir, exist_ok=True)
 
     filepath = os.path.join(output_dir, filename)
@@ -69,11 +74,10 @@ def main():
         print(f"File already exists: {filepath}")
         return
 
-    with open(filepath, "w") as f:
-        f.write(TEMPLATE.format(job=job_name))
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(TEMPLATE.format(job=job_name, source_type=source_type))
 
     print(f"Created: {filepath}")
-
 
 if __name__ == "__main__":
     main()

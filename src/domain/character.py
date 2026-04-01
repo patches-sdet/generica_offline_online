@@ -1,11 +1,7 @@
 from dataclasses import dataclass, field
-from typing import List, TYPE_CHECKING, DefaultDict, Any
+from typing import Any, DefaultDict, Optional, TYPE_CHECKING
 from collections import defaultdict
-
 from domain.attributes import Attributes, Defenses
-from domain.race import Race
-from domain.adventure import AdventureJob
-from domain.profession import ProfessionJob
 from domain.progression import Progression
 from domain.effects.base import Effect
 
@@ -16,42 +12,47 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class Character:
     name: str
+    # PROGRESSION-DRIVEN IDENTITY
 
-    # IDENTITY
-    race_bases: List[str] = field(default_factory=list)
-    race_template: Optional[str] = None
+    # Single source of truth for all character growth/content membership
+    # key: (ptype, name)  e.g. ("race", "Human"), ("adventure", "Cultist")
     progressions: dict[tuple[str, str], Progression] = field(default_factory=dict)
+
+    race_bases: list[str] = field(default_factory=list)
+    race_template: Optional[str] = None
+    race_material: Optional[str] = None
+
+    # Optional character-creation choices for advanced race systems
+    selected_racial_skills: dict[str, str] = field(default_factory=dict)
 
     # CORE STATS
 
     attributes: Attributes = field(default_factory=Attributes)
-    defenses: Defenses = field(default=None)
+    defenses: Defenses = field(default_factory=Defenses)
     attribute_effects: list[Effect] = field(default_factory=list)
 
-    # Snapshot (for debug/diff)
-    _base_attributes: dict = field(default_factory=dict, init=False)
-
-    # Source tracking (your original feature preserved)
+    # Snapshot / debugging
+    _base_attributes: dict[str, int] = field(default_factory=dict, init=False)
     _attribute_sources: DefaultDict[str, DefaultDict[str, int]] = field(
         default_factory=lambda: defaultdict(lambda: defaultdict(int)),
-        init=False
+        init=False,
     )
 
     # RUNTIME SYSTEMS
 
     states: dict[str, Any] = field(default_factory=dict)
-    tags: set = field(default_factory=set)
+    tags: set[str] = field(default_factory=set)
     event_listeners: list[Any] = field(default_factory=list)
 
-    # Combat modifiers
     roll_modifiers: list[Any] = field(default_factory=list)
     next_attack_modifiers: list[Any] = field(default_factory=list)
     extra_attacks: int = 0
     bonus_damage: int = 0
     damage_conversion: Any = None
 
-    # Inventory
     inventory: list[Any] = field(default_factory=list)
+    equipment: list[Any] = field(default_factory=list)
+    active_effects: list[Effect] = field(default_factory=list)
 
     # RESOURCES
 
@@ -61,28 +62,37 @@ class Character:
     current_moxie: int = 0
     current_fortune: int = 0
 
+    # Optional max values if your pool calculators set them
+    max_hp: int = 0
+    max_sanity: int = 0
+    max_stamina: int = 0
+    max_moxie: int = 0
+    max_fortune: int = 0
+
     # SKILLS & ABILITIES
 
     skills: dict[str, int] = field(default_factory=dict)
 
-    # NOTE: abilities list is optional now (registry is primary)
-    abilities: List["Ability"] = field(default_factory=list)
+    # Transitional: still useful while ability rebuild/runtime settles
+    abilities: list["Ability"] = field(default_factory=list)
     ability_levels: dict[str, int] = field(default_factory=dict)
 
     # DERIVED STAT TRACKING
 
-    _derived_bonuses: defaultdict[str, int] = field(default_factory=lambda: defaultdict(int), init=False)
-    _derived_overrides: dict = field(default_factory=dict, init=False)
+    _derived_bonuses: defaultdict[str, int] = field(
+        default_factory=lambda: defaultdict(int),
+        init=False,
+    )
+    _derived_overrides: dict[str, int] = field(default_factory=dict, init=False)
 
     # ATTRIBUTE API
 
-    def add_stat(self, stat: str, value: int, source: str | None = None):
+    def add_stat(self, stat: str, value: int, source: str | None = None) -> None:
         self.attributes.add(stat, value)
-
         if source:
             self._attribute_sources[stat][source] += value
 
-    def set_stat(self, stat: str, value: int):
+    def set_stat(self, stat: str, value: int) -> None:
         self.attributes.set(stat, value)
 
     def get_stat(self, stat: str) -> int:
@@ -99,11 +109,9 @@ class Character:
         current = getattr(self, attr)
         new_value = current + amount
 
-        # Prevent going below 0
         if new_value < 0:
             return False
 
-        # OPTIONAL: clamp to max
         max_attr = f"max_{pool}"
         if hasattr(self, max_attr):
             new_value = min(new_value, getattr(self, max_attr))
@@ -111,50 +119,61 @@ class Character:
         setattr(self, attr, new_value)
         return True
 
-
     def spend_resource(self, pool: str, amount: int) -> bool:
         return self.modify_resource(pool, -amount)
 
-    # HELPERS
-    def get_progression_level(self, name: str, type: str) -> int:
-        p = self.progressions.get((type, name))
-        return p.level if p else 0
-    
+    # PROGRESSION API
+
+    def add_progression(self, ptype: str, name: str, level: int = 1) -> None:
+        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=level)
+
+    def set_progression_level(self, ptype: str, name: str, level: int) -> None:
+        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=level)
+
+    def get_progression(self, ptype: str, name: str) -> Optional[Progression]:
+        return self.progressions.get((ptype, name))
+
+    def get_progression_level(self, ptype: str, name: str, default: int = 0) -> int:
+        progression = self.get_progression(ptype, name)
+        return progression.level if progression else default
+
+    def has_progression(self, ptype: str, name: str) -> bool:
+        return (ptype, name) in self.progressions
+
+    def get_progressions_by_type(self, ptype: str) -> list[Progression]:
+        return [p for (kind, _), p in self.progressions.items() if kind == ptype]
+
+    # Convenience wrappers
+    def get_race_level(self, race_name: str, default: int = 0) -> int:
+        return self.get_progression_level("race", race_name, default)
+
+    def get_adventure_level(self, job_name: str, default: int = 0) -> int:
+        return self.get_progression_level("adventure", job_name, default)
+
+    def get_profession_level(self, job_name: str, default: int = 0) -> int:
+        return self.get_progression_level("profession", job_name, default)
+
+    def get_advanced_level(self, job_name: str, default: int = 0) -> int:
+        return self.get_progression_level("advanced", job_name, default)
+
+    def has_adventure_job(self, job_name: str) -> bool:
+        return self.has_progression("adventure", job_name)
+
     def get_skill(self, name: str) -> int:
         return self.skills.get(name, 0)
 
-    def get_race_levels(self) -> int:
-        return self.get_race_level(self.race.name)
-
-    def has_adventure_job(self, job_name: str) -> bool:
-        return any(job.name == job_name for job in self.adventure_jobs)
-    
-    def get_race_level(self, race_name: str) -> int:
-        return self.get_progression_level(race_name, "race")
-
-    def get_adventure_level_by_name(self, job_name, default=0):
-        level = self.get_progression_level(job_name, "adventure")
-        return level if level else default
-
-    def get_profession_level_by_name(self, job_name, default=0):
-        level = self.get_progression_level(job_name, "profession")
-        return level if level else default
-    
-    def get_advancecd_level_by_name(self, job_name, default=0):
-        level = self.get_progression_level(job_name, "advanced")
-        return level if level else default
-    
     # SERIALIZATION
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
-            "race": self.race.name,
-            "race_levels": self.race_levels,
-            "adventure_jobs": [job.name for job in self.adventure_jobs],
-            "adventure_levels": self.adventure_levels,
-            "profession_jobs": [job.name for job in self.profession_jobs],
-            "profession_levels": self.profession_levels,
+            "progressions": [
+                {"type": p.type, "name": p.name, "level": p.level}
+                for p in self.progressions.values()
+            ],
+            "race_bases": self.race_bases,
+            "race_template": self.race_template,
+            "race_material": self.race_material,
             "attributes": self.attributes.to_dict(),
             "skills": self.skills,
             "resources": {

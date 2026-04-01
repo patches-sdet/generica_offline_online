@@ -1,36 +1,35 @@
+from dataclasses import dataclass
+from typing import Callable
 from domain.effects.base import Effect, EffectContext
 
-
+@dataclass(slots=True)
 class BonusDamageEffect(Effect):
-    def __init__(self, scale_fn):
-        self.scale_fn = scale_fn
+    scale_fn: Callable
 
-    def apply(self, context):
-        bonus = self.scale_fn(context.source)
+    def apply(self, context: EffectContext) -> None:
+        bonus = int(self.scale_fn(context.source))
         context.source.bonus_damage += bonus
 
-
+@dataclass(slots=True)
 class ConvertDamageEffect(Effect):
-    def __init__(self, from_pool, to_pool):
-        self.from_pool = from_pool
-        self.to_pool = to_pool
+    from_pool: str
+    to_pool: str
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         context.source.damage_conversion = (self.from_pool, self.to_pool)
 
+@dataclass(slots=True)
 class TransferEffect(Effect):
-    def __init__(self, amount_fn, condition=None):
-        self.amount_fn = amount_fn
-        self.condition = condition
+    amount_fn: Callable
+    condition: Callable | None = None
 
-    def apply(self, context: EffectContext):
+    def apply(self, context: EffectContext) -> None:
         caster = context.source
-        amount = self.amount_fn(caster, context)
+        amount = int(self.amount_fn(caster, context))
 
         for target in context.targets:
-            if not self.condition or self.condition(caster, target):
-                # Damage target
-                target.modify_health(-amount)
+            if self.condition and not self.condition(caster, target):
+                continue
 
-                # Heal caster
-                caster.modify_health(amount)
+            target.modify_resource("hp", -amount)
+            caster.modify_resource("hp", amount)

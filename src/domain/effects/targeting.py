@@ -1,14 +1,14 @@
-from domain.effects.base import Effect
+from dataclasses import dataclass
+from typing import Callable
+from domain.effects.base import Effect, EffectContext
 
-
+@dataclass(slots=True)
 class TargetFilterEffect(Effect):
-    def __init__(self, effect, condition):
-        self.effect = effect
-        self.condition = condition
+    effect: Effect
+    condition: Callable
 
-    def apply(self, context):
-        filtered = [t for t in context.targets if self.condition(context, t)]
+    def apply(self, context: EffectContext) -> None:
+        filtered = [target for target in context.targets if self.condition(context, target)]
+
         if filtered:
-            self.effect.apply(
-                type(context)(source=context.source, targets=filtered)
-            )
+            self.effect.apply(context.with_targets(filtered))

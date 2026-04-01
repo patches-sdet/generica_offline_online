@@ -1,45 +1,46 @@
 from domain.abilities.factory import make_ability
+from domain.content_registry import register_progression_ability_grant
 
-# Core Builder
+def _normalize_effect_result(result, source_name: str) -> list:
+    if result is None:
+        return []
 
-def build_job(job_name: str, definitions: list):
+    if not isinstance(result, list):
+        result = [result]
+
+    normalized = []
+    for item in result:
+        if isinstance(item, list):
+            raise TypeError(f"{source_name} returned nested list of effects")
+        normalized.append(item)
+
+    return normalized
+
+def build_job(job_name: str, definitions: list) -> None:
     """
-    Registers all abilities for a job using a compact definition format.
+    Register all abilities for a job using a compact definition format,
+    and record which progression grants which abilities.
     """
-
-    def level(c):
-        return c.get_adventure_level_by_name(job_name, 0)
-
     for ability_def in definitions:
-
         name = ability_def["name"]
         kind = ability_def.get("type", "active")  # active | passive | skill
 
-        # Unlock condition
         source_type = ability_def.get("source_type", "adventure")
         required_level = ability_def.get("level", 1)
 
-        def default_unlock(c, st=source_type, lvl=required_level, name=job_name):
-            return c.get_progression_level(name, st) >= lvl
+        def default_unlock(c, st=source_type, lvl=required_level, progression_name=job_name):
+            return c.get_progression_level(st, progression_name, 0) >= lvl
 
         unlock_condition = ability_def.get("unlock", default_unlock)
 
-        # PASSIVE
         if kind == "passive":
-
-            def make_effect_generator(fn):
+            def make_effect_generator(fn, ability_name=name):
                 def effect_generator(character):
                     result = fn(character)
-
-                    # 🔥 Enforce flat List[Effect]
-                    if callable(result):
-                        result = result(character)
-
-                    if not isinstance(result, list):
-                        result = [result]
-
-                    return result
-
+                    return _normalize_effect_result(
+                        result,
+                        f"{job_name}.{ability_name}.effect_generator",
+                    )
                 return effect_generator
 
             make_ability(
@@ -51,24 +52,17 @@ def build_job(job_name: str, definitions: list):
                 is_passive=True,
                 is_skill=False,
                 target_type=ability_def.get("target", "self"),
+                scales_with_level=ability_def.get("scales_with_level", True),
             )
 
-        # ACTIVE / SKILL
         else:
-
-            def make_execute(fn):
+            def make_execute(fn, ability_name=name):
                 def execute(caster, targets):
                     result = fn(caster, targets)
-
-                    # Enforce flat List[Effect] to block lazy eval issues
-                    if callable(result):
-                        result = result(caster)
-
-                    if not isinstance(result, list):
-                        result = [result]
-
-                    return result
-
+                    return _normalize_effect_result(
+                        result,
+                        f"{job_name}.{ability_name}.execute",
+                    )
                 return execute
 
             make_ability(
@@ -82,4 +76,7 @@ def build_job(job_name: str, definitions: list):
                 is_passive=False,
                 is_skill=(kind == "skill"),
                 target_type=ability_def.get("target", "self"),
+                scales_with_level=ability_def.get("scales_with_level", True),
             )
+
+        register_progression_ability_grant(source_type, job_name, name)

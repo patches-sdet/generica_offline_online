@@ -8,6 +8,9 @@ from domain.profession import get_all_professions, resolve_profession
 from domain.effects import StatIncrease
 from application.runtime import execute_ability
 from domain.calculations import recalculate
+from domain.content_registry import initialize_content_registries
+
+initialize_content_registries()
 
 PERSISTENCE_DIR = "src/persistence"
 

@@ -1,16 +1,15 @@
 from dataclasses import dataclass
+from typing import Callable
 from domain.effects.base import Effect, EffectContext
-from typing import Optional
 
-
-@dataclass
+@dataclass(slots=True)
 class RollModifierEffect(Effect):
-    scale_fn: callable
+    scale_fn: Callable
     source_tag: str = "generic"
 
-    def apply(self, context: EffectContext):
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
-            amount = self.scale_fn(context.source)
+            amount = int(self.scale_fn(context.source))
 
             if not hasattr(target, "roll_modifiers"):
                 target.roll_modifiers = []

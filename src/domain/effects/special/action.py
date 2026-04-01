@@ -1,17 +1,17 @@
-from domain.effects.base import Effect
+from dataclasses import dataclass
+from typing import Callable
+from domain.effects.base import Effect, EffectContext
 
-
+@dataclass(slots=True)
 class ExtraAttackEffect(Effect):
-    def __init__(self, count: int):
-        self.count = count
+    count: int
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         context.source.extra_attacks += self.count
 
-
+@dataclass(slots=True)
 class ActionOverrideEffect(Effect):
-    def __init__(self, modifier_fn):
-        self.modifier_fn = modifier_fn
+    modifier_fn: Callable[[EffectContext], None]
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         self.modifier_fn(context)

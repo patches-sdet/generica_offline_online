@@ -1,28 +1,18 @@
-from typing import Callable, Dict
+from dataclasses import dataclass, field
+from typing import Any, Callable
 from domain.effects.base import Effect, EffectContext
 
-
+@dataclass(slots=True)
 class ScalingEffect(Effect):
-    def __init__(
-        self,
-        *,
-        effect_cls: Callable[[int], Effect],
-        scale_fn: Callable[[float], float],
-        stats: Dict[str, float],
-    ):
-        self.effect_cls = effect_cls
-        self.scale_fn = scale_fn
-        self.stats = stats
+    effect_cls: type[Effect]
+    scale_fn: Callable[[Any], float]
+    effect_kwargs: dict[str, Any] = field(default_factory=dict)
 
-    def apply(self, context: EffectContext):
-        character = context.character
-
-        total = sum(
-            character.get_stat(stat) * weight
-            for stat, weight in self.stats.items()
-        )
-
-        amount = int(self.scale_fn(total))
-
-        effect = self.effect_factory(amount)
+    def apply(self, context: EffectContext) -> None:
+        """
+        Compute a scaled amount from the source/context and instantiate
+        the wrapped effect class with that amount plus any extra kwargs.
+        """
+        amount = int(self.scale_fn(context.source))
+        effect = self.effect_cls(amount=amount, **self.effect_kwargs)
         effect.apply(context)

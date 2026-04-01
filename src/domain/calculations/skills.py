@@ -1,9 +1,10 @@
-def rebuild_skills(character, effects=None):
-    skills = {}
+def rebuild_skills(character, effects=None) -> None:
+    skills: dict[str, int] = {}
 
     for ability in getattr(character, "abilities", []):
-        if ability.is_skill:
-            base = skills.get(ability.name, 0)
-            skills[ability.name] = max(base, 1)
+        if not ability.is_skill:
+            continue
+
+        skills[ability.name] = character.ability_levels.get(ability.name, 1)
 
     character.skills = skills

@@ -1,11 +1,11 @@
-from domain.effects.base import Effect
+from dataclasses import dataclass
+from domain.effects.base import Effect, EffectContext
 
-
+@dataclass(slots=True)
 class ApplyTagEffect(Effect):
-    def __init__(self, tag: str):
-        self.tag = tag
+    tag: str
 
-    def apply(self, context):
+    def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             if not hasattr(target, "tags"):
                 target.tags = set()

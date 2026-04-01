@@ -1,64 +1,27 @@
 from domain.character import Character
-from domain.effects import EffectContext, Effect
+from domain.effects import EffectContext
+from domain.attributes import Attributes
+from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
 
 
-def rebuild_attributes(character: Character, effects: list):
+ATTRIBUTE_EFFECT_TYPES = (StatIncrease, MultiStatIncrease)
+
+
+def rebuild_attributes(character: Character, effects: list) -> None:
     """
-    Fully rebuild base + additive attributes ONLY.
-    No derived stats here.
+    Rebuild only base/additive attributes from aggregated effects.
     """
 
-    race_level = character.get_race_levels()
-
-#    character.attributes = character.race.get_base_attributes(race_level)
-
-    # Reset tracking
+    character.attributes = Attributes()
     character._attribute_sources.clear()
 
-    # ROLL EFFECTS (STATIC)
-
-    context = EffectContext(source="roll", targets=[character])
-
-    for effect in character.attribute_effects:
-        effect.apply(context)
-
-    # RACE EFFECTS
-
-    race_level = character.get_race_levels()
-    
     context = EffectContext(
-            source="race", 
-            targets=[character]
-        )
+        source="rebuild_attributes",
+        targets=[character],
+    )
 
-    for effect in character.race.get_effects(race_level):
-        effect.apply(context)
-
-    # Snapshot base AFTER race
-    character._base_attributes = dict(vars(character.attributes))
-
-    # ADVENTURE JOBS
-
-    for job in character.adventure_jobs:
-        level = character.adventure_levels.get(job.name, 1)
-
-        context = EffectContext(
-            source=f"job:{job.name}",
-            targets=[character],
-        )
-
-        for effect in job.get_effects(level):
+    for effect in effects:
+        if isinstance(effect, ATTRIBUTE_EFFECT_TYPES):
             effect.apply(context)
 
-    # PROFESSIONS
-
-    for job in character.profession_jobs:
-        level = character.profession_levels.get(job.name, 1)
-
-        context = EffectContext(
-            source=f"profession:{job.name}",
-            targets=[character],
-        )
-
-        for effect in job.get_effects(level):
-            effect.apply(context)
+    character._base_attributes = character.attributes.to_dict()
