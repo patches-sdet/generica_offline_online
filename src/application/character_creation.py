@@ -1,167 +1,79 @@
-import random, copy
+import random
+
 from domain.attributes import DEFAULT_STATS
 from domain.character import Character
-from domain.race import Race
-from domain.adventure import AdventureJob
-from domain.profession import ProfessionJob, get_all_professions
-from domain.calculations import calculate_pools, recalculate
-from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
-from domain.effects.special.damage import ConvertDamageEffect, BonusDamageEffect  # future-safe
-from domain.effects.special.state import ApplyStateEffect
-from domain.effects.special.tag import ApplyTagEffect
-from domain.effects.base import Effect
 from domain.progression import Progression
 
-# ROLLING
+from domain.calculations import calculate_pools, recalculate
+from domain.effects.base import Effect
+from domain.effects.stat_effects import StatIncrease
+
+from domain.content_registry import (
+    get_base_race,
+    get_race_template,
+    get_adventure_job,
+    get_profession_job,
+)
+from domain.race_resolution import MATERIAL_EFFECTS, get_race_display_name
+
+
+# =========================================================
+# Rolling
+# =========================================================
 
 def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
 
 
 def roll_attributes() -> list[Effect]:
-    effects = []
+    effects: list[Effect] = []
 
     for stat in DEFAULT_STATS:
-        roll = roll_2d10()
-        effects.append(StatIncrease(stat, roll))
+        effects.append(StatIncrease(stat, roll_2d10(), source="roll"))
 
     return effects
 
-# MATERIAL SYSTEM
 
-# DerivedStatOverride
-from domain.effects import DerivedStatOverride
+# =========================================================
+# Internal helpers
+# =========================================================
+
+def _initialize_runtime_state(character: Character) -> None:
+    if not hasattr(character, "states") or character.states is None:
+        character.states = {}
+
+    if not hasattr(character, "tags") or character.tags is None:
+        character.tags = set()
+
+    if not hasattr(character, "event_listeners") or character.event_listeners is None:
+        character.event_listeners = []
+
+    if not hasattr(character, "next_attack_modifiers") or character.next_attack_modifiers is None:
+        character.next_attack_modifiers = []
+
+    if not hasattr(character, "extra_attacks"):
+        character.extra_attacks = 0
+
+    if not hasattr(character, "bonus_damage"):
+        character.bonus_damage = 0
+
+    if not hasattr(character, "damage_conversion"):
+        character.damage_conversion = None
+
+    if not hasattr(character, "roll_modifiers") or character.roll_modifiers is None:
+        character.roll_modifiers = []
+
+    if not hasattr(character, "inventory") or character.inventory is None:
+        character.inventory = []
+
+    if not hasattr(character, "equipment") or character.equipment is None:
+        character.equipment = []
+
+    if not hasattr(character, "active_effects") or character.active_effects is None:
+        character.active_effects = []
 
 
-MATERIAL_EFFECTS = {
-    "cloth": [
-        DerivedStatOverride("armor", 10),
-        DerivedStatOverride("endurance", 20),
-    ],
-    "leather": [
-        DerivedStatOverride("armor", 15),
-        DerivedStatOverride("endurance", 15),
-    ],
-    "metal": [
-        DerivedStatOverride("armor", 20),
-        DerivedStatOverride("endurance", 10),
-    ],
-}
-
-
-def apply_material_to_race(race: Race, base_race: Race, material: str) -> Race:
-    return Race(
-        name=race.name,
-        effects_on_acquire=race.effects_on_acquire + MATERIAL_EFFECTS[material],
-        effects_per_level=base_race.effects_per_level + race.effects_per_level,
-        requires_material=race.requires_material,
-        material=material,
-        base_race=base_race.name,
-    )
-
-# PROFESSION HELPERS
-
-def list_professions():
-    return get_all_professions()
-
-# CORE CREATION
-
-def create_character(
-    name: str,
-    race: Race,
-    jobs: list[AdventureJob],
-    professions: list[ProfessionJob],
-    base_race: Race | None = None,
-    material: str | None = None,
-) -> Character:
-
-    # MATERIAL HANDLING
-
-    if race.requires_material:
-        if base_race is None or material is None:
-            raise ValueError(
-                f"{race.name} requires base_race and material"
-            )
-
-        race = apply_material_to_race(copy.deepcopy(race), base_race, material)
-
-    else:
-        if base_race or material:
-            raise ValueError(f"{race.name} does not support material")
-
-    # VALIDATION
-
-    if len(jobs) > race.max_adventure_jobs:
-        raise ValueError(f"{race.name} allows only {race.max_adventure_jobs} jobs")
-
-    if len(professions) > race.max_profession_jobs:
-        raise ValueError(f"{race.name} allows only {race.max_profession_jobs} professions")
-
-    # LEVEL STRUCTURES
-
-    adventure_levels = {job.name: 1 for job in jobs}
-    profession_levels = {prof.name: 1 for prof in professions}
-
-    # ATTRIBUTE EFFECTS
-
-    attribute_effects = roll_attributes()
-
-    # CHARACTER INIT
-
-    character = Character(
-        name=name,
-        race=race,
-        race_levels={race.name: 1},
-        base_race_levels={base_race.name: 1} if base_race else {},
-        adventure_jobs=jobs,
-        adventure_levels=adventure_levels,
-        profession_jobs=professions,
-        profession_levels=profession_levels,
-    )
-
-    for job in character.adventure_jobs:
-        level = character.adventure_levels.get(job.name, 1)
-        character.progressions[("adventure", job.name)] = Progression(
-            name=job.name,
-            type="adventure",
-            level=level,
-        )
-
-    for job in character.profession_jobs:
-        level = character.profession_levels.get(job.name, 1)
-        character.progressions[("profession", job.name)] = Progression(
-            name=job.name,
-            type="profession",
-            level=level,
-        )
-
-    character.progressions[("race", character.race.name)] = Progression(
-        name=character.race.name,
-        type="race",
-        level=character.get_race_levels(),
-    )
-
-    # NEW: RUNTIME SYSTEM INIT
-
-    character.states = {}
-    character.tags = set()
-    character.event_listeners = []
-
-    character.next_attack_modifiers = []
-    character.extra_attacks = 0
-    character.bonus_damage = 0
-    character.damage_conversion = None
-
-    character.inventory = []
-
-    # APPLY ATTRIBUTE EFFECTS
-
-    character.attribute_effects = attribute_effects
-
-    # FULL REBUILD
-
-    recalculate(character)
-    
+def _initialize_current_resources_to_max(character: Character) -> None:
     pools = calculate_pools(character)
 
     character.current_hp = pools.hp[1]
@@ -169,5 +81,130 @@ def create_character(
     character.current_stamina = pools.stamina[1]
     character.current_moxie = pools.moxie[1]
     character.current_fortune = pools.fortune[1]
+
+
+def _register_progressions(
+    character: Character,
+    *,
+    race_bases: list[str],
+    adventure_job_names: list[str],
+    profession_job_names: list[str],
+) -> None:
+    for base_name in race_bases:
+        character.progressions[("race", base_name)] = Progression(
+            name=base_name,
+            type="race",
+            level=1,
+        )
+
+    for name in adventure_job_names:
+        character.progressions[("adventure", name)] = Progression(
+            name=name,
+            type="adventure",
+            level=1,
+        )
+
+    for name in profession_job_names:
+        character.progressions[("profession", name)] = Progression(
+            name=name,
+            type="profession",
+            level=1,
+        )
+
+
+# =========================================================
+# Public API
+# =========================================================
+
+def create_character(
+    *,
+    name: str,
+    base_race_names: list[str],
+    adventure_job_names: list[str],
+    profession_job_names: list[str],
+    race_template_name: str | None = None,
+    material: str | None = None,
+) -> Character:
+    if not base_race_names:
+        raise ValueError("Character must have at least one base race")
+
+    base_races = [get_base_race(name) for name in base_race_names]
+    jobs = [get_adventure_job(job_name) for job_name in adventure_job_names]
+    professions = [get_profession_job(job_name) for job_name in profession_job_names]
+
+    race_template = get_race_template(race_template_name) if race_template_name else None
+
+    if race_template and race_template.kind == "composition":
+        if race_template.name == "Crossbreed":
+            if len(base_races) != 2:
+                raise ValueError("Crossbreed requires exactly two base races")
+        else:
+            raise ValueError(f"Unsupported composition template: {race_template.name}")
+    else:
+        if len(base_races) != 1:
+            raise ValueError("Non-composition races require exactly one base race")
+
+    if race_template and race_template.requires_material and material is None:
+        raise ValueError(f"{race_template.name} requires material")
+
+    if race_template and not race_template.requires_material and material is not None:
+        raise ValueError(f"{race_template.name} does not use material")
+
+    # Job limits: use the most restrictive base race limit for multi-base cases
+    max_adventure_jobs = min(base.max_adventure_jobs for base in base_races)
+    max_profession_jobs = min(base.max_profession_jobs for base in base_races)
+
+    if len(jobs) > max_adventure_jobs:
+        raise ValueError(f"Race allows only {max_adventure_jobs} adventure job(s)")
+
+    if len(professions) > max_profession_jobs:
+        raise ValueError(f"Race allows only {max_profession_jobs} profession job(s)")
+
+    attribute_effects = roll_attributes()
+
+    # Compatibility fields retained only where useful
+    primary_base = base_races[0]
+
+    character = Character(
+        name=name,
+        race=primary_base,
+        race_levels={base.name: 1 for base in base_races},
+        base_race_levels={base.name: 1 for base in base_races},
+        adventure_jobs=jobs,
+        adventure_levels={job.name: 1 for job in jobs},
+        profession_jobs=professions,
+        profession_levels={prof.name: 1 for prof in professions},
+    )
+
+    if not hasattr(character, "progressions") or character.progressions is None:
+        character.progressions = {}
+
+    character.attribute_effects = attribute_effects
+
+    # Authoritative ancestry fields
+    character.race_bases = [base.name for base in base_races]
+    character.race_template = race_template.name if race_template else None
+    character.race_material = material
+
+    _initialize_runtime_state(character)
+
+    # Also mirror into states for compatibility
+    if character.race_template:
+        character.states["race_template"] = character.race_template
+    if character.race_material:
+        character.states["race_material"] = character.race_material
+
+    _register_progressions(
+        character,
+        race_bases=character.race_bases,
+        adventure_job_names=[job.name for job in jobs],
+        profession_job_names=[prof.name for prof in professions],
+    )
+
+    recalculate(character)
+    _initialize_current_resources_to_max(character)
+
+    # Optional convenience field for simple display/debugging
+    character.race_display_name = get_race_display_name(character)
 
     return character

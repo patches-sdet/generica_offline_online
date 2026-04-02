@@ -15,8 +15,7 @@ from domain.conditions import *
 
 @dataclass(slots=True)
 class DifficultyTable:
-    def __init__(self, values: dict[str, int]):
-        self.values = values
+    values: dict[str, int]
 
     def get(self, key: str) -> int:
         if key not in self.values:

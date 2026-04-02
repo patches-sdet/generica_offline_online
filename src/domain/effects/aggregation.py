@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from domain.effects.base import Effect
 from domain.content_registry import get_progression_source
-from domain.race import get_race_effects
+from domain.race_resolution import get_race_effects
 
 if TYPE_CHECKING:
     from domain.character import Character

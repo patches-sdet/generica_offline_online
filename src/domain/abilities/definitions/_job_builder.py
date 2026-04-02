@@ -1,4 +1,5 @@
 from domain.abilities.factory import make_ability
+from domain.effects import EffectContext
 from domain.content_registry import register_progression_ability_grant
 
 def _normalize_effect_result(result, source_name: str) -> list:

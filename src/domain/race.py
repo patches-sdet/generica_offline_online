@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from math import ceil, floor
-from typing import Literal, Optional
-from domain.content_registry import get_base_race, get_race_template
+from typing import Literal
+
 from domain.effects.base import Effect
 from domain.effects.stat_effects import MultiStatIncrease, DerivedStatBonus
 
@@ -26,24 +26,28 @@ class BaseRace:
 
     def effects_on_acquire(self) -> list[Effect]:
         effects: list[Effect] = []
+
         if self.acquire_stats:
             effects.append(MultiStatIncrease(dict(self.acquire_stats)))
 
         for stat, value in self.acquire_derived.items():
             effects.append(DerivedStatBonus(stat, value))
+
         return effects
 
-    def get_effects(self, level: int = 1) -> list[Effect]: # Level-up Effects
+    def get_effects(self, level: int = 1) -> list[Effect]:
         level = max(1, level)
         if level <= 1:
             return []
 
         per_level: list[Effect] = []
+
         if self.level_stats:
             per_level.append(MultiStatIncrease(dict(self.level_stats)))
 
         for stat, value in self.level_derived.items():
             per_level.append(DerivedStatBonus(stat, value))
+
         return per_level * (level - 1)
 
 
@@ -60,14 +64,16 @@ class RaceTemplate:
 
     def effects_on_acquire(self) -> list[Effect]:
         effects: list[Effect] = []
+
         if self.acquire_stats:
             effects.append(MultiStatIncrease(dict(self.acquire_stats)))
 
         for stat, value in self.acquire_derived.items():
             effects.append(DerivedStatBonus(stat, value))
+
         return effects
 
-    def get_effects(self, level: int = 1) -> list[Effect]: # Template Level-Up Effects
+    def get_effects(self, level: int = 1) -> list[Effect]:
         level = max(1, level)
         if level <= 1:
             return []
@@ -86,10 +92,12 @@ class RaceTemplate:
 
 def _merge_tags(*tag_groups: tuple[str, ...]) -> tuple[str, ...]:
     ordered: list[str] = []
+
     for group in tag_groups:
         for tag in group:
             if tag not in ordered:
                 ordered.append(tag)
+
     return tuple(ordered)
 
 
@@ -104,10 +112,11 @@ def _average_dicts(
     for key in keys:
         avg = (left.get(key, 0) + right.get(key, 0)) / 2
         result[key] = floor(avg) if round_mode == "down" else ceil(avg)
+
     return result
 
 
-def _validate_crossbreed_parent(parent: BaseRace) -> None:
+def validate_crossbreed_parent(parent: BaseRace) -> None:
     if not parent.crossbreed_eligible:
         raise ValueError(f"{parent.name} is not eligible for Crossbreed")
 
@@ -117,14 +126,9 @@ def _validate_crossbreed_parent(parent: BaseRace) -> None:
             f"to be Crossbreed-eligible"
         )
 
-# RACE MECHANICS
-
-def build_crossbreed_race(
-    parent_a: BaseRace,
-    parent_b: BaseRace,
-) -> BaseRace:
-    _validate_crossbreed_parent(parent_a)
-    _validate_crossbreed_parent(parent_b)
+def build_crossbreed_race(parent_a: BaseRace, parent_b: BaseRace) -> BaseRace:
+    validate_crossbreed_parent(parent_a)
+    validate_crossbreed_parent(parent_b)
 
     return BaseRace(
         name=f"Crossbreed ({parent_a.name}/{parent_b.name})",
@@ -142,82 +146,7 @@ def build_crossbreed_race(
         crossbreed_eligible=False,
     )
 
-
-def get_race_effects(character) -> list[Effect]:
-    effects: list[Effect] = []
-    base_names: list[str] = list(getattr(character, "race_bases", []))
-    template_name: Optional[str] = getattr(character, "race_template", None)
-    template = get_race_template(template_name) if template_name else None
-
-    if not base_names:
-        return effects
-
-    # Composition template: Crossbreed
-    if template and template.kind == "composition":
-        if template.name != "Crossbreed":
-            raise ValueError(f"Unsupported composition template: {template.name}")
-
-        if len(base_names) != 2:
-            raise ValueError("Crossbreed requires exactly two parent races")
-
-        parent_a = get_base_race(base_names[0])
-        parent_b = get_base_race(base_names[1])
-        composite = build_crossbreed_race(parent_a, parent_b)
-
-        level_a = character.get_progression_level("race", base_names[0], 0)
-        level_b = character.get_progression_level("race", base_names[1], 0)
-        level = max(1, min(level_a, level_b))
-
-        effects.extend(composite.effects_on_acquire())
-        effects.extend(composite.get_effects(level))
-        return effects
-
-    # Normal base race handling
-    highest_base_level = 1
-
-    for base_name in base_names:
-        base = get_base_race(base_name)
-        level = max(1, character.get_progression_level("race", base_name, 0))
-        highest_base_level = max(highest_base_level, level)
-
-        effects.extend(base.effects_on_acquire())
-        effects.extend(base.get_effects(level))
-
-    # Overlay template handling
-    if template and template.kind == "overlay":
-        effects.extend(template.effects_on_acquire())
-        effects.extend(template.get_effects(highest_base_level))
-
-    return effects
-
-
-def get_race_tags(character) -> tuple[str, ...]:
-    base_names: list[str] = list(getattr(character, "race_bases", []))
-    template_name: Optional[str] = getattr(character, "race_template", None)
-    template = get_race_template(template_name) if template_name else None
-
-    if template and template.kind == "composition":
-        if template.name != "Crossbreed":
-            raise ValueError(f"Unsupported composition template: {template.name}")
-        if len(base_names) != 2:
-            raise ValueError("Crossbreed requires exactly two parent races")
-
-        parent_a = get_base_race(base_names[0])
-        parent_b = get_base_race(base_names[1])
-        composite = build_crossbreed_race(parent_a, parent_b)
-        return composite.tags
-
-    tags: tuple[str, ...] = tuple()
-
-    for base_name in base_names:
-        tags = _merge_tags(tags, get_base_race(base_name).tags)
-
-    if template:
-        tags = _merge_tags(tags, template.tags)
-
-    return tags
-
-# Race Definitions
+# DEFINITIONS
 
 BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
     BaseRace(
