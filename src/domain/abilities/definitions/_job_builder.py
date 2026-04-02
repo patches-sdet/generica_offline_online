@@ -36,7 +36,8 @@ def build_job(job_name: str, definitions: list) -> None:
         if kind == "passive":
             def make_effect_generator(fn, ability_name=name):
                 def effect_generator(character):
-                    result = fn(character)
+                    ctx = EffectContext(source=character, targets=[character])
+                    result = fn(ctx)
                     return _normalize_effect_result(
                         result,
                         f"{job_name}.{ability_name}.effect_generator",
@@ -58,7 +59,8 @@ def build_job(job_name: str, definitions: list) -> None:
         else:
             def make_execute(fn, ability_name=name):
                 def execute(caster, targets):
-                    result = fn(caster, targets)
+                    ctx = EffectContext(source=caster, targets=targets)
+                    result = fn(ctx)
                     return _normalize_effect_result(
                         result,
                         f"{job_name}.{ability_name}.execute",

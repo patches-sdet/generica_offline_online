@@ -1,4 +1,5 @@
 from typing import Callable, Dict, Union
+from dataclasses import dataclass
 from domain.effects import (
     MultiStatIncrease,
     CompositeEffect,
@@ -11,6 +12,27 @@ from domain.effects import (
 from domain.effects import Damage, Heal
 from domain.effects.special.damage import TransferEffect
 from domain.conditions import *
+
+@dataclass(slots=True)
+class DifficultyTable:
+    def __init__(self, values: dict[str, int]):
+        self.values = values
+
+    def get(self, key: str) -> int:
+        if key not in self.values:
+            raise ValueError(f"Unknown difficulty tier: {key}")
+        return self.values[key]
+
+    def __getitem__(self, key: str) -> int:
+        return self.get(key)
+
+def difficulty_from_table(table: DifficultyTable, metadata_key: str = "tier"):
+    def resolve(ctx, target):
+        key = ctx.metadata.get(metadata_key)
+        if key is None:
+            raise ValueError(f"Missing required metadata key: {metadata_key}")
+        return table[key]
+    return resolve
 
 def scaled_stat_buff(
     scale_fn: Callable,
@@ -70,7 +92,7 @@ def on_event(event_name: str, effect, condition=None):
     )
 
 def skill_check(
-    skill: str,
+    ability: str,
     stat: str = "intelligence",
     difficulty: Union[int, Callable] = 0,
     on_success=None,
@@ -81,7 +103,7 @@ def skill_check(
 
     def success_condition(ctx, target):
         roll_fn = getattr(ctx.source, f"roll_{stat}")
-        roll = roll_fn(skill)
+        roll = roll_fn(ability)
         return roll >= resolve_difficulty(ctx, target)
 
     success_effect = ConditionalEffect(
