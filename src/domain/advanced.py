@@ -41,9 +41,9 @@ ADVANCED_JOB_DEFINITIONS: tuple[AdvancedJob, ...] = (
     ),
     AdvancedJob(
         name="Death Knight",
-        effects_on_acquire=make_effects(strength=5, constitution=5),
-        effects_per_level=make_effects(strength=5, constitution=5),
-        tags=("melee", "aggressive"),
+        effects_on_acquire=make_effects(intelligence=5, constitution=5),
+        effects_per_level=make_effects(intelligence=5, constitution=5),
+        tags=("minion", "plague"),
     ),
     AdvancedJob(
         name="Demon Knight",
@@ -86,6 +86,12 @@ ADVANCED_JOB_DEFINITIONS: tuple[AdvancedJob, ...] = (
         effects_on_acquire=make_effects(charisma=5, intelligence=5),
         effects_per_level=make_effects(charisma=5, intelligence=5),
         tags=("support", "social", "utility"),
+    ),
+    AdvancedJob(
+        name="Lich",
+        effects_on_acquire=make_effects(intelligence=5, charisma=5),
+        effects_per_level=make_effects(intelligence=5, charisma=5),
+        tags=("caster", "control"),
     ),
     AdvancedJob(
         name="Paladin",

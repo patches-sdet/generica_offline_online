@@ -1,4 +1,4 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import create_item, damage, inspect, skill_check
 from domain.conditions import IS_ENEMY
 from domain.abilities.patterns import DifficultyTable, difficulty_from_table

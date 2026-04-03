@@ -8,6 +8,8 @@ class Ability:
     unlock_condition: Callable
     execute: Optional[Callable] = None
     effect_generator: Optional[Callable] = None
+    level: int = 0
+    is_leveled: bool = False
 
     cost: Optional[int] = 0
     cost_pool: Optional[str] = None
@@ -49,6 +51,8 @@ def make_ability(
     unlock_condition: Callable,
     execute: Optional[Callable] = None,
     effect_generator: Optional[Callable] = None,
+    level: int = 0,
+    is_leveled: bool = False,
     cost: Optional[int] = 0,
     cost_pool: Optional[str] = None,
     duration: Optional[str] = None,
@@ -70,6 +74,8 @@ def make_ability(
         unlock_condition=unlock_condition,
         execute=execute,
         effect_generator=effect_generator,
+        level=level,
+        is_leveled=is_leveled,
         cost=cost,
         cost_pool=cost_pool,
         duration=duration,

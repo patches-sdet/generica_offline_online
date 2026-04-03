@@ -1,9 +1,10 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import buff, heal, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: 
-# requires Knight 25, Animator 25, Tinker 25. The rest is narrative and can be adjusted as needed.
+# requires Knight 10, Animator 10, Tinker 10. The rest is narrative and can be adjusted as needed.
+# Abilities include "Talk to the Hand" (Either negates critical hits, reduces damage, or increases armor) and "Steam Scream"
 
 build_job("Steam-Knight", [
 

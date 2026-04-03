@@ -1,9 +1,10 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import buff, heal, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: Animate and command undead from horseback, then lead them in battle and buff them with Knight skills
-# requires Necromancer 25, Knight 25. The rest is narrative and can be adjusted as needed.
+# requires Necromancer 10, Knight 10. The rest is narrative and can be adjusted as needed.
+# Known ability is "Bony Armor" which increases armor and constitution
 
 build_job("Death-Knight", [
 

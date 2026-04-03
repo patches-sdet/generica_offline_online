@@ -1,4 +1,4 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
     modify_next_attack,
     conditional_damage,
@@ -77,20 +77,7 @@ build_job("Assassin", [
     },
 
     # Quickdraw
-    {
-        "name": "Quickdraw",
-        "type": "skill",
-        "cost": 5,
-        "cost_pool": "stamina",
-        "duration": "1 minute",
-        "description": "After activating this skill, the Assassin does not need to spend an action to draw any weapon or item on their person. It still costs an action to draw from a pack. This skill has no levels.",
-        "effects": lambda ctx: [
-            action_override(
-                lambda ctx: effect_ctx.set_draw_cost(0)
-            ),
-        ],
-        "scales_with_level": False,
-    },
+    {"grant": "Quickdraw"},
 
     # Unobtrusive — Passive Social Stealth
     {

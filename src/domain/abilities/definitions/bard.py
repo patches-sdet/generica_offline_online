@@ -1,4 +1,4 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import buff, debuff, heal, aura, scaled_resource_effect
 from domain.conditions import IS_ALLY, IS_ENEMY
 from domain.effects import Heal

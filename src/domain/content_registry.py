@@ -40,6 +40,14 @@ def register_race_template(template: RaceTemplate) -> None:
         raise ValueError(f"Race template already registered: {template.name}")
     _RACE_TEMPLATE_REGISTRY[template.name] = template
 
+def get_racial_progression_source(name: str):
+    if has_base_race(name):
+        return get_base_race(name)
+
+    if has_race_template(name):
+        return get_race_template(name)
+
+    raise ValueError(f"Race progression '{name}' not registered")
 
 def get_base_race(name: str) -> BaseRace:
     try:
@@ -163,6 +171,12 @@ def register_progression_ability_grant(
     progression_name: str,
     ability_name: str,
 ) -> None:
+    if ability_name not in _ABILITY_REGISTRY:
+        raise ValueError(
+            f"Cannot grant unknown ability '{ability_name}' "
+            f"to {ptype}:{progression_name}"
+        )
+
     key = (ptype, progression_name)
     _PROGRESSION_ABILITY_GRANTS.setdefault(key, [])
 
@@ -170,14 +184,14 @@ def register_progression_ability_grant(
         _PROGRESSION_ABILITY_GRANTS[key].append(ability_name)
 
 
-def get_progression_ability_names(ptype: str, progression_name: str) -> list[str]:
-    return list(_PROGRESSION_ABILITY_GRANTS.get((ptype, progression_name), []))
+def get_progression_ability_names(ptype: str, progression_name: str) -> tuple[str]:
+    return tuple(_PROGRESSION_ABILITY_GRANTS.get((ptype, progression_name), ()))
 
 # UNIFIED PROGRESSION SOURCE RESOLUTION
 
 def get_progression_source(ptype: str, name: str):
     if ptype == "race":
-        return get_base_race(name)
+        return get_racial_progression_source(name)
 
     if ptype == "adventure":
         return get_adventure_job(name)
@@ -192,39 +206,47 @@ def get_progression_source(ptype: str, name: str):
 
 # BOOTSTRAP HELPERS
 
-def initialize_ability_modules(force: bool = False) -> int:
-    """
-    Explicitly import all ability content modules so that their builders /
-    registration side effects run in a controlled startup step.
+def _import_modules_from_package(package) -> int:
+    loaded = 0
 
-    Returns the number of modules imported during this call.
-    """
+    for _, module_name, _ in pkgutil.iter_modules(package.__path__):
+        if module_name.startswith("_"):
+            continue
+
+        importlib.import_module(f"{package.__name__}.{module_name}")
+        loaded += 1
+
+    return loaded
+
+def initialize_ability_modules(force: bool = False) -> int:
     global _ABILITY_MODULES_INITIALIZED
 
     if _ABILITY_MODULES_INITIALIZED and not force:
         return 0
+
+    from domain.abilities.shared import combat as shared_combat
+    from domain.abilities.shared import stealth as shared_stealth
+    from domain.abilities.shared import utility as shared_utility
 
     from domain.abilities import definitions as ability_definitions
     from domain.abilities import professions as ability_professions
     from domain.abilities import races as ability_races
     from domain.abilities import advanced as ability_advanced
 
-    ability_module_groups = [
+    loaded = 0
+
+    # shared first
+    for group in (shared_combat, shared_stealth, shared_utility):
+        loaded += _import_modules_from_package(group)
+
+    # progression content second
+    for group in (
         ability_definitions,
         ability_professions,
         ability_races,
         ability_advanced,
-    ]
-
-    loaded = 0
-
-    for group in ability_module_groups:
-        for _, module_name, _ in pkgutil.iter_modules(group.__path__):
-            if module_name.startswith("_"):
-                continue
-
-            importlib.import_module(f"{group.__name__}.{module_name}")
-            loaded += 1
+    ):
+        loaded += _import_modules_from_package(group)
 
     _ABILITY_MODULES_INITIALIZED = True
     return loaded

@@ -16,10 +16,7 @@ from domain.content_registry import (
 )
 from domain.race_resolution import MATERIAL_EFFECTS, get_race_display_name
 
-
-# =========================================================
 # Rolling
-# =========================================================
 
 def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
@@ -33,10 +30,7 @@ def roll_attributes() -> list[Effect]:
 
     return effects
 
-
-# =========================================================
 # Internal helpers
-# =========================================================
 
 def _initialize_runtime_state(character: Character) -> None:
     if not hasattr(character, "states") or character.states is None:
@@ -111,10 +105,7 @@ def _register_progressions(
             level=1,
         )
 
-
-# =========================================================
 # Public API
-# =========================================================
 
 def create_character(
     *,

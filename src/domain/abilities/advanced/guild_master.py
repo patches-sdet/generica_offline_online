@@ -1,9 +1,10 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import buff, heal, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: 
-# requires Mercenary 25, Ruler 25. The rest is narrative and can be adjusted as needed.
+# requires Mercenary 10, Ruler 10. The rest is narrative and can be adjusted as needed.
+# Known abilties include "Talent Management" (Allows you to change your active jobs)
 
 build_job("Guild_Master", [
 

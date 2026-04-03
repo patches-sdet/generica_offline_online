@@ -1,4 +1,4 @@
-from domain.abilities.definitions._job_builder import build_job
+from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
     buff,
     skill_check,
