@@ -1,8 +1,8 @@
-from domain.content_registry import get_ability
+from domain.content_registry import get_ability, get_progression_ability_names
 from domain.abilities.factory import Ability
 
 def get_abilities_for_progression(progression) -> list[Ability]:
-    ability_names = get_progression_ability_grants(
+    ability_names = get_progression_ability_names(
         progression.type,
         progression.name,
     )
@@ -10,11 +10,7 @@ def get_abilities_for_progression(progression) -> list[Ability]:
     granted = []
     for name in ability_names:
         ability = get_ability(name)
-        if ability is None:
-            raise ValueError(
-                f"Unknown ability '{name}' granted to "
-                f"{progression.type}:{progression.name}"
-            )
+        
         granted.append(ability)
 
     return granted
@@ -28,7 +24,7 @@ def rebuild_abilities(character) -> None:
             if not ability.is_unlocked(character):
                 continue
 
-            granted_counts[ability.name] = granted_counts.get(ability.name, 0)
+            granted_counts[ability.name] = granted_counts.get(ability.name, 0) + 1
             definitions_by_name[ability.name] = ability
 
     character.abilities = list(definitions_by_name.values())

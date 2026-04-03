@@ -12,6 +12,7 @@ from domain.effects import (
 from domain.effects import Damage, Heal
 from domain.effects.special.damage import TransferEffect
 from domain.conditions import *
+from domain.effects.base import Effect
 
 @dataclass(slots=True)
 class DifficultyTable:
@@ -24,6 +25,21 @@ class DifficultyTable:
 
     def __getitem__(self, key: str) -> int:
         return self.get(key)
+
+@dataclass(slots=True)
+class ApplyChallengedEffect(Effect):
+    def __init__(self, challenger, penalty, duration):
+        self.challenger = challenger
+        self.penalty = penalty
+        self.duration = duration
+
+    def apply(self, context):
+        for target in context.targets:
+            target.states["challenged"] = {
+                "challenger": self.challenger,
+                "penalty": self.penalty,
+                "duration": self.duration,
+            }
 
 def difficulty_from_table(table: DifficultyTable, metadata_key: str = "tier"):
     def resolve(ctx, target):

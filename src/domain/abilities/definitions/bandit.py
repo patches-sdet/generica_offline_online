@@ -6,7 +6,6 @@ from domain.abilities.patterns import (
     apply_tag,
     tagged,
     on_event,
-    convert_damage,
     scaled_resource_effect,
 )
 from domain.effects import Damage
@@ -133,7 +132,9 @@ build_job("Bandit", [
         "duration": "1 turn/level",
         "description": "The Bandit can convert their lethal damage to nonlethal, dealing stamina damage instead of HP without any penalties.",
         "effects": lambda ctx: [
-            convert_damage("hp", "stamina")
+            moxie_damage(
+                scale_fn=lambda c: c.ability_levels.get("Subdue", 0),
+            )
         ],
     },
 ])

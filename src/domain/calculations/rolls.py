@@ -1,3 +1,10 @@
+@dataclass(slots=True)
+class RollContext:
+    actor: Any
+    target: Any | None = None
+    roll_type: str = ""
+    tags: set[str] = field(default_factory=set)
+
 def get_total_roll_modifiers(character):
     return sum(mod.value for mod in character.roll_modifiers)
 
