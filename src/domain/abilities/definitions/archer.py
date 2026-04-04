@@ -3,7 +3,6 @@ from domain.abilities.patterns import (
     modify_next_attack,
     extra_attacks,
     passive_modifier,
-    action_override,
 )
 
 
@@ -25,6 +24,7 @@ build_job("Archer", [
                 )
             )
         ],
+        "scales_with_level": True,
     },
 
     # Missile Mastery

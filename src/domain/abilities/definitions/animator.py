@@ -250,8 +250,8 @@ build_job("Animator", [
                 difficulty=lambda check_ctx, target: target.roll_willpower(),
                 on_success=[
                     control(
-                        duration="1 command",
-                        condition=lambda effect_ctx, target: (
+                        effect="1 command",
+                        success_condition=lambda effect_ctx, target: (
                             IS_CONSTRUCT(effect_ctx, target)
                             and NOT_IN_PARTY(effect_ctx.source, target)
                         ),

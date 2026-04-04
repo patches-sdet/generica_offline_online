@@ -60,6 +60,10 @@ class RaceTemplate:
     acquire_derived: dict[str, int] = field(default_factory=dict)
     level_derived: dict[str, int] = field(default_factory=dict)
     tags: tuple[str, ...] = field(default_factory=tuple)
+    max_adventure_jobs: int = 1
+    max_profession_jobs: int = 1
+    
+    starting_racial_skills: tuple[str, ...] = field(default_factory=tuple)
     requires_material: bool = False
 
     def effects_on_acquire(self) -> list[Effect]:
@@ -174,7 +178,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("humanoid",),
         max_adventure_jobs=7,
         max_profession_jobs=3,
-        starting_racial_skills=("Adaptable", "Generalist"),
+        starting_racial_skills=("Human Flexibility", "Man's Drive to Explore"),
         crossbreed_eligible=True,
     ),
     BaseRace(
@@ -211,7 +215,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("humanoid",),
         max_adventure_jobs=6,
         max_profession_jobs=3,
-        starting_racial_skills=("Grace", "Keen Senses"),
+        starting_racial_skills=("Elven Eyes", "Double-edged Immortality"),
         crossbreed_eligible=True,
     ),
     BaseRace(
@@ -237,7 +241,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("humanoid",),
         max_adventure_jobs=5,
         max_profession_jobs=5,
-        starting_racial_skills=("Stoneblood", "Craft Affinity"),
+        starting_racial_skills=("Stonecrafty", "Sturdy"),
         crossbreed_eligible=True,
     ),
     BaseRace(
@@ -273,7 +277,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("humanoid",),
         max_adventure_jobs=6,
         max_profession_jobs=3,
-        starting_racial_skills=("Lucky", "Quiet Step"),
+        starting_racial_skills=("Fate's Friend", "Small in a Good Way"),
         crossbreed_eligible=True,
     ),
     BaseRace(
@@ -310,7 +314,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("humanoid",),
         max_adventure_jobs=6,
         max_profession_jobs=2,
-        starting_racial_skills=("Savage Vigor", "Battle Instinct"),
+        starting_racial_skills=("Darkspawn", "Twisted Rage"),
         crossbreed_eligible=True,
     ),
     BaseRace(
@@ -351,7 +355,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("amphibian", "humanoid"),
         max_adventure_jobs=1,
         max_profession_jobs=1,
-        starting_racial_skills=(),
+        starting_racial_skills=("Amphibious", "Hop"),
         crossbreed_eligible=False,
     ),
     BaseRace(
@@ -392,7 +396,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("monster", "humanoid"),
         max_adventure_jobs=4,
         max_profession_jobs=2,
-        starting_racial_skills=(),
+        starting_racial_skills=("Forage", "Darkspawn", "Sturdy"),
         crossbreed_eligible=False,
     ),
     BaseRace(
@@ -433,7 +437,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         tags=("giant",),
         max_adventure_jobs=4,
         max_profession_jobs=2,
-        starting_racial_skills=(),
+        starting_racial_skills=("Don't Sveat de Smol Stuff", "Large and In Charge", "Sving for de Bleachers"),
         crossbreed_eligible=False,
     ),
 )
@@ -458,6 +462,9 @@ RACE_TEMPLATE_DEFINITIONS: tuple[RaceTemplate, ...] = (
         acquire_derived={},
         level_derived={},
         tags=("construct",),
+        max_adventure_jobs=1,
+        max_profession_jobs=1,
+        starting_racial_skills=("Adorable", "Haunting Spirit Undead", "Golem Body", "Magic Resistance", "Plush Form"),
         requires_material=True,
     ),
     RaceTemplate(
@@ -479,6 +486,9 @@ RACE_TEMPLATE_DEFINITIONS: tuple[RaceTemplate, ...] = (
         acquire_derived={},
         level_derived={},
         tags=("construct",),
+        max_adventure_jobs=1,
+        max_profession_jobs=1,
+        starting_racial_skills=("Adorable", "Gift of Sapience", "Golem Body", "Magic Resistance", "Plush Form"),
         requires_material=True,
     ),
     RaceTemplate(
@@ -489,6 +499,7 @@ RACE_TEMPLATE_DEFINITIONS: tuple[RaceTemplate, ...] = (
         acquire_derived={},
         level_derived={},
         tags=("crossbreed",),
+        starting_racial_skills=("Human Blood", "Mixed Blood"),
         requires_material=False,
     ),
 )

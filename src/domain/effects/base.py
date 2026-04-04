@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-
+@dataclass(slots=True)
 class CONTEXT_OPTIONS:
     TIER = "tier"
     PRODUCT_TYPE = "product_type"

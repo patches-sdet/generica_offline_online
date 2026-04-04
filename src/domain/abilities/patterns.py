@@ -8,6 +8,7 @@ from domain.effects import (
     ResourceEffect,
     ScalingEffect,
     DerivedStatBonus,
+    EventListenerEffect,
 )
 from domain.effects import Damage, Heal
 from domain.effects.special.damage import TransferEffect
