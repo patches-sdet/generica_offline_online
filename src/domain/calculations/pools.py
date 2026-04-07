@@ -36,6 +36,4 @@ def calculate_pools(character) -> Pools:
         fortune=(character.current_fortune, character.max_fortune),
     )
 
-    character.pools = pools
-
     return pools

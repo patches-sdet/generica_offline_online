@@ -13,10 +13,8 @@ build_job("Conjuror", [
     # Conjuror's Eye
     {
         "name": "Conjuror's Eye",
-        "type": "skill",
         "cost": 5,
         "cost_pool": "sanity",
-        "duration": "1 minute",
         "description": (
             "You may examine the status of any arcane creature you look upon. This is "
             "an Intelligence skill check plus the level of this skill against a "
@@ -24,7 +22,7 @@ build_job("Conjuror", [
             "On a success, you learn the target's type, current HP, attributes, jobs, "
             "and their levels. This skill is a spell."
         ),
-        "target": "self",
+        "duration": "1 minute",
         "effects": lambda ctx: [
             skill_check(
                 ability="Conjuror's Eye",
@@ -45,43 +43,53 @@ build_job("Conjuror", [
                 ],
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "creature",
+        "type": "skill",
     },
 
     # Dimensional Pocket
     {
         "name": "Dimensional Pocket",
-        "type": "skill",
         "cost": 20,
         "cost_pool": "sanity",
-        "duration": "1 Day",
         "description": (
             "You can turn anything with at least one pocket into a dimensional storage "
             "space. This allows you to store an item or identical collection of items "
             "equal to your level in this skill. This skill is a spell."
         ),
-        "target": "self",
+        "duration": "1 Day",
         "effects": lambda ctx: [
             buff(
                 scale_fn=lambda c: c.ability_levels.get("Dimensional Pocket", 0),
                 stats={"capacity": 1},  # TODO: placeholder until container/inventory support exists
             ),
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "item with pocket",
+        "type": "skill",
     },
 
     # Handy Creation
     {
         "name": "Handy Creation",
-        "type": "skill",
         "cost": 5,
         "cost_pool": "sanity",
-        "duration": "1 minute per level",
         "description": (
             "You can create a rough object out of common materials. It cannot exceed "
             "3 feet in any dimension and cannot be a dedicated crafting tool. It cannot "
             "weigh more than an amount equal to your Conjuror level in pounds. "
             "This skill is a spell."
         ),
-        "target": "self",
+        "duration": "1 minute per level",
         "effects": lambda ctx: [
             create_item(
                 factory_fn=lambda item_ctx, target: {
@@ -92,20 +100,25 @@ build_job("Conjuror", [
                 }
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": False,
+        "target": "unoccupied space",
+        "type": "skill",
     },
 
     # Magic Snack
     {
         "name": "Magic Snack",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "sanity",
-        "duration": "1 Meal",
         "description": (
             "Magic Snack provides a quick, bland but nourishing snack that is filling "
             "for anyone who eats it. This skill has no levels. This skill is a spell."
         ),
-        "target": "self or ally",
+        "duration": "1 Meal",
         "effects": lambda ctx: [
             create_item(
                 factory_fn=lambda item_ctx, target: {
@@ -114,16 +127,20 @@ build_job("Conjuror", [
                 }
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
         "scales_with_level": False,
+        "target": "unoccupied space",
+        "type": "skill",
     },
 
     # Summon Least
     {
         "name": "Summon Least",
-        "type": "skill",
         "cost": 5,
         "cost_pool": "moxie",
-        "duration": "15 minutes*",
         "description": (
             "You can call forth a lesser Arcane being. Typically a Class One creature "
             "of the Daemon, Djinn, Elemental, Manabeast, or Old One type. This is a "
@@ -134,7 +151,7 @@ build_job("Conjuror", [
             "are equal to your level in this skill.\n"
             "This skill is a spell."
         ),
-        "target": "self",
+        "duration": "15 minutes*",
         "effects": lambda ctx: [
             skill_check(
                 ability="Summon Least",
@@ -153,6 +170,13 @@ build_job("Conjuror", [
                 ],
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "unoccupied space",
+        "type": "skill",
     },
 
 ])

@@ -11,11 +11,10 @@ build_job("Archer", [
     # Aim
     {
         "name": "Aim",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "fortune",
-        "duration": "1 turn",
         "description": "Improve accuracy for a single attack by the level of this skill.",
+        "duration": "1 turn",
         "effects": lambda ctx, targets: [
             modify_next_attack(
                 lambda ctx, attack: attack.add_bonus(
@@ -24,13 +23,18 @@ build_job("Archer", [
                 )
             )
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "is_spell": False,
+        "required_level": 1,
         "scales_with_level": True,
+        "target": "self",
+        "type": "skill",
     },
 
     # Missile Mastery
     {
         "name": "Missile Mastery",
-        "type": "passive",
         "description": "When attacking with ranged weapons, Archers may substitute half of their highest ranged weapon skill instead of the skill they would normally use. This skill has no levels.",
         "effects": lambda ctx: [
             passive_modifier(
@@ -41,33 +45,43 @@ build_job("Archer", [
                 )
             )
         ],
+        "is_passive": True,
+        "is_skill": False,
+        "is_spell": False,
+        "required_level": 1,
         "scales_with_level": False,
+        "target": "self",
+        "type": "passive",
     },
 
     # Quickdraw
-    {"grant": "Quickdraw"},
+    {"grant": "Quickdraw", "required_level": 1},
     
     # Rapid Fire
     {
         "name": "Rapid Fire",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "stamina",
         "description": "The Archer may make two attacks as part of an attack action instead of one. All costs must be paid as normal. This skill can only be used once per turn. This skill has no levels.",
         "effects": lambda ctx, targets: [
             extra_attacks(1)
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "is_spell": False,
+        "required_level": 1,
         "scales_with_level": False,
+        "target": "self",
+        "type": "skill",
     },
 
     # Ricochet Shot
     {
         "name": "Ricochet Shot",
-        "type": "skill",
         "cost": 5,
         "cost_pool": "fortune",
-        "duration": "1 attack",
         "description": "Bounce a shot off a surface to hit difficult targets. Reduces penalties for these shots by this skill's level.",
+        "duration": "1 attack",
         "effects": lambda ctx, targets: [
             modify_next_attack(
                 lambda ctx, attack: attack.reduce_penalty(
@@ -75,6 +89,13 @@ build_job("Archer", [
                 )
             )
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "is_spell": False,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "self",
+        "type": "skill",
     },
 
 ])

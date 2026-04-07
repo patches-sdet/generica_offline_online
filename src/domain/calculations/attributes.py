@@ -1,6 +1,6 @@
 from domain.character import Character
 from domain.effects import EffectContext
-from domain.attributes import Attributes
+from domain.attributes import Attributes, DEFAULT_STATS
 from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
 
 
@@ -15,8 +15,12 @@ def rebuild_attributes(character: Character, effects: list) -> None:
     character.attributes = Attributes()
     character._attribute_sources.clear()
 
+    for stat, value in DEFAULT_STATS.items():
+        character.set_stat(stat, value)
+        character._attribute_sources[stat]["base"] += value
+
     context = EffectContext(
-        source="rebuild_attributes",
+        source=character,
         targets=[character],
     )
 

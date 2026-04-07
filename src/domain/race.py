@@ -28,10 +28,10 @@ class BaseRace:
         effects: list[Effect] = []
 
         if self.acquire_stats:
-            effects.append(MultiStatIncrease(dict(self.acquire_stats)))
+            effects.append(MultiStatIncrease(dict(self.acquire_stats), source=self.name))
 
         for stat, value in self.acquire_derived.items():
-            effects.append(DerivedStatBonus(stat, value))
+            effects.append(DerivedStatBonus(stat, value, source=self.name))
 
         return effects
 
@@ -43,10 +43,10 @@ class BaseRace:
         per_level: list[Effect] = []
 
         if self.level_stats:
-            per_level.append(MultiStatIncrease(dict(self.level_stats)))
+            per_level.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
 
         for stat, value in self.level_derived.items():
-            per_level.append(DerivedStatBonus(stat, value))
+            per_level.append(DerivedStatBonus(stat, value, source=self.name))
 
         return per_level * (level - 1)
 
@@ -70,10 +70,10 @@ class RaceTemplate:
         effects: list[Effect] = []
 
         if self.acquire_stats:
-            effects.append(MultiStatIncrease(dict(self.acquire_stats)))
+            effects.append(MultiStatIncrease(dict(self.acquire_stats), source=self.name))
 
         for stat, value in self.acquire_derived.items():
-            effects.append(DerivedStatBonus(stat, value))
+            effects.append(DerivedStatBonus(stat, value, source=self.name))
 
         return effects
 
@@ -85,10 +85,10 @@ class RaceTemplate:
         per_level: list[Effect] = []
 
         if self.level_stats:
-            per_level.append(MultiStatIncrease(dict(self.level_stats)))
+            per_level.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
 
         for stat, value in self.level_derived.items():
-            per_level.append(DerivedStatBonus(stat, value))
+            per_level.append(DerivedStatBonus(stat, value, source=self.name))
 
         return per_level * (level - 1)
 

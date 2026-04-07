@@ -15,10 +15,8 @@ build_job("Cultist", [
     # Conceal Status
     {
         "name": "Conceal Status",
-        "type": "skill",
         "cost": 5,
         "cost_pool": "moxie",
-        "target": "self",
         "description": (
             "While this skill is active, you are considered to have a job of your choice "
             "if someone investigates your stats. This is a Charisma plus the level of "
@@ -30,15 +28,20 @@ build_job("Cultist", [
                 stats={"any": 1},  # placeholder until inspection-disguise system exists
             )
         ],
+        "is_passive": False,
+        "is_spell": False,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "self",
+        "type": "skill",
     },
 
     # Curses
     {
         "name": "Curses",
-        "type": "skill",
         "cost": "variable",
         "cost_pool": "fortune",
-        "target": "enemy",
         "description": (
             "Inflict a curse on an enemy, reducing a chosen derived stat by an amount "
             "equal to the Fortune spent. This effect lasts until canceled or dispelled. "
@@ -51,15 +54,20 @@ build_job("Cultist", [
                 condition=IS_ENEMY,
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": False,
+        "target": "enemy",
+        "type": "skill",
     },
 
     # Enhance Pain
     {
         "name": "Enhance Pain",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "sanity",
-        "target": "enemy",
         "description": (
             "Enemies afflicted by this debuff take additional damage equal to your "
             "Cultist level. This is an Intelligence plus the level of this skill versus "
@@ -77,15 +85,20 @@ build_job("Cultist", [
                 ],
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,        
+        "scales_with_level": True,
+        "target": "enemy",
+        "type": "skill",
     },
 
     # Occult Eye
     {
         "name": "Occult Eye",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "sanity",
-        "target": "self",
         "description": (
             "This skill allows the Cultist to examine an object, area, or being for "
             "traces of occult contamination. This also allows them to read blasphemous "
@@ -100,15 +113,20 @@ build_job("Cultist", [
                 }
             )
         ],
+        "is_passive": False,
+        "is_spell": False,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": False,
+        "target": "object, area, or being",
+        "type": "skill",
     },
 
     # Transfer Wounds
     {
         "name": "Transfer Wounds",
-        "type": "skill",
         "cost": 10,
         "cost_pool": "fortune",
-        "target": "enemy",
         "description": (
             "Transfer wounds from yourself to an enemy. The damage and healing are equal "
             "to your level in this skill. This skill is a spell."
@@ -119,6 +137,13 @@ build_job("Cultist", [
                 condition=IS_ENEMY,
             )
         ],
+        "is_passive": False,
+        "is_spell": True,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "enemy",
+        "type": "skill",
     },
 
 ])

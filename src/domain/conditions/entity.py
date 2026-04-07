@@ -4,8 +4,14 @@ def IS_CONSTRUCT(ctx, target):
 def IS_OBJECT(ctx, target):
     return getattr(target, "type", None) == "object"
 
+def IN_PARTY(ctx, target):
+    return target in getattr(ctx.source, "party", set())
+
 def NOT_IN_PARTY(ctx, target):
     return target not in getattr(ctx.source, "party", set())
 
 def IS_MATERIAL(ctx, target):
     return getattr(target, "type", None) == "material"
+
+def IS_FOOD(ctx, target):
+    return getattr(target, "type", None) == "food"

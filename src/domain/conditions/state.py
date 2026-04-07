@@ -6,3 +6,9 @@ def IS_SURPRISED(ctx, target):
 
 def IS_HELPLESS(ctx, target):
     return "helpless" in getattr(target, "states", {})
+
+def IS_LYING(ctx, target):
+    return "lying" in getattr(target, "states", {})
+
+def HAGGLING(ctx, target):
+    return "haggling" in getattr(target, "states", {})

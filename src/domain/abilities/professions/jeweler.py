@@ -1,36 +1,36 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, create_item, scaled_derived_buff, skill_check
 from domain.conditions import IS_ALLY
+from domain.effects.base import CONTEXT_OPTIONS
+
+JEWEL_DIFFICULTIES = {
+    "common": 100,
+    "uncommon": 200,
+    "rare": 300,
+}
 
 build_job("Jeweler", [
 
-    # -------------------------
-    # Passive
-    # -------------------------
+    # Jewelcrafting
     {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Jeweler", 0),
-        )(c),
-        "description": "Your Fate increases with Jeweler level.",
-    },
-
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
+        "name": "Jewelcrafting",
+        "required_level": 1,
         "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
-                condition=IS_ALLY,
+        "description": "You spend thirty seconds and an amount of ingredients equal to half the cost of the jewelry you wish to create. This is a Dexterity plus Jewelcrafting skill check against the difficulty of the item. Common, uncommon, and rare items have a difficulty of 100, 200, and 300 respectively.",
+        "effects": lambda ctx: [
+            skill_check(
+                ability="Jewelcrafting",
+                stat="dexterity",
+                difficulty=lambda ctx, target: JEWEL_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
+                on_success=[
+                    create_item(
+                        factory_fn=lambda item_ctx, target: create_item(
+                            caster=item_ctx.source,
+                            target=target,
+                            product_type=item_ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE),
+                        ),
+                    ),
+                ],
             )
         ],
     },

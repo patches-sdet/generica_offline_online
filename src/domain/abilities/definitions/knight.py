@@ -1,38 +1,27 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, heal_moxie, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 build_job("Knight", [
 
-    # -------------------------
-    # Passive
-    # -------------------------
     {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Knight", 0),
-        )(c),
-        "description": "Your Fate increases with Knight level.",
-    },
-
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
-        "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
+        "name": "Rally Troops",
+        "cost": 10,
+        "cost_pool": "moxie",
+        "description": "You can rally your allies with a few encouraging words. This will heal all allies that can hear you for a small amount of moxie equal to your level in this skill.",
+        "duration": "1 Action",
+        "effects": [
+            heal_moxie(
+                scale_fn=lambda ctx: ctx["user"].get_skill_level("Rally Troops"),
                 condition=IS_ALLY,
             )
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "allies",
+        "type": "passive",
     },
 
 ])

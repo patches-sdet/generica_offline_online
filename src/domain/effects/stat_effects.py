@@ -5,15 +5,17 @@ from domain.effects.base import Effect, EffectContext
 class StatIncrease(Effect):
     stat: str
     amount: int
+    source: str = None
 
     def apply(self, context: EffectContext) -> None:
         for target in context.targets:
-            target.add_stat(self.stat, self.amount, source=context.source)
+            target.add_stat(self.stat, self.amount, source=self.source)
 
 @dataclass(slots=True)
 class MultiStatIncrease(Effect):
     stats: dict[str, int]
     scale: int = 1
+    source: str = None
 
     def describe(self) -> list[str]:
         return [f"+{v} {k}" for k, v in self.stats.items()]
@@ -21,12 +23,13 @@ class MultiStatIncrease(Effect):
     def apply(self, context: EffectContext) -> None:
         for target in context.targets:
             for stat, value in self.stats.items():
-                target.add_stat(stat, value * self.scale, source=context.source)
+                target.add_stat(stat, value * self.scale, source=self.source)
 
 @dataclass(slots=True)
 class DerivedStatBonus(Effect):
     stat: str
     amount: int
+    source: str = None
     priority: int = 0
 
     def apply(self, context: EffectContext) -> None:
@@ -44,6 +47,7 @@ class DerivedStatBonus(Effect):
 class DerivedStatOverride(Effect):
     stat: str
     value: int
+    source: str = None
     priority: int = 100
 
     def apply(self, context: EffectContext) -> None:

@@ -170,6 +170,7 @@ def register_progression_ability_grant(
     ptype: str,
     progression_name: str,
     ability_name: str,
+    required_level: int = 1,
 ) -> None:
     if ability_name not in _ABILITY_REGISTRY:
         raise ValueError(
@@ -228,10 +229,10 @@ def initialize_ability_modules(force: bool = False) -> int:
     from domain.abilities.shared import stealth as shared_stealth
     from domain.abilities.shared import utility as shared_utility
 
+    from domain.abilities import advanced as ability_advanced
     from domain.abilities import definitions as ability_definitions
     from domain.abilities import professions as ability_professions
     from domain.abilities import races as ability_races
-    from domain.abilities import advanced as ability_advanced
 
     loaded = 0
 
@@ -250,6 +251,19 @@ def initialize_ability_modules(force: bool = False) -> int:
 
     _ABILITY_MODULES_INITIALIZED = True
     return loaded
+
+def get_progression_level_for_ability(self, ptype: str, ability_name: str, default: int = 0) -> int:
+        best = default
+
+        for (current_type, progression_name), progression in self.progressions.items():
+            if current_type != ptype:
+                continue
+
+            granted = get_progression_ability_names(current_type, progression_name)
+            if ability_name in granted:
+                best = max(best, progression.level)
+    
+        return best
 
 
 def initialize_content_registries() -> None:

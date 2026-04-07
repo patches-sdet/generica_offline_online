@@ -91,6 +91,10 @@ def _register_progressions(
             level=1,
         )
 
+    template = get_race_template(character.race_template) if character.race_template else None
+    if template and template.kind == "overlay":
+        character.add_progression("race", template.name, 1)
+
     for name in adventure_job_names:
         character.progressions[("adventure", name)] = Progression(
             name=name,
@@ -157,25 +161,13 @@ def create_character(
     primary_base = base_races[0]
 
     character = Character(
-        name=name,
-        race=primary_base,
-        race_levels={base.name: 1 for base in base_races},
-        base_race_levels={base.name: 1 for base in base_races},
-        adventure_jobs=jobs,
-        adventure_levels={job.name: 1 for job in jobs},
-        profession_jobs=professions,
-        profession_levels={prof.name: 1 for prof in professions},
-    )
-
-    if not hasattr(character, "progressions") or character.progressions is None:
-        character.progressions = {}
+    name=name,
+    race_bases=[base.name for base in base_races],
+    race_template=race_template.name if race_template else None,
+    race_material=material,
+)
 
     character.attribute_effects = attribute_effects
-
-    # Authoritative ancestry fields
-    character.race_bases = [base.name for base in base_races]
-    character.race_template = race_template.name if race_template else None
-    character.race_material = material
 
     _initialize_runtime_state(character)
 
@@ -194,8 +186,5 @@ def create_character(
 
     recalculate(character)
     _initialize_current_resources_to_max(character)
-
-    # Optional convenience field for simple display/debugging
-    character.race_display_name = get_race_display_name(character)
 
     return character

@@ -22,81 +22,81 @@ class ProfessionJob:
         }
 
 
-def make_effects(**mods) -> tuple[Effect, ...]:
-    return tuple(StatIncrease(stat, value) for stat, value in mods.items())
+def make_effects(source: str | None = None, **mods) -> tuple[Effect, ...]:
+    return tuple(StatIncrease(stat, value, source=source) for stat, value in mods.items())
 
 
 PROFESSION_JOB_DEFINITIONS: tuple[ProfessionJob, ...] = (
     ProfessionJob(
         name="Brewer",
-        effects_on_acquire=make_effects(constitution=1, perception=1),
-        effects_per_level=make_effects(constitution=1, perception=1),
+        effects_on_acquire=make_effects(source="Brewer", constitution=1, perception=1),
+        effects_per_level=make_effects(source="Brewer", constitution=1, perception=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Carpenter",
-        effects_on_acquire=make_effects(strength=1, dexterity=1),
-        effects_per_level=make_effects(strength=1, dexterity=1),
+        effects_on_acquire=make_effects(source="Carpenter", strength=1, dexterity=1),
+        effects_per_level=make_effects(source="Carpenter", strength=1, dexterity=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Cook",
-        effects_on_acquire=make_effects(perception=1, luck=1),
-        effects_per_level=make_effects(perception=1, luck=1),
+        effects_on_acquire=make_effects(source="Cook", perception=1, luck=1),
+        effects_per_level=make_effects(source="Cook", perception=1, luck=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Jeweler",
-        effects_on_acquire=make_effects(wisdom=1, luck=1),
-        effects_per_level=make_effects(wisdom=1, luck=1),
+        effects_on_acquire=make_effects(source="Jeweler", wisdom=1, luck=1),
+        effects_per_level=make_effects(source="Jeweler", wisdom=1, luck=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Mason",
-        effects_on_acquire=make_effects(strength=1, constitution=1),
-        effects_per_level=make_effects(strength=1, constitution=1),
+        effects_on_acquire=make_effects(source="Mason", strength=1, constitution=1),
+        effects_per_level=make_effects(source="Mason", strength=1, constitution=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Midwife",
-        effects_on_acquire=make_effects(constitution=1, luck=1),
-        effects_per_level=make_effects(constitution=1, luck=1),
+        effects_on_acquire=make_effects(source="Midwife", constitution=1, luck=1),
+        effects_per_level=make_effects(source="Midwife", constitution=1, luck=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Miner",
-        effects_on_acquire=make_effects(strength=1, dexterity=1),
-        effects_per_level=make_effects(strength=1, dexterity=1),
+        effects_on_acquire=make_effects(source="Miner", strength=1, dexterity=1),
+        effects_per_level=make_effects(source="Miner", strength=1, dexterity=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Sculptor",
-        effects_on_acquire=make_effects(dexterity=1, perception=1),
-        effects_per_level=make_effects(dexterity=1, perception=1),
+        effects_on_acquire=make_effects(source="Sculptor", dexterity=1, perception=1),
+        effects_per_level=make_effects(source="Sculptor", dexterity=1, perception=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Smith",
-        effects_on_acquire=make_effects(strength=1, constitution=1),
-        effects_per_level=make_effects(strength=1, constitution=1),
+        effects_on_acquire=make_effects(source="Smith", strength=1, constitution=1),
+        effects_per_level=make_effects(source="Smith", strength=1, constitution=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Tailor",
-        effects_on_acquire=make_effects(dexterity=1, perception=1),
-        effects_per_level=make_effects(dexterity=1, perception=1),
+        effects_on_acquire=make_effects(source="Tailor", dexterity=1, perception=1),
+        effects_per_level=make_effects(source="Tailor", dexterity=1, perception=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Tanner",
-        effects_on_acquire=make_effects(dexterity=1, agility=1),
-        effects_per_level=make_effects(dexterity=1, agility=1),
+        effects_on_acquire=make_effects(source="Tanner", dexterity=1, agility=1),
+        effects_per_level=make_effects(source="Tanner", dexterity=1, agility=1),
         tags=("utility",),
     ),
     ProfessionJob(
         name="Tinker",
-        effects_on_acquire=make_effects(dexterity=1, intelligence=1),
-        effects_per_level=make_effects(dexterity=1, intelligence=1),
+        effects_on_acquire=make_effects(source="Tinker", dexterity=1, intelligence=1),
+        effects_per_level=make_effects(source="Tinker", dexterity=1, intelligence=1),
         tags=("utility",),
     ),
 )

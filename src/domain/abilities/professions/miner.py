@@ -1,36 +1,36 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, create_item, scaled_derived_buff, skill_check
 from domain.conditions import IS_ALLY
+from domain.effects.base import CONTEXT_OPTIONS
+
+JEWEL_DIFFICULTIES = {
+    "common": 100,
+    "uncommon": 200,
+    "rare": 300,
+}
 
 build_job("Miner", [
 
-    # -------------------------
-    # Passive
-    # -------------------------
+    # Mining
     {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Miner", 0),
-        )(c),
-        "description": "Your Fate increases with Miner level.",
-    },
-
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
+        "name": "Mining",
+        "required_level": 1,
         "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
-                condition=IS_ALLY,
+        "description": "You spend thirty seconds digging in an area that contains ore and gather metal or stone components. This requires one crate costing 5 copper for each attempt, and produces metal or stone worth a number of copper equal to your Strength plus Mining skill roll divided by 10, rounded down.",
+        "effects": lambda ctx: [
+            skill_check(
+                ability="Mining",
+                stat="strength",
+                difficulty=lambda ctx, target: 100,  # Simplified difficulty for mining
+                on_success=[
+                    create_item(
+                        factory_fn=lambda item_ctx, target: create_item(
+                            caster=item_ctx.source,
+                            target=target,
+                            product_type=item_ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE),
+                        ),
+                    ),
+                ],
             )
         ],
     },

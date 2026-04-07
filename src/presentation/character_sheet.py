@@ -1,7 +1,9 @@
+from dataclasses import asdict
 from domain.character import Character
 from domain.calculations import calculate_pools, calculate_defenses
 from domain.content_registry import get_ability
 from domain.race_resolution import get_race_display_name
+from domain import character
 
 POOL_COLORS = {
     "hp": "\033[91m",
@@ -296,8 +298,10 @@ def print_abilities(character: Character):
         if description:
             print(f"    {description}\n")
 
-
 def debug_print_character(character: Character):
+    print(character.attributes.to_dict())
+    print(dict(character._base_attributes))
+    print({k: dict(v) for k, v in character._attribute_sources.items()})
     print("\n==============================")
     print("      CHARACTER SHEET")
     print("==============================")
@@ -314,14 +318,14 @@ def debug_print_character(character: Character):
 
     print_stat_block(
         "Pools",
-        vars(pools),
+        asdict(pools),
         POOL_NAMES,
         color_map=POOL_COLORS,
     )
 
     print_stat_block(
         "Defenses",
-        vars(defenses),
+        asdict(defenses),
         name_map=DEFENSE_NAMES,
     )
 

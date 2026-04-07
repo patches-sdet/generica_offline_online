@@ -1,42 +1,41 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: 
 # requires Mercenary 10, Ruler 10. The rest is narrative and can be adjusted as needed.
 # Known abilties include "Talent Management" (Allows you to change your active jobs)
 
-build_job("Guild_Master", [
+build_job("Guild_Master", [])
+#     # -------------------------
+#     # Passive
+#     # -------------------------
+#     {
+#         "name": "Faith",
+#         "type": "passive",
+#         "effects": lambda c: scaled_derived_buff(
+#             stat="fate",
+#             scale_fn=lambda c: c.get_adventure_level_by_name("Doomsayer", 0),
+#         )(c),
+#         "description": "Your Fate increases with Doomsayer level.",
+#     },
 
-    # -------------------------
-    # Passive
-    # -------------------------
-    {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Guild_Master", 0),
-        )(c),
-        "description": "Your Fate increases with Guild_Master level.",
-    },
+#     # -------------------------
+#     # Example Skill
+#     # -------------------------
+#     {
+#         "name": "Example Skill",
+#         "type": "skill",
+#         "cost": 1,
+#         "cost_pool": "fortune",
+#         "target": "ally",
+#         "effects": lambda caster, targets: [
+#             buff(
+#                 scale_fn=lambda c: c.pools.get("fortune", 0),
+#                 stats={"any": 1},
+#                 condition=IS_ALLY,
+#             )
+#         ],
+#     },
 
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
-        "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
-                condition=IS_ALLY,
-            )
-        ],
-    },
-
-])
+# ])

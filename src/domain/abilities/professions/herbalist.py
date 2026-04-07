@@ -1,38 +1,35 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
+from domain.abilities.patterns import buff, create_item, scaled_derived_buff, skill_check
 from domain.conditions import IS_ALLY
+from domain.effects.base import CONTEXT_OPTIONS
 
 build_job("Herbalist", [
 
-    # -------------------------
-    # Passive
-    # -------------------------
+    # Gathering
     {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Herbalist", 0),
-        )(c),
-        "description": "Your Fate increases with Herbalist level.",
-    },
-
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
-        "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
-                condition=IS_ALLY,
+        "name": "Gathering",
+        "description": "You spend thirty seconds and an amount of ingredients equal to half the cost of the food item you wish to create. This is a Wisdom plus Gathering skill check against the difficulty of the item. Common, uncommon, and rare items have a difficulty of 100, 200, and 300 respectively.",
+        "effects": lambda ctx: [
+            skill_check(
+                ability="Gathering",
+                stat="wisdom",
+                difficulty=100,
+                on_success=[
+                    create_item(
+                        factory_fn=lambda item_ctx, target: create_item(
+                            caster=item_ctx.source,
+                            target=target,
+                            product_type=item_ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE), # TODO: This needs to be updated when herbs are added to the equipment/items
+                        ),
+                    ),
+                ],
             )
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "type": "skill",
     },
 
 ])

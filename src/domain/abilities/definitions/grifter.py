@@ -1,38 +1,31 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, heal, scaled_derived_buff
-from domain.conditions import IS_ALLY
+from domain.abilities.patterns import buff, conditional_effect
+from domain.conditions import IS_LYING
 
 build_job("Grifter", [
 
-    # -------------------------
-    # Passive
-    # -------------------------
     {
-        "name": "Faith",
-        "type": "passive",
-        "effects": lambda c: scaled_derived_buff(
-            stat="fate",
-            scale_fn=lambda c: c.get_adventure_level_by_name("Grifter", 0),
-        )(c),
-        "description": "Your Fate increases with Grifter level.",
-    },
-
-    # -------------------------
-    # Example Skill
-    # -------------------------
-    {
-        "name": "Example Skill",
-        "type": "skill",
-        "cost": 1,
-        "cost_pool": "fortune",
-        "target": "ally",
-        "effects": lambda caster, targets: [
-            buff(
-                scale_fn=lambda c: c.pools.get("fortune", 0),
-                stats={"any": 1},
-                condition=IS_ALLY,
+        "name": "Silver Tongue",
+        "cost": 10,
+        "cost_pool": "moxie",
+        "description": "The Grifter gets a bonus to Charisma equal to their level in this ability, but only while lying.",
+        "duration": "10 minutes/level",
+        "effects": [
+            conditional_effect(
+                effect=buff(
+                    scale_fn=lambda char_ctx: char_ctx.ability_levels.get("Silver Tongue", 0),
+                    stats={"charisma": 1},
+                    condition=None,
+                ),
+                condition=IS_LYING,
             )
         ],
+        "is_passive": False,
+        "is_skill": True,
+        "required_level": 1,
+        "scales_with_level": True,
+        "target": "self",
+        "type": "skill",
     },
 
 ])

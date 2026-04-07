@@ -4,6 +4,7 @@ from collections import defaultdict
 from domain.attributes import Attributes, Defenses
 from domain.progression import Progression
 from domain.effects.base import Effect
+from domain.content_registry import get_progression_ability_names
 
 if TYPE_CHECKING:
     from domain.abilities.factory import Ability

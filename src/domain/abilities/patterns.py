@@ -42,6 +42,10 @@ class ApplyChallengedEffect(Effect):
                 "duration": self.duration,
             }
 
+def clear_existing_challenges(character):
+    if "challenged" in character.states:
+        del character.states["challenged"]
+
 def difficulty_from_table(table: DifficultyTable, metadata_key: str = "tier"):
     def resolve(ctx, target):
         key = ctx.metadata.get(metadata_key)
@@ -59,6 +63,22 @@ def scaled_stat_buff(
         effect_cls=MultiStatIncrease,
         scale_fn=scale_fn,
         effect_kwargs={"stats": stats},
+    )
+
+    if condition:
+        return TargetFilterEffect(effect, condition=condition)
+
+    return effect
+
+def scaled_skill_buff(
+    scale_fn: Callable,
+    skills: dict[str, int],
+    condition: Callable = None,
+):
+    effect = ScalingEffect(
+        effect_cls=MultiStatIncrease,
+        scale_fn=scale_fn,
+        effect_kwargs={"skills": skills},
     )
 
     if condition:
@@ -137,7 +157,7 @@ def skill_check(
 
     return CompositeEffect([success_effect, failure_effect])
 
-def damage(scale_fn: Callable, condition: Callable = None):
+def hp_damage(scale_fn: Callable, condition: Callable = None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -145,11 +165,75 @@ def damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal(scale_fn: Callable, condition: Callable = None):
+def sanity_damage(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Damage,
+        scale_fn=scale_fn,
+        pool="sanity",
+        condition=condition,
+    )
+
+def moxie_damage(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Damage,
+        scale_fn=scale_fn,
+        pool="moxie",
+        condition=condition,
+    )
+
+def stamina_damage(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Damage,
+        scale_fn=scale_fn,
+        pool="stamina",
+        condition=condition,
+    )
+
+def fortune_damage(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Damage,
+        scale_fn=scale_fn,
+        pool="fortune",
+        condition=condition,
+    )
+
+def heal_hp(scale_fn: Callable, condition: Callable = None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
         pool="hp",
+        condition=condition,
+    )
+
+def heal_sanity(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Heal,
+        scale_fn=scale_fn,
+        pool="sanity",
+        condition=condition,
+    )
+
+def heal_stamina(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Heal,
+        scale_fn=scale_fn,
+        pool="stamina",
+        condition=condition,
+    )
+
+def heal_moxie(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Heal,
+        scale_fn=scale_fn,
+        pool="moxie",
+        condition=condition,
+    )
+
+def heal_fortune(scale_fn: Callable, condition: Callable = None):
+    return scaled_resource_effect(
+        effect_cls=Heal,
+        scale_fn=scale_fn,
+        pool="fortune",
         condition=condition,
     )
 
@@ -227,7 +311,7 @@ def conditional_damage(scale_fn, condition):
     )
 
 def summon(factory_fn, condition: Callable = None):
-    from domain.effects.special import CreateEntityEffect
+    from domain.effects.special.crafting import CreateEntityEffect
     effect = CreateEntityEffect(factory_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
 
@@ -235,15 +319,15 @@ def control(effect, success_condition: Callable):
     return ConditionalEffect(effect=effect, condition=success_condition)
 
 def inspect(reveal_fn, condition: Callable = None):
-    from domain.effects.special import InspectEffect
+    from domain.effects.special.action import InspectEffect
     effect = InspectEffect(reveal_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
 
 def create_item(factory_fn, condition=None):
-    from domain.effects.special import CreateItemEffect
+    from domain.effects.special.crafting import CreateItemEffect
     effect = CreateItemEffect(factory_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
 
 def apply_state(state_name: str, value_fn=None):
-    from domain.effects.special import ApplyStateEffect
+    from domain.effects.special.state import ApplyStateEffect
     return ApplyStateEffect(state_name, value_fn)

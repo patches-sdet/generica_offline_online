@@ -1,6 +1,6 @@
 from typing import Optional
 
-from domain.effects import DerivedStatOverride
+from domain.effects import DerivedStatOverride, DerivedStatBonus
 from domain.effects.base import Effect
 from domain.content_registry import get_base_race, get_race_template
 from domain.race import build_crossbreed_race
@@ -8,16 +8,16 @@ from domain.race import build_crossbreed_race
 
 MATERIAL_EFFECTS: dict[str, list[Effect]] = {
     "cloth": [
-        DerivedStatOverride("armor", 10),
-        DerivedStatOverride("endurance", 20),
+        DerivedStatBonus("armor", 10),
+        DerivedStatBonus("endurance", 20),
     ],
     "leather": [
-        DerivedStatOverride("armor", 15),
-        DerivedStatOverride("endurance", 15),
+        DerivedStatBonus("armor", 15),
+        DerivedStatBonus("endurance", 15),
     ],
     "metal": [
-        DerivedStatOverride("armor", 20),
-        DerivedStatOverride("endurance", 10),
+        DerivedStatBonus("armor", 20),
+        DerivedStatBonus("endurance", 10),
     ],
 }
 

@@ -18,7 +18,7 @@ def _normalize_effect_result(result, source_name: str) -> list:
 
     return normalized
 
-def build_shared_ability(namespace: str, definition: dict):
+def build_shared_ability(namespace: str, definition: dict, source_type: str = "shared"):
     definition = dict(definition)
     definition.setdefault("unlock", lambda character: True)
     return build_ability(
@@ -30,12 +30,25 @@ def build_shared_ability(namespace: str, definition: dict):
 def build_ability(definition: dict, owner_name: str, source_type: str = "adventure"):
     name = definition["name"]
     kind = definition.get("type", "active")
-    required_level = definition.get("level", 1)
+    required_level = definition.get("required_level", 1)
 
     def default_unlock(c, st=source_type, lvl=required_level, progression_name=owner_name):
         return c.get_progression_level(st, progression_name, 0) >= lvl
 
     unlock_condition = definition.get("unlock", default_unlock)
+
+    if "effects" not in definition:
+        raise ValueError(f"{owner_name}.{name} is missing required 'effects'")
+
+    common_kwargs = dict(
+        name=name,
+        unlock_condition=unlock_condition,
+        duration=definition.get("duration", "Passive Constant" if kind == "passive" else None),
+        description=definition.get("description", ""),
+        target_type=definition.get("target", "self"),
+        scales_with_level=definition.get("scales_with_level", False),
+#        metadata={"owner_name": owner_name, "source_type": source_type, "required_level": required_level, **definition.get("metadata", {}),},
+)
 
     if kind == "passive":
         def make_effect_generator(fn, ability_name=name):
@@ -49,18 +62,13 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
             return effect_generator
 
         return make_ability(
-            name=name,
-            unlock_condition=unlock_condition,
+            **common_kwargs,
             effect_generator=make_effect_generator(definition["effects"]),
-            duration=definition.get("duration", "Passive Constant"),
-            description=definition.get("description", ""),
             is_passive=True,
             is_skill=False,
-            target_type=definition.get("target", "self"),
-            scales_with_level=definition.get("scales_with_level", True),
         )
 
-    else:
+    elif kind in {"active", "skill"}:
         def make_execute(fn, ability_name=name):
             def execute(caster, targets):
                 ctx = EffectContext(source=caster, targets=targets)
@@ -72,18 +80,15 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
             return execute
 
         return make_ability(
-            name=name,
-            unlock_condition=unlock_condition,
+            **common_kwargs,
             execute=make_execute(definition["effects"]),
             cost=definition.get("cost", 0),
             cost_pool=definition.get("cost_pool"),
-            duration=definition.get("duration"),
-            description=definition.get("description", ""),
             is_passive=False,
             is_skill=(kind == "skill"),
-            target_type=definition.get("target", "self"),
-            scales_with_level=definition.get("scales_with_level", True),
         )
+    else:
+        raise ValueError(f"Invalid ability type '{kind}' for {owner_name}.{name}")
 
 
 def build_job(job_name: str, definitions: list) -> None:
@@ -95,6 +100,7 @@ def build_job(job_name: str, definitions: list) -> None:
                 source_type,
                 job_name,
                 ability_def["grant"],
+                required_level=ability_def.get("required_level", 1),
             )
             continue
         

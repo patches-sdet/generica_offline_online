@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Callable
 
 # BASE ATTRIBUTE DEFINITIONS
@@ -62,7 +62,7 @@ class Pools:
     fortune: tuple[int, int]
 
     def to_dict(self) -> dict[str, tuple[int, int]]:
-        return vars(self)
+        return asdict(self)
 
 # DEFENSES
 
@@ -75,7 +75,7 @@ class Defenses:
     fate: int = 0
 
     def to_dict(self) -> dict[str, int]:
-        return vars(self)
+        return asdict(self)
 
 DEFENSE_KEYS: tuple[str, ...] = (
     "armor",
