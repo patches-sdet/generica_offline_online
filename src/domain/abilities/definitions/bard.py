@@ -1,7 +1,6 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import buff, debuff, aura, heal_hp, heal_stamina
 from domain.conditions import IS_ALLY, IS_ENEMY
-from domain.effects import Heal
 from domain.effects.special.roll import RollModifierEffect
 from domain.effects.conditional import CompositeEffect
 
@@ -12,7 +11,7 @@ build_job("Bard", [
 {
     "name": "Borrowed Skill 1",
     "description": "A Bard may 'replace' this skill with any other Tier One, level one Adventuring Job skill. Once chosen, it cannot be reset. Godspells and darkspells may NOT be chosen.",
-    "effects": lambda ctx: [], # Need to build the method for this to actually work, but for now this is a placeholder
+    "effects": [], # Need to build the method for this to actually work, but for now this is a placeholder
     "scales_with_level": False,
     "type": "passive",
 },

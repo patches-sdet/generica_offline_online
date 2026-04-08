@@ -57,7 +57,7 @@ def difficulty_from_table(table: DifficultyTable, metadata_key: str = "tier"):
 def scaled_stat_buff(
     scale_fn: Callable,
     stats: dict[str, int],
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     effect = ScalingEffect(
         effect_cls=MultiStatIncrease,
@@ -73,7 +73,7 @@ def scaled_stat_buff(
 def scaled_skill_buff(
     scale_fn: Callable,
     skills: dict[str, int],
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     effect = ScalingEffect(
         effect_cls=MultiStatIncrease,
@@ -90,7 +90,7 @@ def scaled_resource_effect(
     effect_cls,
     scale_fn: Callable,
     pool: str,
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     effect = ScalingEffect(
         effect_cls=effect_cls,
@@ -113,14 +113,14 @@ def filtered(effect, condition: Callable):
     return TargetFilterEffect(effect, condition=condition)
 
 def apply_tag(tag: str):
-    from domain.effects.special import ApplyTagEffect
+    from domain.effects.special.tag import ApplyTagEffect
     return ApplyTagEffect(tag)
 
 def tagged(tag: str):
     return lambda ctx, target: tag in getattr(target, "tags", set())
 
 def on_event(event_name: str, effect, condition=None):
-    from domain.effects.special import EventListenerEffect
+    from domain.effects.special.event import EventListenerEffect
     return EventListenerEffect(
         event_name=event_name,
         effect=effect,
@@ -157,7 +157,7 @@ def skill_check(
 
     return CompositeEffect([success_effect, failure_effect])
 
-def hp_damage(scale_fn: Callable, condition: Callable = None):
+def hp_damage(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -165,7 +165,7 @@ def hp_damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def sanity_damage(scale_fn: Callable, condition: Callable = None):
+def sanity_damage(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -173,7 +173,7 @@ def sanity_damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def moxie_damage(scale_fn: Callable, condition: Callable = None):
+def moxie_damage(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -181,7 +181,7 @@ def moxie_damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def stamina_damage(scale_fn: Callable, condition: Callable = None):
+def stamina_damage(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -189,7 +189,7 @@ def stamina_damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def fortune_damage(scale_fn: Callable, condition: Callable = None):
+def fortune_damage(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Damage,
         scale_fn=scale_fn,
@@ -197,7 +197,7 @@ def fortune_damage(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal_hp(scale_fn: Callable, condition: Callable = None):
+def heal_hp(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
@@ -205,7 +205,7 @@ def heal_hp(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal_sanity(scale_fn: Callable, condition: Callable = None):
+def heal_sanity(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
@@ -213,7 +213,7 @@ def heal_sanity(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal_stamina(scale_fn: Callable, condition: Callable = None):
+def heal_stamina(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
@@ -221,7 +221,7 @@ def heal_stamina(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal_moxie(scale_fn: Callable, condition: Callable = None):
+def heal_moxie(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
@@ -229,7 +229,7 @@ def heal_moxie(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def heal_fortune(scale_fn: Callable, condition: Callable = None):
+def heal_fortune(scale_fn: Callable, condition: Callable | None=None):
     return scaled_resource_effect(
         effect_cls=Heal,
         scale_fn=scale_fn,
@@ -237,20 +237,20 @@ def heal_fortune(scale_fn: Callable, condition: Callable = None):
         condition=condition,
     )
 
-def transfer_stat(amount_fn, condition=None):
+def transfer_stat(amount_fn, condition: Callable | None=None):
     return TransferEffect(amount_fn=amount_fn, condition=condition)
 
 def buff(
     scale_fn: Callable,
     stats: Dict[str, int],
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     return scaled_stat_buff(scale_fn=scale_fn, stats=stats, condition=condition)
 
 def debuff(
     scale_fn: Callable,
     stats: Dict[str, int],
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     return scaled_stat_buff(scale_fn=scale_fn, stats=stats, condition=condition)
 
@@ -264,7 +264,7 @@ def scaled_derived_buff(
     *,
     scale_fn: Callable,
     stat: str,
-    condition: Callable = None,
+    condition: Callable | None=None,
 ):
     def effect_generator(character):
         if condition and not condition(character):
@@ -282,35 +282,35 @@ def modify_next_attack(modifier_fn):
     """
     modifier_fn should accept: (ctx, attack)
     """
-    from domain.effects.special import ModifyNextAttackEffect
+    from domain.effects.special.attack import ModifyNextAttackEffect
     return ModifyNextAttackEffect(modifier_fn)
 
 def extra_attacks(count: int):
-    from domain.effects.special import ExtraAttackEffect
+    from domain.effects.special.action import ExtraAttackEffect
     return ExtraAttackEffect(count)
 
 def passive_modifier(modifier_fn):
     """
     modifier_fn should accept: (ctx)
     """
-    from domain.effects.special import PassiveModifierEffect
+    from domain.effects.special.action import PassiveModifierEffect
     return PassiveModifierEffect(modifier_fn)
 
 def action_override(modifier_fn):
     """
     modifier_fn should accept: (ctx)
     """
-    from domain.effects.special import ActionOverrideEffect
+    from domain.effects.special.action import ActionOverrideEffect
     return ActionOverrideEffect(modifier_fn)
 
 def conditional_damage(scale_fn, condition):
-    from domain.effects.special import BonusDamageEffect
+    from domain.effects.special.damage import BonusDamageEffect
     return ConditionalEffect(
         effect=BonusDamageEffect(scale_fn),
         condition=condition,
     )
 
-def summon(factory_fn, condition: Callable = None):
+def summon(factory_fn, condition: Callable | None=None):
     from domain.effects.special.crafting import CreateEntityEffect
     effect = CreateEntityEffect(factory_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
@@ -318,16 +318,16 @@ def summon(factory_fn, condition: Callable = None):
 def control(effect, success_condition: Callable):
     return ConditionalEffect(effect=effect, condition=success_condition)
 
-def inspect(reveal_fn, condition: Callable = None):
+def inspect(reveal_fn, condition: Callable | None=None):
     from domain.effects.special.action import InspectEffect
     effect = InspectEffect(reveal_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
 
-def create_item(factory_fn, condition=None):
+def create_item(factory_fn, condition: Callable | None=None):
     from domain.effects.special.crafting import CreateItemEffect
     effect = CreateItemEffect(factory_fn)
     return TargetFilterEffect(effect, condition) if condition else effect
 
-def apply_state(state_name: str, value_fn=None):
+def apply_state(state_name: str, value_fn: Callable | None=None):
     from domain.effects.special.state import ApplyStateEffect
     return ApplyStateEffect(state_name, value_fn)
