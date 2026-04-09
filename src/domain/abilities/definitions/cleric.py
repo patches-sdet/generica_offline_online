@@ -1,6 +1,6 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
-    buff,
+    scaled_stat_buff,
     scaled_derived_buff,
     modify_next_attack,
 )
@@ -24,7 +24,7 @@ build_job("Cleric", [
         ),
         "duration": "Until Cancelled or Dispelled",
         "effects": lambda ctx: [
-            buff(
+            scaled_stat_buff(
                 scale_fn=lambda c: c.pools.get("fortune", 0),
                 stat=ctx.metadata.get(CONTEXT_OPTIONS.BLESSING_STAT),
                 condition=IS_ALLY,
@@ -44,12 +44,10 @@ build_job("Cleric", [
         "name": "Faith",
         "description": "Your Fate is increased by your Cleric Level.",
         "duration": "Passive Constant",
-        "effects": lambda ctx: [
-            scaled_derived_buff(
+        "effects": scaled_derived_buff(
                 stat="fate",
                 scale_fn=lambda c: c.get_progression_level("adventure", "Cleric", 0),
-            )
-        ],
+            ),
         "is_passive": True,
         "is_skill": False,
         "is_spell": False,
@@ -67,7 +65,8 @@ build_job("Cleric", [
             "that can only be used by Clerics of that deity. Each Godspell is unique "
             "and acts as its own skill. It may or may not be a Spell."
         ),
-        "effects": lambda ctx: [],
+        "effects": [], # TODO: This is another skill swap effect that will need implementation along with God or Dark One selection.
+        "is_passive": False,
         "required_level": 1,
     },
 
@@ -80,15 +79,12 @@ build_job("Cleric", [
             "Holy Smite increases your melee attack damage by 1 per level of this skill. "
             "This skill is a spell."
         ),
-        "duration": "1 Minute per level",
-        "effects": lambda ctx: [
-            modify_next_attack(
+        "effects": modify_next_attack(
                 lambda attack_ctx, attack: attack.add_bonus(
                     "damage",
                     attack_ctx.source.ability_levels.get("Holy Smite", 0),
                 )
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,
@@ -112,13 +108,11 @@ build_job("Cleric", [
             "skill is a spell."
         ),
         "duration": "1 Action",
-        "effects": lambda ctx: [
-            buff(
+        "effects": scaled_derived_buff(
                 scale_fn=lambda c: c.ability_levels.get("Shield of Divinity", 0),
-                stats={"armor": 1},
+                stat="armor",
                 condition=IS_ALLY,
-            )
-        ],
+            ),
         "is_passive": False,
         "is_spell": True,
         "is_skill": True,

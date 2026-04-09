@@ -1,6 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, create_item, scaled_derived_buff, skill_check
-from domain.conditions import IS_ALLY
+from domain.abilities.patterns import create_item, skill_check
 from domain.effects.base import CONTEXT_OPTIONS
 
 JEWEL_DIFFICULTIES = {
@@ -17,11 +16,10 @@ build_job("Jeweler", [
         "required_level": 1,
         "type": "skill",
         "description": "You spend thirty seconds and an amount of ingredients equal to half the cost of the jewelry you wish to create. This is a Dexterity plus Jewelcrafting skill check against the difficulty of the item. Common, uncommon, and rare items have a difficulty of 100, 200, and 300 respectively.",
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Jewelcrafting",
                 stat="dexterity",
-                difficulty=lambda ctx, target: JEWEL_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
+                difficulty=lambda ctx: JEWEL_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
                 on_success=[
                     create_item(
                         factory_fn=lambda item_ctx, target: create_item(
@@ -31,8 +29,7 @@ build_job("Jeweler", [
                         ),
                     ),
                 ],
-            )
-        ],
+            ),
     },
 
 ])

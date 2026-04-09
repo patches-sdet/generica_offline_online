@@ -10,19 +10,17 @@ GROWL = {
         "duration": "1 Attack",
         "description": "Growl at an enemy, inflicting moxie damage. This is a Charisma plus Growl skill roll against the target's Willpower.",
         "target": "enemy",
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Growl",
                 stat="charisma",
-                difficulty=lambda check_ctx, target: target.roll_willpower(),
+                difficulty=lambda target: target.roll_willpower(),
                 on_success=[
                     moxie_damage(
                         scale_fn=lambda c: c.ability_levels.get("Growl", 0),
                         condition=IS_ENEMY,
                     )
                 ],
-            )
-        ],
+            ),
     }
 
 build_shared_ability("shared.combat", GROWL)

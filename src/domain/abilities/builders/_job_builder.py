@@ -1,19 +1,24 @@
 from domain.abilities.factory import make_ability
-from domain.effects import EffectContext
+from domain.effects.base import EffectContext, Effect
 from domain.content_registry import register_progression_ability_grant
 
-
-def _normalize_effect_result(result, source_name: str) -> list:
+def _normalize_effect_result(result, source_name: str) -> list[Effect]:
     if result is None:
         return []
 
     if not isinstance(result, list):
         result = [result]
 
-    normalized = []
+    normalized: list[Effect] = []
+    
     for item in result:
         if isinstance(item, list):
             raise TypeError(f"{source_name} returned nested list of effects")
+        elif callable(item):
+            raise TypeError(f"{source_name} returned a function instead of an Effect")
+        elif not isinstance(item, Effect):
+            raise TypeError(f"{source_name} returned {type(item).__name__}, expected Effect")
+        
         normalized.append(item)
 
     return normalized
@@ -24,7 +29,7 @@ def build_shared_ability(namespace: str, definition: dict, source_type: str = "s
     return build_ability(
         definition,
         owner_name=namespace,
-        source_type="shared",
+        source_type=source_type,
     )
 
 def build_ability(definition: dict, owner_name: str, source_type: str = "adventure"):
@@ -32,8 +37,8 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
     kind = definition.get("type", "active")
     required_level = definition.get("required_level", 1)
 
-    def default_unlock(c, st=source_type, lvl=required_level, progression_name=owner_name):
-        return c.get_progression_level(st, progression_name, 0) >= lvl
+    def default_unlock(character, st=source_type, lvl=required_level, progression_name=owner_name):
+        return character.get_progression_level(st, progression_name, 0) >= lvl
 
     unlock_condition = definition.get("unlock", default_unlock)
 
@@ -47,7 +52,6 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
         description=definition.get("description", ""),
         target_type=definition.get("target", "self"),
         scales_with_level=definition.get("scales_with_level", False),
-#        metadata={"owner_name": owner_name, "source_type": source_type, "required_level": required_level, **definition.get("metadata", {}),},
 )
 
     if kind == "passive":
@@ -66,6 +70,7 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
             effect_generator=make_effect_generator(definition["effects"]),
             is_passive=True,
             is_skill=False,
+            is_spell=definition.get("is_spell", False),
         )
 
     elif kind in {"active", "skill"}:
@@ -86,6 +91,7 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
             cost_pool=definition.get("cost_pool"),
             is_passive=False,
             is_skill=(kind == "skill"),
+            is_spell=definition.get("is_spell", False),
         )
     else:
         raise ValueError(f"Invalid ability type '{kind}' for {owner_name}.{name}")
@@ -109,4 +115,4 @@ def build_job(job_name: str, definitions: list) -> None:
             owner_name=job_name,
             source_type=source_type,
         )
-        register_progression_ability_grant(source_type, job_name, ability.name)
+        register_progression_ability_grant(source_type, job_name, ability.name, required_level=ability_def.get("required_level", 1))

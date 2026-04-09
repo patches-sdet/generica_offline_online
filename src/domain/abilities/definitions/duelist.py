@@ -1,6 +1,27 @@
+from dataclasses import dataclass
+from typing import Any
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, scaled_derived_buff, skill_check, conditional_effect, clear_existing_challenges, ApplyChallengedEffect
-from domain.effects.conditional import HighestWeaponSkillBonus
+from domain.abilities.patterns import scaled_stat_buff, skill_check, conditional_effect, scaled_derived_buff
+from domain.effects.conditional import CompositeEffect, HighestWeaponSkillBonus
+from domain.effects.base import Effect, EffectContext
+    
+@dataclass(slots=True)
+class ApplyChallengedEffect(Effect):
+    challenger: Any
+    penalty: int
+    duration: Any
+
+    def apply(self, context: EffectContext):
+        for target in context.targets:
+            target.states["challenged"] = {
+                "challenger": self.challenger,
+                "penalty": self.penalty,
+                "duration": self.duration,
+            }
+
+def clear_existing_challenges(character):
+    if "challenged" in character.states:
+        del character.states["challenged"]
 
 build_job("Duelist", [
 
@@ -25,11 +46,10 @@ build_job("Duelist", [
     "cost_pool": "moxie",
     "description": "Challenge an enemy to a duel. If you succeed, they become Challenged, taking penalties to their rolls based on your Duelist level. Only one enemy can be Challenged at a time.",
     "duration": "5 minutes",
-    "effects": lambda ctx: [
-        skill_check(
+    "effects": skill_check(
             ability="Challenge",
             stat="charisma",
-            difficulty=lambda check_ctx, target: target.roll_charisma(),
+            difficulty=lambda target: target.roll_charisma(),
             on_success=lambda check_ctx, target: [
                 clear_existing_challenges(check_ctx.source),
                 conditional_effect(
@@ -38,11 +58,10 @@ build_job("Duelist", [
                         penalty=check_ctx.source.get_progression_level("adventure", "Duelist"),
                         duration="5 minutes",
                     ),
-                    condition=lambda inner_ctx, inner_target: inner_target is target,
+                    condition=lambda inner_target: inner_target is target,
                     )
                 ],
-            )
-        ],
+            ),
     "is_skill": True,
     "required_level": 1,
     "scales_with_level": True,
@@ -56,11 +75,16 @@ build_job("Duelist", [
     "cost_pool": "moxie",
     "description": "Used before revealing yourself to foes, the more dramatic your entrance, the better. This buffs your Charisma and Cool equal to your Duelist level. Lasts for a number of turns equal to the level of this skill.",
     "duration": "1 Turn/level",
-    "effects": lambda ctx: buff (
+    "effects": CompositeEffect(
+        scaled_stat_buff(
         scale_fn=lambda c: c.get_progression_level("adventure", "Duelist"),
         stats = {
-            "charisma": 1,
-            "cool": 1}
+            "charisma": 1}
+        ) and
+        scaled_derived_buff(
+        scale_fn=lambda c: c.get_progression_level("adventure", "Duelist"),
+        stat = "cool",
+        ),
     ),
     "is_skill": True,
     "required_level": 1,
@@ -69,17 +93,16 @@ build_job("Duelist", [
     "type": "skill",
     },
 
-    {
+    { # TODO: This is not what the skill does, need to update it
     "name": "Fancy Flourish",
     "cost": 5,
     "cost_pool": "moxie",
     "description": "Challenge an enemy to a duel. If you succeed, they become Challenged, taking penalties to their rolls based on your Duelist level. Only one enemy can be Challenged at a time.",
     "duration": "5 minutes",
-    "effects": lambda ctx: [
-        skill_check(
+    "effects": skill_check(
             ability="Challenge",
             stat="charisma",
-            difficulty=lambda check_ctx, target: target.roll_charisma(),
+            difficulty=lambda target: target.roll_charisma(),
             on_success=lambda check_ctx, target: [
                 clear_existing_challenges(check_ctx.source),
                 conditional_effect(
@@ -88,11 +111,10 @@ build_job("Duelist", [
                         penalty=check_ctx.source.get_progression_level("adventure", "Duelist"),
                         duration="5 minutes",
                     ),
-                    condition=lambda inner_ctx, inner_target: inner_target is target,
+                    condition=lambda inner_target: inner_target is target,
                     )
                 ],
-            )
-        ],
+            ),
     "is_skill": True,
     "required_level": 1,
     "scales_with_level": True,
@@ -100,17 +122,16 @@ build_job("Duelist", [
     "type": "skill",
     },
 
-    {
+    { # TODO: This is not what the skill does, need to update it
     "name": "Guard Stance",
     "cost": 5,
     "cost_pool": "moxie",
     "duration": "5 minutes",
     "description": "Challenge an enemy to a duel. If you succeed, they become Challenged, taking penalties to their rolls based on your Duelist level. Only one enemy can be Challenged at a time.",
-    "effects": lambda ctx: [
-        skill_check(
+    "effects": skill_check(
             ability="Challenge",
             stat="charisma",
-            difficulty=lambda check_ctx, target: target.roll_charisma(),
+            difficulty=lambda target: target.roll_charisma(),
             on_success=lambda check_ctx, target: [
                 clear_existing_challenges(check_ctx.source),
                 conditional_effect(
@@ -119,11 +140,10 @@ build_job("Duelist", [
                         penalty=check_ctx.source.get_progression_level("adventure", "Duelist"),
                         duration="5 minutes",
                     ),
-                    condition=lambda inner_ctx, inner_target: inner_target is target,
+                    condition=lambda inner_target: inner_target is target,
                     )
                 ],
-            )
-        ],
+            ),
     "is_skill": True,
     "required_level": 1,
     "scales_with_level": True,

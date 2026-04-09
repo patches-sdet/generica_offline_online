@@ -1,5 +1,7 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import  on_event, passive_modifier
+from domain.effects.conditional import CompositeEffect
+from domain.effects.special.event import GainLevelPointsEffect
 
 build_job("Human", [
     {
@@ -7,10 +9,9 @@ build_job("Human", [
     "required_level": 1,
     "type": "passive",
     "description": "Humans do not suffer a multijob penalty when receiving level points.",
-    "effects": lambda ctx: [
-        passive_modifier(
-            lambda ctx: ctx.modify_level_point_award(multijob_penalty=-1))
-        ],
+    "effects": passive_modifier(
+            lambda ctx: ctx.modify_level_point_award(multijob_penalty=-1)
+            ),
     },
 
     {
@@ -18,7 +19,7 @@ build_job("Human", [
         "required_level": 1,
         "type": "passive",
         "description": "Whenever you slay a boss-level monster or complete a legendary quest, you gain an extra level point.",
-        "effects": lambda ctx: [
+        "effects": CompositeEffect(
             on_event(
                 "defeat_boss",
                 GainLevelPointsEffect(1),
@@ -27,6 +28,6 @@ build_job("Human", [
                 "complete_legendary_quest",
                 GainLevelPointsEffect(1),
             )
-        ],
+        ),
     }
 ])

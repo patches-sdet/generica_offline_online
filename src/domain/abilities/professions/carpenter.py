@@ -36,11 +36,10 @@ build_job("Carpenter", [
         "required_level": 1,
         "type": "skill",
         "description": "You spend thirty seconds and an amount of ingredients equal to half the cost of the wooden item you wish to create. This is a Intelligence plus Carpentry skill check against the difficulty of the item. Common, uncommon, and rare items have a difficulty of 100, 200, and 300 respectively.",
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Carpentry",
                 stat="intelligence",
-                difficulty=lambda ctx, target: WOOD_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
+                difficulty=lambda ctx: WOOD_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
                 on_success=[
                     create_item(
                         factory_fn=lambda item_ctx, target: create_item(
@@ -50,8 +49,7 @@ build_job("Carpenter", [
                         ),
                     ),
                 ],
-            )
-        ],
+            ),
     },
 
     # Level 5
@@ -89,11 +87,10 @@ build_job("Carpenter", [
         "cost": 50,
         "cost_pool": "sanity",
         "description": "By spending thirty seconds polishing a wooden object, you can transform it into a different type of wood. You must know the name and properties of the wood you are transmuting. Certain rare wood types may require an Intelligence roll plus your level in this skill.",
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Transmute Wood",
                 stat="intelligence",
-                difficulty=lambda ctx, target: WOOD_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.TARGET_WOOD_TYPE)],
+                difficulty=lambda ctx: WOOD_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.TARGET_WOOD_TYPE)],
                 on_success=[
                     create_item(
                         factory_fn=lambda item_ctx, target: create_item(
@@ -103,8 +100,7 @@ build_job("Carpenter", [
                         ),
                     ),
                 ],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "scales_with_level": True,

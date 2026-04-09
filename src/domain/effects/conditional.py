@@ -15,6 +15,7 @@ class ConditionalEffect(Effect):
 @dataclass(slots=True)
 class CompositeEffect(Effect):
     effects: list[Effect]
+    aura_id: str = None  # Optional identifier for the aura, if this effect creates one
 
     def apply(self, context: EffectContext) -> None:
         for effect in self.effects:

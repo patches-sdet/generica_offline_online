@@ -6,7 +6,7 @@ from .special.action import ExtraAttackEffect, ActionOverrideEffect, InspectEffe
 from .special.attack import ModifyNextAttackEffect
 from .special.crafting import CreateItemEffect, CreateEntityEffect
 from .special.damage import BonusDamageEffect
-from .special.event import EventListenerEffect, GainGrindPointsEffect, ModifyGrindPointAwardEffect
+from .special.event import EventListenerEffect, GainGrindPointsEffect, ModifyGrindPointAwardEffect, GainLevelPointsEffect, ModifyLevelPointAwardEffect
 from .special.state import ApplyStateEffect 
 from .special.tag import ApplyTagEffect
 
@@ -26,6 +26,8 @@ __all__ = [
     "MultiStatIncrease",
     "DerivedStatBonus",
     "DerivedStatOverride",
+    "ScalingEffect",
+    "ModifyNextAttackEffect",
 
     # Crafting / creation
     "CreateItemEffect",
@@ -42,12 +44,15 @@ __all__ = [
     "GainGrindPointsEffect",
     "ModifyGrindPointAwardEffect",
     "InspectEffect",
+    "GainLevelPointsEffect",
+    "ModifyLevelPointAwardEffect",
 
     # Special / utility
     "ExtraAttackEffect",
     "ActionOverrideEffect",
     "BonusDamageEffect",
     "ApplyStateEffect",
+    "ApplyTagEffect",
 
     # Conditional
     "ConditionalEffect",

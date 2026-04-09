@@ -20,6 +20,22 @@ class EventListenerEffect(Effect):
         self.effect.apply(context if target is None else context.with_targets([target]))
 
 @dataclass(slots=True)
+class GainLevelPointsEffect(Effect):
+    amount: int
+
+    def apply(self, context: EffectContext) -> None:
+        context.source.gain_grind_points(self.amount)
+
+@dataclass(slots=True)
+class ModifyLevelPointAwardEffect(Effect):
+    amount: int
+    minimum: int = 0
+
+    def apply(self, context: EffectContext) -> None:
+        current = getattr(context, "grind_points_awarded", 0)
+        context.modify_grind_point_award(max(self.minimum, current + self.amount))
+
+@dataclass(slots=True)
 class GainGrindPointsEffect(Effect):
     amount: int
 
@@ -34,3 +50,12 @@ class ModifyGrindPointAwardEffect(Effect):
     def apply(self, context: EffectContext) -> None:
         current = getattr(context, "grind_points_awarded", 0)
         context.modify_grind_point_award(max(self.minimum, current + self.amount))
+
+@dataclass(slots=True)
+class SpendGrindPointEffect(Effect):
+    amount: int
+    minimum: int = 1
+
+    def apply(self, context: EffectContext) -> None:
+        current = getattr(context, "grind_points_cost", 0)
+        context.modify_grind_point_cost(max(self.minimum, current + self.amount))

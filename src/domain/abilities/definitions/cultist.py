@@ -1,6 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
-    buff,
     conditional_damage,
     transfer_stat,
     scaled_derived_buff,
@@ -22,12 +21,7 @@ build_job("Cultist", [
             "if someone investigates your stats. This is a Charisma plus the level of "
             "this skill versus an investigation roll."
         ),
-        "effects": lambda ctx: [
-            buff(
-                scale_fn=lambda c: c.get_progression_level("adventure", "Cultist", 0),
-                stats={"any": 1},  # placeholder until inspection-disguise system exists
-            )
-        ],
+        "effects": [], # This is a conditional effect that will require implementation of the investigation roll and stat concealment mechanics.
         "is_passive": False,
         "is_spell": False,
         "is_skill": True,
@@ -73,18 +67,17 @@ build_job("Cultist", [
             "Cultist level. This is an Intelligence plus the level of this skill versus "
             "their Wisdom roll. Lasts until canceled or dispelled. This skill is a spell."
         ),
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Enhance Pain",
                 stat="intelligence",
-                difficulty=lambda check_ctx, target: target.roll_wisdom(),
+                difficulty=lambda target: target.roll_wisdom(),
                 on_success=[
                     conditional_damage(
                         scale_fn=lambda c: c.get_progression_level("adventure", "Cultist", 0),
+                        condition=IS_ENEMY,
                     )
                 ],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_spell": True,
         "is_skill": True,
@@ -104,15 +97,13 @@ build_job("Cultist", [
             "traces of occult contamination. This also allows them to read blasphemous "
             "tomes, scrolls, and inscriptions without risking damage."
         ),
-        "effects": lambda ctx: [
-            inspect(
-                reveal_fn=lambda inspect_ctx, target: {
+        "effects": inspect(
+                reveal_fn=lambda target: {
                     "occult_traces": getattr(target, "occult_traces", None),
                     "contamination_level": getattr(target, "contamination_level", None),
                     "blasphemous_text": getattr(target, "blasphemous_text", None),
                 }
-            )
-        ],
+            ),
         "is_passive": False,
         "is_spell": False,
         "is_skill": True,
@@ -131,12 +122,10 @@ build_job("Cultist", [
             "Transfer wounds from yourself to an enemy. The damage and healing are equal "
             "to your level in this skill. This skill is a spell."
         ),
-        "effects": lambda ctx: [
-            transfer_stat(
-                amount_fn=lambda c, effect_ctx: c.ability_levels.get("Transfer Wounds", 0),
+        "effects": transfer_stat(
+                amount_fn=lambda c: c.ability_levels.get("Transfer Wounds", 0),
                 condition=IS_ENEMY,
-            )
-        ],
+            ),
         "is_passive": False,
         "is_spell": True,
         "is_skill": True,

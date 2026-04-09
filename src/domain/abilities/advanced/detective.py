@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, scaled_derived_buff
+from domain.abilities.patterns import scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: 

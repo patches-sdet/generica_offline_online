@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, scaled_derived_buff
+from domain.abilities.patterns import scaled_derived_buff
 from domain.conditions import IS_ALLY
 
 # Narrative Unlock conditions: Animate and command undead from horseback, then lead them in battle and buff them with Knight skills

@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  apply_state, buff
+from domain.abilities.patterns import  apply_state, scaled_stat_buff, scaled_derived_buff
 
 build_job("Orc", [
     {"grant": "Darkspawn", "required_level": 1},
@@ -15,13 +15,13 @@ build_job("Orc", [
             apply_state("raging"),
             apply_state("cannot_use_ranged_attacks"),
             apply_state("cannot_cast_spells"),
-            buff(
+            scaled_stat_buff(
                 scale_fn=lambda c: c.get_progression_level("race", "Orc", 0),
                 stats={"perception": -1},
             ),
-            buff(
+            scaled_derived_buff(
                 scale_fn=lambda c: c.get_progression_level("race", "Orc", 0),
-                stats={"all_rolls": 1},
+                stat="all_rolls",
                 condition=lambda c: "raging" in getattr(c.source, "states", {}),
             ),
         ],

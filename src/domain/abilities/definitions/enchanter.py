@@ -9,14 +9,13 @@ build_job("Enchanter", [
         "cost_pool": "sanity",
         "description": "You can determine the properties of an item. If the item is cursed or illusionary, the GM may roll this secretly to see what you can determine. It is an Intelligence plus Appraise roll. This does not have an experience roll, it instead increases whenver you use it to examine a new item for the first time. This skill is a spell.",
         "duration": "5 minutes",
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Appraise",
                 stat="intelligence",
-                difficulty=lambda check_ctx, target: target.roll_willpower(),
+                difficulty=lambda target: target.roll_willpower(),
                 on_success=[
                     inspect(
-                        reveal_fn=lambda inspect_ctx, target: {
+                        reveal_fn=lambda target: {
                             "type": getattr(target, "type", None),
                             "hp": getattr(target, "hp", None),
                             "attributes": getattr(target, "attributes", None),
@@ -27,8 +26,7 @@ build_job("Enchanter", [
                         },
                     )
                 ],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "required_level": 1,

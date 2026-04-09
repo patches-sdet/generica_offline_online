@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  buff
+from domain.abilities.patterns import  scaled_derived_buff
 
 build_job("Gribbit", [
     {
@@ -10,7 +10,8 @@ build_job("Gribbit", [
     "cost_pool": "stamina",
     "description": "Renders you immune to drowning while this buff is active. This skill has no levels.",
     "effects": lambda ctx: [
-        buff(
+        scaled_derived_buff(
+            scale_fn=lambda ctx: ctx.get_progression_level("race", "Gribbit"),
             stats={"drowning_immunity": 1},
         )
     ],

@@ -1,7 +1,7 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
-    buff,
     inspect,
+    scaled_stat_buff,
     skill_check,
 )
 from domain.effects.special.roll import RollModifierEffect
@@ -26,15 +26,13 @@ build_job("Burglar", [
             "- Legendary Dragon Lair: 400"
         ),
         "duration": "1 Inspection",
-        "effects": lambda ctx: [
-            inspect(
-                reveal_fn=lambda inspect_ctx, target: {
+        "effects": inspect(
+                reveal_fn=lambda target: {
                     "security_level": getattr(target, "security_level", None),
                     "lock_difficulty": getattr(target, "lock_difficulty", None),
                     "trap_difficulty": getattr(target, "trap_difficulty", None),
                 }
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": False,
@@ -61,14 +59,12 @@ build_job("Burglar", [
             "- Legendary Mimic: 300"
         ),
         "duration": "1 Minute per Burglar Level",
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Find Trap",
                 stat="perception",
-                difficulty=lambda check_ctx, target: target.trap_difficulty,
+                difficulty=lambda target: target.trap_difficulty,
                 on_success=[],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": False,
@@ -87,12 +83,10 @@ build_job("Burglar", [
             "This is an increase, not a buff."
         ),
         "duration": "Passive Constant",
-        "effects": lambda ctx: [
-            RollModifierEffect(
+        "effects": RollModifierEffect(
                 scale_fn=lambda c: c.ability_levels.get("Locksmith", 0),
                 source_tag="locksmith",
-            )
-        ],
+            ),
         "is_passive": True,
         "is_skill": False,
         "is_spell": False,
@@ -114,12 +108,10 @@ build_job("Burglar", [
             "the item(s) are dropped in the bag's location."
         ),
         "duration": "1 Hour",
-        "effects": lambda ctx: [
-            buff(
+        "effects": scaled_stat_buff(
                 scale_fn=lambda c: c.ability_levels.get("Lootbag", 0),
                 stats={"strength": 1},
             ),
-        ],
         "is_passive": False,
         "is_skill": True,
         "is_spell": False,

@@ -1,6 +1,6 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, scaled_derived_buff
-from domain.conditions import IS_ALLY, HAGGLING
+from domain.abilities.patterns import scaled_derived_buff
+from domain.conditions import HAGGLING
 
 build_job("Merchant", [
 
@@ -10,13 +10,11 @@ build_job("Merchant", [
         "cost_pool": "fortune",
         "description": "You always know how to get a good deal. You add this skill to all negotiation skill checks.",
         "duration": "5 minutes",
-        "effects": [
-            buff(
+        "effects": scaled_derived_buff(
                     scale_fn=lambda c: c.ability_levels.get("Haggle", 0),
-                    stats={"negotiation": 1}, # This is a placeholder until skills get implemented.
+                    stat={"negotiation": 1}, # This is a placeholder until skills get implemented.
                     condition=HAGGLING,
             ),
-        ],
         "is_passive": False,
         "is_skill": True,
         "required_level": 1,

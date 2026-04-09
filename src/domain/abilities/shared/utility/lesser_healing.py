@@ -15,16 +15,14 @@ LESSER_HEALING = {
             "is a spell."
         ),
         "duration": "1 Action",
-        "effects": lambda ctx: [
-            heal_hp(
+        "effects": heal_hp(
                 scale_fn=lambda c: (
                     c.get_progression_level("adventure", "Cleric", 0)
                     + c.ability_levels.get("Lesser Healing", 0)
                 ) // 2,
                 condition=IS_ALLY,
-            )
+            ),
             # damaging undead/dark branch still to be added
-        ],
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,

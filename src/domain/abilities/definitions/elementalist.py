@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import create_item, scaled_derived_buff, skill_check, hp_damage, conditional_effect, debuff
+from domain.abilities.patterns import create_item, scaled_derived_buff, skill_check, hp_damage, conditional_effect
 from domain.conditions import IS_ALLY
 
 def create_element(element_type, amount_fn):
@@ -33,12 +33,10 @@ build_job("Elementalist", [
         "cost": 10,
         "cost_pool": "sanity",
         "description": "This allows you to create an amount of an element that matches your Elemental Affinity. You can create one cubic foot per level of this skill. This skill is a spell.",
-        "effects": [
-            create_element(
+        "effects": create_element(
                 element_type="{elemental_affinity}",
                 amount_fn=lambda c: c.ability_levels.get("Call Element", 0)
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,
@@ -65,13 +63,11 @@ build_job("Elementalist", [
         "cost": 5,
         "cost_pool": "sanity",
         "description": "You can give yourself or an ally resistance to an element chosen from your Elemental Affinity(ies). The resistance granted is equal to the level of this skill as a percentage. This DOES stack with the resistance granted by Elemental Affinity. This skill is a spell.",
-        "effects": [
-            scaled_derived_buff(
+        "effects": scaled_derived_buff(
                 scale_fn=lambda c: c.ability_levels.get("Endure Element", 0) * 0.1,
                 stat="armor",
                 condition=IS_ALLY, # TODO: Need to get this to work on either an ally or self.
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,
@@ -86,14 +82,12 @@ build_job("Elementalist", [
         "cost": 20,
         "cost_pool": "sanity",
         "description": "You summon a Class One elemental. This is a Willpower plus Least Elemental roll against the elemental's Willpower. The level of the Elemental is equal to your Elementalist level. This skill is a spell.",
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Least Elemental",
                 stat="willpower",
                 difficulty=lambda target: target.roll_willpower(),
                 on_success=summon_elemental(level=lambda c: c.get_progression_level("Elementalist")),
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,
@@ -113,8 +107,7 @@ build_job("Elementalist", [
                         "Earth: Hobbled\n",
                         "Air: Stunned\n",
         ),
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Manipulate Element",
                 stat="dexterity",
                 difficulty=lambda target: target.roll_agility(),
@@ -124,15 +117,14 @@ build_job("Elementalist", [
                         condition=lambda ctx, t: t == target,
                     ),
                     conditional_effect(
-                        effect=debuff(
-                            scale_fn=lambda c: 1, # TODO: Maybe add scaling to these effects based on level of Manipulate Element or something?
+                        effect=scaled_derived_buff(
+                            scale_fn=lambda c: 1, # TODO: It's now a scaled_derived_buff penalizing attack, but it needs to match to both the element and the level of Manipulate Element
                             stats={"attack": -1},
                         ),
                         condition=lambda c: c.roll_result.get("is_critical_hit", False) and c.target == target,
                     )
                 ], # TODO: Implement damage based on difference between rolls.
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "is_spell": True,

@@ -1,14 +1,15 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
-    buff,
     heal_hp,
+    scaled_stat_buff,
     summon,
-    control,
+#    control,
     inspect,
     skill_check,
 )
 from domain.conditions.entity import IS_CONSTRUCT, IS_OBJECT, NOT_IN_PARTY, IN_PARTY
 from domain.effects.base import Effect
+from domain.effects.conditional import CompositeEffect
 
 # Animus data tables
 
@@ -212,12 +213,12 @@ build_job("Animator", [
     "cost_pool": "sanity",
     "description": "Turns a touched object into an animi, capable of movement, combat, and simple tasks as ordered by its creator. Must be in its creator's party to do anything beyond defend itself. The greater the size and mass of the object, the more it costs to animate, and the more hit points and strength it begins with. The type of material also factors in, and determines the starting armor rating of the animi. The larger the size, the more difficult the roll to animate the object. This skill is a spell, that uses intelligence plus Animus for the roll.",
     "duration": "10 minutes per Animus level",
-    "effects": lambda ctx: [
+    "effects": CompositeEffect([
         spend_animus_extra_sanity(),
         skill_check(
             ability="Animus",
             stat="intelligence",
-            difficulty=lambda check_ctx, target: resolve_animus_profile(target)["difficulty"],
+            difficulty=lambda target: resolve_animus_profile(target)["difficulty"],
             on_success=[
                 summon(
                     factory_fn=lambda summon_ctx, obj: create_animi_from_object(
@@ -227,10 +228,11 @@ build_job("Animator", [
                         duration_minutes=summon_ctx.source.ability_levels.get("Animus", 0) * 10,
                     ),
                     condition=IS_OBJECT,
-                )
-            ],
-        ),
-    ],
+                    )
+                ],
+            ),
+        ],
+    ),
     "is_passive": False,
     "is_spell": True,
     "is_skill": True,
@@ -246,22 +248,20 @@ build_job("Animator", [
     "cost_pool": "sanity",
     "description": "Allows the caster to issue one command to an animi not in the creator's party. On a success, the animi will complete the command as best it can. This skill is a spell, and uses Intelligence plus Command Animus for the roll. The difficulty is set by the Animi's Willpower roll.",
     "duration": "1 command",
-    "effects": lambda ctx: [
-        skill_check(
+    "effects": skill_check(
             ability="Command Animus",
             stat="intelligence",
-            difficulty=lambda check_ctx, target: target.roll_willpower(),
-            on_success=[
-                control(
-                    effect="1 command",
-                    success_condition=lambda effect_ctx, target: (
-                        IS_CONSTRUCT(effect_ctx, target)
-                        and NOT_IN_PARTY(effect_ctx.source, target)
-                    ),
-                )
-            ],
-        )
-    ],
+            difficulty=lambda target: target.roll_willpower(),
+            #on_success=(
+                    #control( # TODO: Bring this pattern back, it was for the command effects...or make a new dataclass for CommandEffect
+                    #effect="1 command",
+                    #success_condition=lambda effect_ctx, target: (
+                    #    IS_CONSTRUCT(effect_ctx, target)
+                    #    and NOT_IN_PARTY(effect_ctx.source, target)
+                    #),
+                #),
+            #),
+    ),
     "is_passive": False,
     "is_spell": True,
     "is_skill": True,
@@ -275,8 +275,7 @@ build_job("Animator", [
 {
     "name": "Creator's Guardians",
     "description": "Enhances animi in the creator's party, boosting all non-zero attributes. The amount is the creator's Willpower and Creator's Guardians ability level, divided by 10.",
-    "effects": lambda ctx: [
-        buff(
+    "effects": scaled_stat_buff(
             scale_fn=lambda c: (
                 c.get_stat("willpower")
                 + c.ability_levels.get("Creator's Guardians", 0)
@@ -297,8 +296,7 @@ build_job("Animator", [
                 IS_CONSTRUCT(ctx, target)
                 and IN_PARTY(ctx.source, target)
             ),
-        )
-    ],
+        ),
     "is_passive": True,
     "is_spell": False,
     "is_skill": False,
@@ -315,14 +313,13 @@ build_job("Animator", [
     "cost_pool": "sanity",
     "description": "Allows the Animator to examine the status of any animi, golem, or other construct. Also used to analyze any object for animus potential and sanity cost. This is accomplished with an Intelligence plus Eye for Detail roll. The object can make a Willpower roll to resist, with Animi or constructs in a party able to use their creator's Willpower. This skill is a spell.",
     "duration": "1 minute",
-    "effects": lambda ctx: [
-        skill_check(
+    "effects": skill_check(
             ability="Eye for Detail",
             stat="intelligence",
-            difficulty=lambda check_ctx, target: target.roll_willpower(),
+            difficulty=lambda target: target.roll_willpower(),
             on_success=[
                 inspect(
-                    reveal_fn=lambda inspect_ctx, target: {
+                    reveal_fn=lambda target: {
                         "type": getattr(target, "type", None),
                         "hp": getattr(target, "hp", None),
                         "attributes": getattr(target, "attributes", None),
@@ -334,8 +331,7 @@ build_job("Animator", [
                     ),
                 )
             ],
-        )
-    ],
+        ),
     "is_passive": False,
     "is_spell": True,
     "is_skill": True,
@@ -350,11 +346,9 @@ build_job("Animator", [
     "name": "Mend",
     "cost": 5,
     "cost_pool": "sanity",
-
     "description": "Instantly repair the targeted construct or object, restoring a number of HP equal to the Animator's level plus the Mend ability level, divided by two. This is earth-based healing, and can affect earth elementals, but not other living creatures. This skill is a spell.",
     "duration": "1 action",
-    "effects": lambda ctx: [
-        heal_hp(
+    "effects": heal_hp(
             scale_fn=lambda c: (
                 c.get_progression_level("adventure", "Animator", 0)
                 + c.ability_levels.get("Mend", 0)
@@ -362,8 +356,7 @@ build_job("Animator", [
             condition=lambda effect_ctx, target: (
                 IS_CONSTRUCT(effect_ctx, target) or IS_OBJECT(effect_ctx, target)
                 ),
-            )
-        ],
+            ),
     "is_passive": False,
     "is_spell": True,
     "is_skill": True,

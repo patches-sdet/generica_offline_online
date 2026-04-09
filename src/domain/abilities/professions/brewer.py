@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import DifficultyTable, buff, create_item, skill_check
+from domain.abilities.patterns import DifficultyTable, conditional_effect, create_item, scaled_stat_buff, skill_check
 from domain.effects.base import CONTEXT_OPTIONS
 
 DRINK_DIFFICULTIES = DifficultyTable({
@@ -22,16 +22,16 @@ build_job("Brewer", [
         "required_level": 1,
         "type": "passive",
         "description": "You have a high tolerance for alcohol, adding your constitution whenever you have to roll against the drunk or hungover condition.",
-        "effects": lambda ctx: [
-            buff(
+        "effects": conditional_effect(
+            scaled_stat_buff(
                 scale_fn=lambda ctx: ctx.source.attributes.constitution,
                 stats={"constitution": 1},
-                condition=lambda ctx: (
-                    ctx.action_type == "condition_resistance_roll"
-                    and ctx.metadata.get("condition_name") in {"drunk", "hungover"}
+            ),
+            condition=lambda ctx: (
+                ctx.action_type == "condition_resistance_roll"
+                and ctx.metadata.get("condition_name") in {"drunk", "hungover"}
                 )
             ),
-        ],
     },
 
     # Brewing
@@ -41,11 +41,10 @@ build_job("Brewer", [
         "type": "skill",
         "target": "self",
         "description": "You spend thirty seconds and an amount of ingredients equal to half the cost of the drink you wish to create. This is a Wisdom plus Brewing skill check against the difficulty of the drink. Common, uncommon, and rare drinks have a difficulty of 100, 200, and 300 respectively.",
-        "effects": lambda ctx: [
-            skill_check(
+        "effects": skill_check(
                 ability="Brewing",
                 stat="wisdom",
-                difficulty=lambda ctx, target: DRINK_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
+                difficulty=lambda ctx: DRINK_DIFFICULTIES[ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE)],
                 on_success=[
                     create_item(
                         factory_fn=lambda item_ctx, target: create_item(
@@ -55,8 +54,7 @@ build_job("Brewer", [
                         ),
                     ),
                 ],
-            )
-        ],
+            ),
     },
 
     # Level 5
@@ -79,11 +77,10 @@ build_job("Brewer", [
         "cost": 25,
         "cost_pool": "sanity",
         "description": "By spending 30 seconds mixing two liquids together, you can combine any properties and effects they have. This requires a Wisdom check plus your level in this skill against the crafting difficulty of the highest drink used. Failure means both liquids are ruined.",
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Mixed Drinks",
                 stat="wisdom",
-                difficulty=lambda ctx, target: DRINK_DIFFICULTIES[max(
+                difficulty=lambda ctx: DRINK_DIFFICULTIES[max(
                     ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE_1),
                     ctx.require_option(CONTEXT_OPTIONS.PRODUCT_TYPE_2),
                 )],
@@ -112,8 +109,7 @@ build_job("Brewer", [
                         ),
                     ),
                 ],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "scales_with_level": True,

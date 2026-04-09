@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  buff
+from domain.abilities.patterns import  scaled_derived_buff
 
 build_job("Halven", [
     {
@@ -8,9 +8,9 @@ build_job("Halven", [
     "type": "passive",
     "description": "You gain a bonus to your Fate equal to your Halven level.",
     "effects": lambda ctx: [
-        derived_stat_buff(
-            derived_stat="fate",
+        scaled_derived_buff(
             scale_fn=lambda ctx: ctx.source.get_progression_level("race", "Halven"),
+            stat="fate",
             )
         ],
     },
@@ -21,9 +21,9 @@ build_job("Halven", [
     "type": "passive",
     "description": "Whenever your size would be an advantage for the situation you're in, you gain a bonus to all rolls equal to your Halven level.",
     "effects": lambda ctx: [
-        buff(
+        scaled_derived_buff(
             scale_fn=lambda ctx: ctx.source.get_progression_level("race", "Halven"),
-            stats={"all_rolls": 1},
+            stat="all_rolls",
             condition=lambda ctx: ctx.metadata.get("size_advantage", False),
             )
         ],

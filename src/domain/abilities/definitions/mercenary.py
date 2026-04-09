@@ -1,6 +1,6 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import buff, scaled_stat_buff, scaled_skill_buff
-from domain.conditions import IS_ALLY, IN_PARTY
+from domain.abilities.patterns import scaled_stat_buff, scaled_skill_buff
+from domain.conditions import IN_PARTY
 from domain.effects.conditional import CompositeEffect
 
 build_job("Mercenary", [
@@ -12,7 +12,7 @@ build_job("Mercenary", [
         "description": "You are strongest when fighting with allies. You can use this skill to buff yourself and your party members' Strength, Constitution, Armor, and all Generic Weapon skills by an amount equal to your level in this skill.",
         "duration": "1 Turn/level",
         "effects": lambda ctx: [
-            CompositeEffect([
+            CompositeEffect(
                 scaled_stat_buff(
                     stats=["strength", "constitution", "armor"],
                     scale_fn=lambda c: c.ability_levels.get("Fight the Battles", 0),
@@ -23,7 +23,6 @@ build_job("Mercenary", [
                     scale_fn=lambda c: c.ability_levels.get("Fight the Battles", 0),
                     condition=IN_PARTY,
                     ),
-                ],
             ),
         ],
         "is_passive": False,

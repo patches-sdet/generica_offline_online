@@ -1,6 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import inspect, skill_check
-from domain.conditions import IS_ALLY
 
 build_job("Wizard", [
 
@@ -10,14 +9,13 @@ build_job("Wizard", [
         "cost_pool": "sanity",
         "description": "You can examine the properties of any magical item or spell encountered. This will also list all magical effects active on an individual. This is an Intelligence plus Analyze Magic roll. This skill is a spell.",
         "duration": "1 minute",
-        "effects": [
-            skill_check(
+        "effects": skill_check(
                 ability="Analyze Magic",
                 stat="intelligence",
-                difficulty=lambda check_ctx, target: target.roll_willpower(),
+                difficulty=lambda target: target.roll_willpower(),
                 on_success=[
                     inspect( # TODO: these reveal fns need to be matched to how equipment and magical effects are implemented, but gets things running for now.
-                        reveal_fn=lambda inspect_ctx, target: {
+                        reveal_fn=lambda target: {
                             "type": getattr(target, "type", None),
                             "hp": getattr(target, "hp", None),
                             "attributes": getattr(target, "attributes", None),
@@ -28,8 +26,7 @@ build_job("Wizard", [
                         },
                     )
                 ],
-            )
-        ],
+            ),
         "is_passive": False,
         "is_skill": True,
         "required_level": 1,

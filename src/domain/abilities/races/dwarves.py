@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  buff
+from domain.abilities.patterns import  scaled_stat_buff
 
 build_job("Dwarf", [
     {
@@ -10,7 +10,7 @@ build_job("Dwarf", [
     "cost_pool": "fortune",
     "description": "This skill adds its level to your Perception rolls when you examine stone, are moving around a mostly stone environment, or trying to detect someone standing on a stone surface. This skill is a buff.",
     "effects": lambda ctx: [
-        buff(
+        scaled_stat_buff(
             scale_fn=lambda ctx: ctx.source.ability_levels["Stonecrafty"],
             stats={"perception": 1},
             condition=lambda ctx: ctx.action_type in {

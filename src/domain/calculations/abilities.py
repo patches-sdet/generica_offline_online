@@ -33,7 +33,7 @@ def rebuild_abilities(character) -> None:
     for name, ability in definitions_by_name.items():
         count = granted_counts[name]
 
-        if ability.is_leveled:
+        if ability.scales_with_level:
             character.ability_levels[name] = 1 + (count - 1) * 5
         else:
             character.ability_levels[name] = 1
