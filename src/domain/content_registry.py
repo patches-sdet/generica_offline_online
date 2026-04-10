@@ -1,6 +1,5 @@
-import importlib
+import importlib, sys
 import pkgutil
-
 from domain.race import (
     BaseRace,
     RaceTemplate,
@@ -22,7 +21,7 @@ _ADVANCED_JOB_REGISTRY: dict[str, AdvancedJob] = {}
 _ABILITY_REGISTRY: dict[str, Ability] = {}
 
 # progression key: (ptype, progression_name)
-_PROGRESSION_ABILITY_GRANTS: dict[tuple[str, str], list[str]] = {}
+_PROGRESSION_ABILITY_GRANTS: dict[tuple[str, str], list[tuple[str, int]]] = {}
 
 # guard to avoid repeated import-discovery work
 _ABILITY_MODULES_INITIALIZED = False
@@ -177,16 +176,31 @@ def register_progression_ability_grant(
             f"Cannot grant unknown ability '{ability_name}' "
             f"to {ptype}:{progression_name}"
         )
+    
+    try:
+        normalized_level = max(1, int(required_level))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid required level for: {ptype}:{progression_name} -> "
+                            f"{ability_name}: {required_level!r}"
+                            ) from exc
 
     key = (ptype, progression_name)
     _PROGRESSION_ABILITY_GRANTS.setdefault(key, [])
 
-    if ability_name not in _PROGRESSION_ABILITY_GRANTS[key]:
-        _PROGRESSION_ABILITY_GRANTS[key].append(ability_name)
+    grant = (ability_name, normalized_level)
 
+    if grant not in _PROGRESSION_ABILITY_GRANTS[key]:
+        _PROGRESSION_ABILITY_GRANTS[key].append(grant)
 
-def get_progression_ability_names(ptype: str, progression_name: str) -> tuple[str]:
+def get_progression_ability_grants(ptype: str, progression_name: str,) -> tuple[tuple[str, int], ...]:
     return tuple(_PROGRESSION_ABILITY_GRANTS.get((ptype, progression_name), ()))
+
+
+def get_progression_ability_names(ptype: str, progression_name: str) -> tuple[str, ...]:
+    return tuple(
+        ability_name
+        for ability_name, _required_level in get_progression_ability_grants(ptype, progression_name)
+    )
 
 # UNIFIED PROGRESSION SOURCE RESOLUTION
 
@@ -252,21 +266,7 @@ def initialize_ability_modules(force: bool = False) -> int:
     _ABILITY_MODULES_INITIALIZED = True
     return loaded
 
-def get_progression_level_for_ability(self, ptype: str, ability_name: str, default: int = 0) -> int:
-        best = default
-
-        for (current_type, progression_name), progression in self.progressions.items():
-            if current_type != ptype:
-                continue
-
-            granted = get_progression_ability_names(current_type, progression_name)
-            if ability_name in granted:
-                best = max(best, progression.level)
-    
-        return best
-
-
-def initialize_content_registries() -> None:
+def initialize_content_registries(force: bool = False) -> None:
     """
     Canonical startup hook for static content.
 
@@ -274,6 +274,9 @@ def initialize_content_registries() -> None:
     - base content is only registered once
     - ability modules are only imported once unless forced
     """
+    if force:
+        clear_content_registries()
+
     for race in BASE_RACE_DEFINITIONS:
         if race.name not in _BASE_RACE_REGISTRY:
             register_base_race(race)
@@ -294,19 +297,33 @@ def initialize_content_registries() -> None:
         if job.name not in _ADVANCED_JOB_REGISTRY:
             register_advanced_job(job)
 
-    initialize_ability_modules()
-
-# TEST / DEV UTILITIES
+    initialize_ability_modules(force=force)
 
 def clear_content_registries() -> None:
     global _ABILITY_MODULES_INITIALIZED
 
+    # Static content registries
     _BASE_RACE_REGISTRY.clear()
     _RACE_TEMPLATE_REGISTRY.clear()
     _ADVENTURE_JOB_REGISTRY.clear()
     _PROFESSION_JOB_REGISTRY.clear()
     _ADVANCED_JOB_REGISTRY.clear()
+
+    # Ability / grant registries
     _ABILITY_REGISTRY.clear()
     _PROGRESSION_ABILITY_GRANTS.clear()
+
+    # Remove imported content modules so top-level build_* calls execute again
+    reload_prefixes = (
+        "domain.abilities.shared.",
+        "domain.abilities.definitions.",
+        "domain.abilities.professions.",
+        "domain.abilities.races.",
+        "domain.abilities.advanced.",
+    )
+
+    for module_name in list(sys.modules):
+        if module_name.startswith(reload_prefixes):
+            del sys.modules[module_name]
 
     _ABILITY_MODULES_INITIALIZED = False

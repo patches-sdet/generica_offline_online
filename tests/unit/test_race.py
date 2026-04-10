@@ -1,8 +1,9 @@
-def test_material_race_combination():
-    golem = resolve_race("Golem")
-    human = resolve_race("Human")
+from domain.race import BASE_RACE_DEFINITIONS
 
-    new_race = apply_material_to_race(golem, human, "metal")
 
-    assert new_race.material == "metal"
-    assert new_race.base_race == "Human"
+def test_orc_level_effects_repeat_correctly():
+    orc = next(r for r in BASE_RACE_DEFINITIONS if r.name == "Orc")
+
+    effects = orc.get_effects(3)
+
+    assert len(effects) == 4

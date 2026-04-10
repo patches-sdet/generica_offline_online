@@ -7,7 +7,6 @@ from domain.effects.stat_effects import MultiStatIncrease, DerivedStatBonus
 
 TemplateKind = Literal["overlay", "composition"]
 
-# MODELS
 
 @dataclass(frozen=True, slots=True)
 class BaseRace:
@@ -24,7 +23,8 @@ class BaseRace:
     starting_racial_skills: tuple[str, ...] = field(default_factory=tuple)
     crossbreed_eligible: bool = False
 
-    def effects_on_acquire(self) -> list[Effect]:
+    @property
+    def effects_on_acquire(self) -> tuple[Effect, ...]:
         effects: list[Effect] = []
 
         if self.acquire_stats:
@@ -33,22 +33,31 @@ class BaseRace:
         for stat, value in self.acquire_derived.items():
             effects.append(DerivedStatBonus(stat, value, source=self.name))
 
-        return effects
+        return tuple(effects)
 
-    def get_effects(self, level: int = 1) -> list[Effect]:
-        level = max(1, level)
-        if level <= 1:
-            return []
-
-        per_level: list[Effect] = []
+    @property
+    def effects_per_level(self) -> tuple[Effect, ...]:
+        effects: list[Effect] = []
 
         if self.level_stats:
-            per_level.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
+            effects.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
 
         for stat, value in self.level_derived.items():
-            per_level.append(DerivedStatBonus(stat, value, source=self.name))
+            effects.append(DerivedStatBonus(stat, value, source=self.name))
 
-        return per_level * (level - 1)
+        return tuple(effects)
+
+    def get_effects(self, level: int) -> list[Effect]:
+        level = max(1, level)
+
+        effects: list[Effect] = []
+        effects.extend(self.effects_on_acquire)
+
+        if level > 1:
+            for _ in range(level - 1):
+                effects.extend(self.effects_per_level)
+
+        return effects
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,11 +71,12 @@ class RaceTemplate:
     tags: tuple[str, ...] = field(default_factory=tuple)
     max_adventure_jobs: int = 1
     max_profession_jobs: int = 1
-    
+
     starting_racial_skills: tuple[str, ...] = field(default_factory=tuple)
     requires_material: bool = False
 
-    def effects_on_acquire(self) -> list[Effect]:
+    @property
+    def effects_on_acquire(self) -> tuple[Effect, ...]:
         effects: list[Effect] = []
 
         if self.acquire_stats:
@@ -75,22 +85,31 @@ class RaceTemplate:
         for stat, value in self.acquire_derived.items():
             effects.append(DerivedStatBonus(stat, value, source=self.name))
 
-        return effects
+        return tuple(effects)
 
-    def get_effects(self, level: int = 1) -> list[Effect]:
-        level = max(1, level)
-        if level <= 1:
-            return []
-
-        per_level: list[Effect] = []
+    @property
+    def effects_per_level(self) -> tuple[Effect, ...]:
+        effects: list[Effect] = []
 
         if self.level_stats:
-            per_level.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
+            effects.append(MultiStatIncrease(dict(self.level_stats), source=self.name))
 
         for stat, value in self.level_derived.items():
-            per_level.append(DerivedStatBonus(stat, value, source=self.name))
+            effects.append(DerivedStatBonus(stat, value, source=self.name))
 
-        return per_level * (level - 1)
+        return tuple(effects)
+
+    def get_effects(self, level: int) -> list[Effect]:
+        level = max(1, level)
+
+        effects: list[Effect] = []
+        effects.extend(self.effects_on_acquire)
+
+        if level > 1:
+            for _ in range(level - 1):
+                effects.extend(self.effects_per_level)
+
+        return effects
 
 # HELPERS
 
@@ -438,6 +457,34 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
         max_adventure_jobs=4,
         max_profession_jobs=2,
         starting_racial_skills=("Don't Sveat de Smol Stuff", "Large and In Charge", "Sving for de Bleachers"),
+        crossbreed_eligible=False,
+    ),
+    BaseRace(
+        name="Bear",
+        acquire_stats={},
+        level_stats={
+            "strength": 3,
+            "constitution": 3,
+            "intelligence": 3,
+            "wisdom": 3,
+            "dexterity": 3,
+            "agility": 3,
+            "charisma": 3,
+            "willpower": 3,
+            "perception": 3,
+            "luck": 3,
+        },
+        acquire_derived={},
+        level_derived={
+            "armor": 1,
+            "mental_fortitude": 3,
+            "endurance": 3,
+            "cool": 3,
+        },
+        tags=("monster"),
+        max_adventure_jobs=2,
+        max_profession_jobs=2,
+        starting_racial_skills=("Growl", "Claw Swipe"),
         crossbreed_eligible=False,
     ),
 )

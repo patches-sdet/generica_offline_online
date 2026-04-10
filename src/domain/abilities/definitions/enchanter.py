@@ -34,5 +34,6 @@ build_job("Enchanter", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

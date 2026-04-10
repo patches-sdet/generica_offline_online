@@ -21,5 +21,6 @@ build_job("Scout", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

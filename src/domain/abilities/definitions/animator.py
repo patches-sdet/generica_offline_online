@@ -365,5 +365,6 @@ build_job("Animator", [
     "target": "animus_or_object",
     "type": "skill",
 },
-
-])
+],
+source_type="adventure"
+)

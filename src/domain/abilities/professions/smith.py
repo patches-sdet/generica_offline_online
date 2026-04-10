@@ -31,5 +31,6 @@ build_job("Smith", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

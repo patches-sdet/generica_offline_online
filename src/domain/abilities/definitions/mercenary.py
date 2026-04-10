@@ -32,5 +32,6 @@ build_job("Mercenary", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

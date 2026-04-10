@@ -50,12 +50,16 @@ class AdventureJob:
     name: str
     effects_on_acquire: tuple[Effect, ...] = field(default_factory=tuple)
     effects_per_level: tuple[Effect, ...] = field(default_factory=tuple)
-    source: str = field(init=False)
     tags: tuple[str, ...] = field(default_factory=tuple)
 
     def get_effects(self, level: int) -> list[Effect]:
         level = max(1, level)
-        return list(self.effects_per_level) * max(0, level - 1)
+
+        effects = list(self.effects_on_acquire)
+
+        if level > 1:
+            effects.extend(self.effects_per_level * (level - 1))
+        return effects
 
     @property
     def class_code(self) -> str:

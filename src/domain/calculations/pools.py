@@ -1,9 +1,25 @@
 from domain.attributes import STAT_FORMULAS, Pools
 
 
+def get_pool_bonuses(character) -> dict[str, int]:
+    bonuses = {
+        "hp": 0,
+        "sanity": 0,
+        "stamina": 0,
+        "moxie": 0,
+        "fortune": 0,
+    }
+
+    toughness_rank = character.ability_levels.get("Toughness", 0)
+    if toughness_rank > 0:
+        bonuses["hp"] += toughness_rank * 2
+
+    return bonuses
+
+
 def calculate_pools(character) -> Pools:
     """
-    Recalculate poolsfrom rebuilt attributes.
+    Recalculate pools from rebuilt attributes.
     Does not modify current resource values unless they exceed new max.
     """
 
@@ -13,6 +29,10 @@ def calculate_pools(character) -> Pools:
         key: STAT_FORMULAS[key](a)
         for key in STAT_FORMULAS
     }
+
+    pool_bonuses = get_pool_bonuses(character)
+    for pool_name, bonus in pool_bonuses.items():
+        values[pool_name] += bonus
 
     # Store max
     character.max_hp = values["hp"]

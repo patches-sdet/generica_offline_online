@@ -29,4 +29,6 @@ build_job("Herbalist", [
         "type": "skill",
     },
 
-])
+],
+source_type="profession",
+)

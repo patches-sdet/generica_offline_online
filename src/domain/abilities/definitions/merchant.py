@@ -22,5 +22,6 @@ build_job("Merchant", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

@@ -7,4 +7,6 @@ build_job("Cat", [
     {"grant": "Groom", "required_level": 1},
     {"grant": "Nine Lives", "required_level": 1},
     {"grant": "Scents and Sensibility", "required_level": 1}
-])
+],
+source_type="race",
+)

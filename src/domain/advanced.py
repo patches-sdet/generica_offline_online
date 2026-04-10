@@ -13,7 +13,13 @@ class AdvancedJob:
 
     def get_effects(self, level: int) -> list[Effect]:
         level = max(1, level)
-        return list(self.effects_per_level) * max(0, level - 1)
+
+        effects = list(self.effects_on_acquire)
+
+        if level > 1:
+            effects.extend(self.effects_per_level * (level - 1))
+
+        return effects
 
     def to_dict(self) -> dict:
         return {

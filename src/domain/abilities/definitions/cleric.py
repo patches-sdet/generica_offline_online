@@ -121,5 +121,6 @@ build_job("Cleric", [
         "target": "ally",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

@@ -123,4 +123,6 @@ build_job("Berserker", [
         "target": "self",
         "type": "skill",
     },
-])
+],
+source_type="adventure"
+)

@@ -1,5 +1,4 @@
 from typing import Optional
-
 from domain.effects import DerivedStatOverride, DerivedStatBonus
 from domain.effects.base import Effect
 from domain.content_registry import get_base_race, get_race_template
@@ -95,7 +94,6 @@ def get_race_effects(character) -> list[Effect]:
         level_b = character.get_progression_level("race", base_names[1], 0)
         level = max(1, min(level_a, level_b))
 
-        effects.extend(composite.effects_on_acquire())
         effects.extend(composite.get_effects(level))
         return effects
 
@@ -107,12 +105,10 @@ def get_race_effects(character) -> list[Effect]:
         level = max(1, character.get_progression_level("race", base_name, 0))
         highest_base_level = max(highest_base_level, level)
 
-        effects.extend(base.effects_on_acquire())
         effects.extend(base.get_effects(level))
 
     # Overlay template handling
     if template and template.kind == "overlay":
-        effects.extend(template.effects_on_acquire())
         effects.extend(template.get_effects(highest_base_level))
 
         if template.requires_material:

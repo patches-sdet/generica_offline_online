@@ -6,7 +6,10 @@ from domain.conditions import IS_ALLY
 # requires Mercenary 10, Ruler 10. The rest is narrative and can be adjusted as needed.
 # Known abilties include "Talent Management" (Allows you to change your active jobs)
 
-build_job("Guild_Master", [])
+build_job("Guild_Master", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

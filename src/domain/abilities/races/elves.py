@@ -38,4 +38,6 @@ build_job("Elf", [
     ),
     "scales_with_level": False,
     }
-])
+],
+source_type="race",
+)

@@ -5,7 +5,10 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Knight 25, Cleric 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Paladin", [])
+build_job("Paladin", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

@@ -5,7 +5,10 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: Dual-wilding out in the woods...
 # requires Archer 25, Scout 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Ranger", [])
+build_job("Ranger", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

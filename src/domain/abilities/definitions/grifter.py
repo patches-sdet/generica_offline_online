@@ -25,5 +25,6 @@ build_job("Grifter", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

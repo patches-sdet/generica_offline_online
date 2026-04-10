@@ -33,5 +33,6 @@ build_job("Sensate", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

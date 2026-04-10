@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Oracle 25, Cultist 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Doomsayer", [])
+build_job("Doomsayer", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

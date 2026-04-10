@@ -36,4 +36,6 @@ build_job("Farmer", [
         "type": "skill",
     },
 
-])
+],
+source_type="profession",
+)

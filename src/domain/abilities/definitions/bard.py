@@ -123,4 +123,6 @@ build_job("Bard", [
     "type": "skill",
 },
 
-])
+],
+source_type="adventure"
+)

@@ -13,5 +13,6 @@ build_job("Toy Golem", [
         "description": "Your toy golem is imbued with a spark of sapience, granting it all attributes and can think and learn.",
         "effects": [],
     },
-
-])
+],
+source_type="race",
+)

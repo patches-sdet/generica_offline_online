@@ -22,5 +22,6 @@ build_job("Midwife", [
                 condition=IS_ALLY,
                         ),
     },
-
-])
+],
+source_type="profession",
+)

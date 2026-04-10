@@ -168,5 +168,6 @@ build_job("Conjuror", [
     "target": "unoccupied space",
     "type": "skill",
 },
-
-])
+],
+source_type="adventure"
+)

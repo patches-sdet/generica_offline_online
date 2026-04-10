@@ -172,5 +172,6 @@ build_job("Alchemist", [
     "target": "self",
     "type": "skill",
 },
-
-])
+],
+source_type="adventure"
+)

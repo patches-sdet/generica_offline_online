@@ -43,5 +43,6 @@ build_job("Frosted Giant", [
         "effects": [], # TODO: This is a complicated effect that might need a custom pattern or effect.
         "scales_with_level": False, 
     },
-
-])
+],
+source_type="race",
+)

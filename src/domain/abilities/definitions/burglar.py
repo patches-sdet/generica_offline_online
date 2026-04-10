@@ -145,4 +145,6 @@ build_job("Burglar", [
         "target": "self",
         "type": "skill",
     },
-])
+],
+source_type="adventure"
+)

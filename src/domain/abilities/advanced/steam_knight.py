@@ -6,7 +6,10 @@ from domain.conditions import IS_ALLY
 # requires Knight 10, Animator 10, Tinker 10. The rest is narrative and can be adjusted as needed.
 # Abilities include "Talk to the Hand" (Either negates critical hits, reduces damage, or increases armor) and "Steam Scream" which does moxie damage to all enemies in earshot
 
-build_job("Steam-Knight", [])
+build_job("Steam-Knight", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

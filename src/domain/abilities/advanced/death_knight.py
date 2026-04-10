@@ -6,7 +6,9 @@ from domain.conditions import IS_ALLY
 # requires Necromancer 10, Knight 10. The rest is narrative and can be adjusted as needed.
 # Known ability is "Bony Armor" which increases armor and constitution
 
-build_job("Death-Knight", [])
+build_job("Death-Knight", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

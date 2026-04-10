@@ -21,6 +21,7 @@ GROWL = {
                     )
                 ],
             ),
+        "scales_with_level": True,
     }
 
 build_shared_ability("shared.combat", GROWL)

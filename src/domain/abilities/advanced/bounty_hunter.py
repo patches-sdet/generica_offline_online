@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Mercenary 25, Scout 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Bounty-Hunter", [])
+build_job("Bounty-Hunter", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Knight 25, Scout 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Detective", [])
+build_job("Detective", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

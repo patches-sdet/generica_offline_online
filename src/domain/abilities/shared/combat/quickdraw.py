@@ -15,4 +15,4 @@ QUICKDRAW = {
     "scales_with_level": False,
 }
 
-build_shared_ability("shared.combat", QUICKDRAW)
+build_shared_ability("shared.combat", QUICKDRAW, source_type="adventure")

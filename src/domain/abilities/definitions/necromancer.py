@@ -28,5 +28,6 @@ build_job("Necromancer", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

@@ -114,8 +114,10 @@ class Character:
             return False
 
         max_attr = f"max_{pool}"
-        if hasattr(self, max_attr):
-            new_value = min(new_value, getattr(self, max_attr))
+        max_value = getattr(self, max_attr, None)
+
+        if max_value is not None and max_value > 0:
+            new_value = min(new_value, max_value)
 
         setattr(self, attr, new_value)
         return True
@@ -126,10 +128,10 @@ class Character:
     # PROGRESSION API
 
     def add_progression(self, ptype: str, name: str, level: int = 1) -> None:
-        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=level)
+        self.set_progression_level(ptype, name, level)
 
     def set_progression_level(self, ptype: str, name: str, level: int) -> None:
-        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=level)
+        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=max(1, level),)
 
     def get_progression(self, ptype: str, name: str) -> Optional[Progression]:
         return self.progressions.get((ptype, name))
@@ -139,10 +141,29 @@ class Character:
         return progression.level if progression else default
 
     def has_progression(self, ptype: str, name: str) -> bool:
-        return (ptype, name) in self.progressions
+        return self.get_progression_level(ptype, name, 0) > 0
 
     def get_progressions_by_type(self, ptype: str) -> list[Progression]:
         return [p for (kind, _), p in self.progressions.items() if kind == ptype]
+
+    # Level up
+
+    def increment_progression(self, ptype: str, name: str, amount: int = 1) -> None:
+        current = self.get_progression_level(ptype, name)
+        self.set_progression_level(ptype, name, current + amount)
+    
+    def get_progression_level_for_ability(self, ptype: str, ability_name: str, default: int = 0) -> int:
+        best = default
+
+        for (current_type, progression_name), progression in self.progressions.items():
+            if current_type != ptype:
+                continue
+
+            granted = get_progression_ability_names(current_type, progression_name)
+            if ability_name in granted:
+                best = max(best, progression.level)
+    
+        return best
 
     # Convenience wrappers
     def get_race_level(self, race_name: str, default: int = 0) -> int:

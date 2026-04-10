@@ -31,5 +31,6 @@ build_job("Tinker", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

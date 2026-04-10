@@ -11,13 +11,14 @@ def rebuild_attributes(character: Character, effects: list) -> None:
     """
     Rebuild only base/additive attributes from aggregated effects.
     """
-
     character.attributes = Attributes()
     character._attribute_sources.clear()
 
-    for stat, value in DEFAULT_STATS.items():
+    base_attributes = character._base_attributes or dict(DEFAULT_STATS)
+
+    for stat, value in base_attributes.items():
         character.set_stat(stat, value)
-        character._attribute_sources[stat]["base"] += value
+        character._attribute_sources[stat]["Base"] += value
 
     context = EffectContext(
         source=character,
@@ -27,5 +28,3 @@ def rebuild_attributes(character: Character, effects: list) -> None:
     for effect in effects:
         if isinstance(effect, ATTRIBUTE_EFFECT_TYPES):
             effect.apply(context)
-
-    character._base_attributes = character.attributes.to_dict()

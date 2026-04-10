@@ -14,7 +14,7 @@ from domain.content_registry import (
     get_adventure_job,
     get_profession_job,
 )
-from domain.race_resolution import MATERIAL_EFFECTS, get_race_display_name
+from domain.race_resolution import get_race_effects
 
 # Rolling
 
@@ -30,43 +30,6 @@ def roll_attributes() -> list[Effect]:
 
     return effects
 
-# Internal helpers
-
-def _initialize_runtime_state(character: Character) -> None:
-    if not hasattr(character, "states") or character.states is None:
-        character.states = {}
-
-    if not hasattr(character, "tags") or character.tags is None:
-        character.tags = set()
-
-    if not hasattr(character, "event_listeners") or character.event_listeners is None:
-        character.event_listeners = []
-
-    if not hasattr(character, "next_attack_modifiers") or character.next_attack_modifiers is None:
-        character.next_attack_modifiers = []
-
-    if not hasattr(character, "extra_attacks"):
-        character.extra_attacks = 0
-
-    if not hasattr(character, "bonus_damage"):
-        character.bonus_damage = 0
-
-    if not hasattr(character, "damage_conversion"):
-        character.damage_conversion = None
-
-    if not hasattr(character, "roll_modifiers") or character.roll_modifiers is None:
-        character.roll_modifiers = []
-
-    if not hasattr(character, "inventory") or character.inventory is None:
-        character.inventory = []
-
-    if not hasattr(character, "equipment") or character.equipment is None:
-        character.equipment = []
-
-    if not hasattr(character, "active_effects") or character.active_effects is None:
-        character.active_effects = []
-
-
 def _initialize_current_resources_to_max(character: Character) -> None:
     pools = calculate_pools(character)
 
@@ -76,7 +39,6 @@ def _initialize_current_resources_to_max(character: Character) -> None:
     character.current_moxie = pools.moxie[1]
     character.current_fortune = pools.fortune[1]
 
-
 def _register_progressions(
     character: Character,
     *,
@@ -85,7 +47,7 @@ def _register_progressions(
     profession_job_names: list[str],
 ) -> None:
     for base_name in race_bases:
-        character.progressions[("race", base_name)] = Progression(
+        character.add_progression("race", base_name, 1), Progression(
             name=base_name,
             type="race",
             level=1,
@@ -96,18 +58,58 @@ def _register_progressions(
         character.add_progression("race", template.name, 1)
 
     for name in adventure_job_names:
-        character.progressions[("adventure", name)] = Progression(
+        character.add_progression("adventure", name, 1), Progression(
             name=name,
             type="adventure",
             level=1,
         )
 
     for name in profession_job_names:
-        character.progressions[("profession", name)] = Progression(
+        character.add_progression("profession", name, 1), Progression(
             name=name,
             type="profession",
             level=1,
         )
+
+def _build_creation_base_attributes(
+    character: Character,
+    roll_effects: list[Effect],
+) -> dict[str, int]:
+    """
+    Creation-time immutable base:
+      DEFAULT_STATS
+      + rolled attribute variance
+      + racial/template/material acquire effects at level 1
+    """
+    base = dict(DEFAULT_STATS)
+
+    # Apply the 2d10 roll layer
+    for effect in roll_effects:
+        if isinstance(effect, StatIncrease):
+            base[effect.stat] += effect.amount
+
+    # Apply racial/template/material level-1 effects.
+    for effect in get_race_effects(character):
+        if isinstance(effect, StatIncrease):
+            base[effect.stat] += effect.amount
+
+    return base
+
+def _seed_character_base_state(
+    character: Character,
+    roll_effects: list[Effect],
+) -> None:
+    """
+    Persist the creation-time base so recalculate() can rebuild from it later.
+    """
+    character._base_attributes = _build_creation_base_attributes(character, roll_effects)
+
+    # NOTE FOR LATER DEV:
+    # character.attribute_effects used to hold roll effects for older rebuild logic.
+    # With progressions + _base_attributes now canonical, this field should be
+    # considered transitional / removable once the rest of the pipeline no longer
+    # references it anywhere.
+    character.attribute_effects = []
 
 # Public API
 
@@ -123,7 +125,7 @@ def create_character(
     if not base_race_names:
         raise ValueError("Character must have at least one base race")
 
-    base_races = [get_base_race(name) for name in base_race_names]
+    base_races = [get_base_race(race_name) for race_name in base_race_names]
     jobs = [get_adventure_job(job_name) for job_name in adventure_job_names]
     professions = [get_profession_job(job_name) for job_name in profession_job_names]
 
@@ -155,34 +157,23 @@ def create_character(
     if len(professions) > max_profession_jobs:
         raise ValueError(f"Race allows only {max_profession_jobs} profession job(s)")
 
-    attribute_effects = roll_attributes()
-
-    # Compatibility fields retained only where useful
-    primary_base = base_races[0]
+    roll_effects = roll_attributes()
 
     character = Character(
-    name=name,
-    race_bases=[base.name for base in base_races],
-    race_template=race_template.name if race_template else None,
-    race_material=material,
-)
-
-    character.attribute_effects = attribute_effects
-
-    _initialize_runtime_state(character)
-
-    # Also mirror into states for compatibility
-    if character.race_template:
-        character.states["race_template"] = character.race_template
-    if character.race_material:
-        character.states["race_material"] = character.race_material
+        name=name,
+        race_bases=[base.name for base in base_races],
+        race_template=race_template.name if race_template else None,
+        race_material=material,
+    )
 
     _register_progressions(
         character,
         race_bases=character.race_bases,
         adventure_job_names=[job.name for job in jobs],
-        profession_job_names=[prof.name for prof in professions],
+        profession_job_names=[profession.name for profession in professions],
     )
+
+    _seed_character_base_state(character, roll_effects)
 
     recalculate(character)
     _initialize_current_resources_to_max(character)

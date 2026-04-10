@@ -4,5 +4,6 @@ build_job("Oracle", [
 
     # Lesser Healing
     {"grant": "Lesser Healing", "required_level": 1},
-
-])
+],
+source_type="adventure"
+)

@@ -150,4 +150,6 @@ build_job("Duelist", [
     "target": "enemy",
     "type": "skill",
     }
-])
+],
+source_type="adventure"
+)

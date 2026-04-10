@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Bard 25, Model 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Courtier", [])
+build_job("Courtier", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

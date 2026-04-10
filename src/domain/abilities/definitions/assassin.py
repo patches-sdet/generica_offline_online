@@ -94,5 +94,6 @@ build_job("Assassin", [
     "target": "self",
     "type": "passive",
     },
-]
+],
+source_type="adventure"
 )

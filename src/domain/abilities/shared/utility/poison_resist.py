@@ -17,4 +17,4 @@ POISON_RESISTANCE = {
     "scales_with_level": True,
 }
 
-build_shared_ability("shared.utility", POISON_RESISTANCE)
+build_shared_ability("shared.utility", POISON_RESISTANCE, source_type="shared")

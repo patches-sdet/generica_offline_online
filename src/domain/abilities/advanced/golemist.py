@@ -6,7 +6,10 @@ from domain.conditions import IS_ALLY
 # requires Enchanter 10, Animator 10. The rest is narrative and can be adjusted as needed.
 # Known abilities include "Animate Golem" (Infuses a golem body with life), "Mend Golem" (A heal that only targets golems, but heals for ~4x normal Mend and costs 4x the normal Mend), "Greater Golem Upgrade" (Infuses a golem with greater power, including mental attributes)
 
-build_job("Golemist", [])
+build_job("Golemist", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

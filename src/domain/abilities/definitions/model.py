@@ -19,5 +19,6 @@ build_job("Model", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

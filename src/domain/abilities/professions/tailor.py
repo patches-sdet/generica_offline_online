@@ -31,5 +31,6 @@ build_job("Tailor", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

@@ -1,6 +1,6 @@
 from domain.abilities.factory import make_ability
 from domain.effects.base import EffectContext, Effect
-from domain.content_registry import register_progression_ability_grant
+from domain.content_registry import register_ability, register_progression_ability_grant
 
 def _normalize_effect_result(result, source_name: str) -> list[Effect]:
     if result is None:
@@ -26,11 +26,14 @@ def _normalize_effect_result(result, source_name: str) -> list[Effect]:
 def build_shared_ability(namespace: str, definition: dict, source_type: str = "shared"):
     definition = dict(definition)
     definition.setdefault("unlock", lambda character: True)
-    return build_ability(
+
+    ability = build_ability(
         definition,
         owner_name=namespace,
         source_type=source_type,
     )
+
+    return ability
 
 def build_ability(definition: dict, owner_name: str, source_type: str = "adventure"):
     name = definition["name"]
@@ -52,13 +55,13 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
         description=definition.get("description", ""),
         target_type=definition.get("target", "self"),
         scales_with_level=definition.get("scales_with_level", False),
-)
+    )
 
     if kind == "passive":
         def make_effect_generator(fn, ability_name=name):
             def effect_generator(character):
                 ctx = EffectContext(source=character, targets=[character])
-                result = fn(ctx)
+                result = fn(ctx) if callable(fn) else fn
                 return _normalize_effect_result(
                     result,
                     f"{owner_name}.{ability_name}.effect_generator",
@@ -77,7 +80,7 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
         def make_execute(fn, ability_name=name):
             def execute(caster, targets):
                 ctx = EffectContext(source=caster, targets=targets)
-                result = fn(ctx)
+                result = fn(ctx) if callable(fn) else fn
                 return _normalize_effect_result(
                     result,
                     f"{owner_name}.{ability_name}.execute",
@@ -97,10 +100,8 @@ def build_ability(definition: dict, owner_name: str, source_type: str = "adventu
         raise ValueError(f"Invalid ability type '{kind}' for {owner_name}.{name}")
 
 
-def build_job(job_name: str, definitions: list) -> None:
+def build_job(job_name: str, definitions: list, *, source_type: str) -> None:
     for ability_def in definitions:
-        source_type = ability_def.get("source_type", "adventure")
-
         if "grant" in ability_def:
             register_progression_ability_grant(
                 source_type,

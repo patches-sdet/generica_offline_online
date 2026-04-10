@@ -60,7 +60,7 @@ build_job("Brewer", [
     # Level 5
     {
         "name": "Sommelier",
-        "required_level": "5",
+        "required_level": 5,
         "type": "skill",
         "cost": 10,
         "cost_pool": "sanity",
@@ -127,4 +127,6 @@ build_job("Brewer", [
         "is_skill": True,
         "scales_with_level": False,
     }
-])
+],
+source_type="profession",
+)

@@ -119,4 +119,6 @@ build_job("Carpenter", [
         "scales_with_level": True,
         "type": "skill",
         }
-])
+],
+source_type="profession",
+)

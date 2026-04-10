@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Gambler 25, Archer 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Gambler", [])
+build_job("Gambler", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

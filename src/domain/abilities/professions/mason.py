@@ -31,5 +31,6 @@ build_job("Jeweler", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

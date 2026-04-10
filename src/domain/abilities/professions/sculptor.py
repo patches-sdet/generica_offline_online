@@ -31,5 +31,6 @@ build_job("Sculptor", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

@@ -34,5 +34,6 @@ build_job("Wizard", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

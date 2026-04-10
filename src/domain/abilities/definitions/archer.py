@@ -89,5 +89,6 @@ build_job("Archer", [
         "target": "self",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

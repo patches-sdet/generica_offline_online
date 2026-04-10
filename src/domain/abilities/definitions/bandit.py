@@ -153,5 +153,6 @@ build_job("Bandit", [
     "target": "enemy",
     "type": "skill",
 },
-
-])
+],
+source_type="adventure"
+)

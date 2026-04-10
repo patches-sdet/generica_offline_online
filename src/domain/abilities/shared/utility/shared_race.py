@@ -201,4 +201,4 @@ SHARED_RACIAL_ABILITIES = [
 ]
 
 for definition in SHARED_RACIAL_ABILITIES:
-    build_shared_ability("shared.utility", definition)
+    build_shared_ability("shared.utility", definition, source_type="race")

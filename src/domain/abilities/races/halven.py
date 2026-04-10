@@ -29,4 +29,6 @@ build_job("Halven", [
         ],
     "scales_with_level": False,
     },
-])
+],
+source_type="race",
+)

@@ -23,4 +23,6 @@ build_job("Dwarf", [
     },
 
     {"grant": "Sturdy", "required_level": 1},
-])
+],
+source_type="race",
+)

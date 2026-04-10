@@ -19,4 +19,4 @@ DISPEL_MAGIC = {
     "scales_with_level": True,
 }
 
-build_shared_ability("shared.utility", DISPEL_MAGIC)
+build_shared_ability("shared.utility", DISPEL_MAGIC, source_type="adventure")

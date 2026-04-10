@@ -28,4 +28,6 @@ build_job("Orc", [
         "duration": "1 turn per level",
         "scales_with_level": True,
     },
-])
+],
+source_type="race",
+)

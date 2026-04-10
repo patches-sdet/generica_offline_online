@@ -34,5 +34,6 @@ build_job("Ruler", [
         "target": "allies",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)

@@ -30,4 +30,6 @@ build_job("Human", [
             )
         ),
     }
-])
+],
+source_type="race",
+)

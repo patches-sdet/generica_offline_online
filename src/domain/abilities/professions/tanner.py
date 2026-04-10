@@ -31,5 +31,6 @@ build_job("Tanner", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

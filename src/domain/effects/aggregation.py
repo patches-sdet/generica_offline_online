@@ -31,7 +31,19 @@ def collect_effects(character: "Character") -> list[Effect]:
 
     # Racial effects separated due to complexity
 
-    _extend_flat_effects(effects, get_race_effects(character), "get_race_effects")
+    for (ptype, name), progression in character.progressions.items():
+        if ptype != "race":
+            continue
+
+        level = progression.level
+        if level <= 1:
+            continue
+
+        source = get_progression_source(ptype, name)
+
+        if hasattr(source, "effects_per_level"):
+            per_level = list(source.effects_per_level) * (level - 1)
+            _extend_flat_effects(effects, per_level, f"{ptype}:{name}.effects_per_level")
 
     # Progression effects
 
@@ -44,11 +56,6 @@ def collect_effects(character: "Character") -> list[Effect]:
 
         source = get_progression_source(ptype, name)
 
-        # Acquire effects are applied once at level 1
-        acquire_effects = list(getattr(source, "effects_on_acquire", ()) or ())
-        _extend_flat_effects(effects, acquire_effects, f"{ptype}:{name}.effects_on_acquire")
-
-        # Level-up Effects
         if hasattr(source, "get_effects"):
             generated = source.get_effects(level)
             _extend_flat_effects(effects, generated, f"{ptype}:{name}.get_effects")

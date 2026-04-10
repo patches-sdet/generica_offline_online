@@ -55,7 +55,7 @@ build_job("Carpenter", [
     # Level 5
     {
         "name": "Timber",
-        "required_level": "5",
+        "required_level": 5,
         "type": "skill",
         "cost": 20,
         "cost_pool": "stamina",
@@ -105,4 +105,6 @@ build_job("Carpenter", [
         "is_skill": True,
         "scales_with_level": True,
     }
-])
+],
+source_type="profession",
+)

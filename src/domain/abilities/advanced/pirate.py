@@ -5,7 +5,10 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Bandit 25, Mercenary 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Pirate", [])
+build_job("Pirate", [],
+source_type="advanced"
+)
+
 #     # -------------------------
 #     # Passive
 #     # -------------------------

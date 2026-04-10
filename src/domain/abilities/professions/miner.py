@@ -31,5 +31,6 @@ build_job("Miner", [
                 ],
             ),
     },
-
-])
+],
+source_type="profession",
+)

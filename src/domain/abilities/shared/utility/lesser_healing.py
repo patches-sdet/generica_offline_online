@@ -32,4 +32,4 @@ LESSER_HEALING = {
         "type": "skill",
     }
 
-build_shared_ability("shared.utility", LESSER_HEALING)
+build_shared_ability("shared.utility", LESSER_HEALING, source_type="adventure")

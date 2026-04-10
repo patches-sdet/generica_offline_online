@@ -21,5 +21,6 @@ build_job("Knight", [
         "target": "allies",
         "type": "passive",
     },
-
-])
+],
+source_type="adventure"
+)

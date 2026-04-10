@@ -134,5 +134,6 @@ build_job("Elementalist", [
         "type": "skill",
 
     }
-
-])
+],
+source_type="adventure"
+)

@@ -152,7 +152,9 @@ def print_attribute_block(character: Character):
         parts = [
             f"{amount:+d} {format_source_name(source)}"
             for source, amount in ordered_sources
-            if amount != 0 and source not in HIDDEN_SOURCES
+            if amount != 0
+            and source not in HIDDEN_SOURCES
+            and str(source).lower() != "base"
         ]
 
         if parts:
@@ -299,9 +301,6 @@ def print_abilities(character: Character):
             print(f"    {description}\n")
 
 def debug_print_character(character: Character):
-    print(character.attributes.to_dict())
-    print(dict(character._base_attributes))
-    print({k: dict(v) for k, v in character._attribute_sources.items()})
     print("\n==============================")
     print("      CHARACTER SHEET")
     print("==============================")

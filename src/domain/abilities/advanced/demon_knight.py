@@ -5,7 +5,9 @@ from domain.conditions import IS_ALLY
 # Narrative Unlock conditions: 
 # requires Cultist 25, Knight 25. The rest is narrative and can be adjusted as needed.
 
-build_job("Demon-Knight", [])
+build_job("Demon-Knight", [],
+source_type="advanced"
+)
 
 #     # -------------------------
 #     # Passive

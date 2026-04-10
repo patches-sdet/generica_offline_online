@@ -134,5 +134,6 @@ build_job("Cultist", [
         "target": "enemy",
         "type": "skill",
     },
-
-])
+],
+source_type="adventure"
+)
