@@ -1,6 +1,6 @@
 [project]
-name = "generica"
-version = "0.5.1"
+name = "generica_offline_online"
+version = "0.5.5"
 
 [project.scripts]
 rpg-create = "src.cli.run"

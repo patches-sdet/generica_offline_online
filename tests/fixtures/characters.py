@@ -1,21 +1,23 @@
-from domain.race import resolve_race
-from domain.adventure import resolve_job
-from domain.profession import resolve_profession
+from __future__ import annotations
 
-def make_base_character():
-    return create_character(
-            name="Test", race=resolve_race("Human"), 
-            job=resolve_job("Archer"), 
-            profession=resolve_profession("Farmer")
-            )
+from helpers.builders import make_recalculated_character
 
 
-def make_golem_character():
-    return create_character(
-        name=("Test"),
-        race=resolve_race("toy Golem"),
-        job=resolve_job("aNimator"),
-        profession=resolve_profession("Farmer"),
-        base_race=resolve_race("Human"),
-        material="metal",
+def bear_berserker():
+    return make_recalculated_character(
+        name="Bear Berserker",
+        progressions=[
+            ("race", "Bear", 1),
+            ("adventure", "Berserker", 1),
+        ],
+    )
+
+
+def cleric_oracle():
+    return make_recalculated_character(
+        name="Cleric Oracle",
+        progressions=[
+            ("adventure", "Cleric", 1),
+            ("adventure", "Oracle", 1),
+        ],
     )
