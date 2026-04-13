@@ -1,5 +1,7 @@
 from domain.calculations import recalculate
 
+def increase_skill_from_runtime_use(character, skill_name: str, source: str = "runtime:rank_up", ranks: int = 1) -> None:
+    ...
 
 def level_up(character, level_attr: str):
     """

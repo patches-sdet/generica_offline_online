@@ -1,9 +1,8 @@
 import random
-
 from domain.attributes import DEFAULT_STATS
 from domain.character import Character
 from domain.progression import Progression
-
+from domain.skill_ownership import set_skill_levels
 from domain.calculations import calculate_pools, recalculate
 from domain.effects.base import Effect
 from domain.effects.stat_effects import StatIncrease
@@ -15,6 +14,7 @@ from domain.content_registry import (
     get_profession_job,
 )
 from domain.race_resolution import get_race_effects
+from domain.skill_ownership import set_skill_levels
 
 # Rolling
 
@@ -110,6 +110,35 @@ def _seed_character_base_state(
     # considered transitional / removable once the rest of the pipeline no longer
     # references it anywhere.
     character.attribute_effects = []
+
+def apply_generic_skill_allocation(character, allocations: dict[str, int]) -> None:
+        """
+        allocations example:
+        {
+            "Riding": 10,
+            "Sword": 15,
+            "Awareness": 5,
+        }
+        """
+        for skill_name, levels in allocations.items():
+            if levels < 0:
+                raise ValueError(f"Generic skill levels cannot be negative: {skill_name}={levels}")
+            set_skill_levels(character, skill_name, source="generic_points", levels=levels)
+
+
+def apply_job_skill_allocation(character, allocations: dict[str, dict[str, int]]) -> None:
+    """
+    allocations example:
+    {
+        "Berserker": {"Growl": 10, "Toughness": 5},
+        "Cleric": {"Faith": 10, "Lesser Healing": 5},
+    }
+    """
+    for job_name, skill_map in allocations.items():
+        for skill_name, level in skill_map.items():
+            if level < 0:
+                raise ValueError(f"Job skill levels cannot be negative: {job_name}.{skill_name}={level}")
+            set_skill_levels(character, skill_name, source=f"job_points:{job_name}", levels=level)
 
 # Public API
 

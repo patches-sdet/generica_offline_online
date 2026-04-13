@@ -22,10 +22,9 @@ def recalculate(character):
 
     # RESET STATE
     reset_derived(character)
-    reset_runtime_state(character)
-    rebuild_abilities(character)
     rebuild_skills(character)
-    effects = collect_effects(character)  
+    rebuild_abilities(character)
+    effects = collect_effects(character)
     rebuild_attributes(character, effects)
     apply_derived_effects(character, effects)
     calculate_pools(character)

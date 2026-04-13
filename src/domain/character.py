@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
+from email.policy import default
 from typing import Any, DefaultDict, Optional, TYPE_CHECKING
 from collections import defaultdict
 from domain.attributes import Attributes, Defenses
 from domain.progression import Progression
 from domain.effects.base import Effect
 from domain.content_registry import get_progression_ability_names
+from domain.skill_ownership import get_total_skill_levels
 
 if TYPE_CHECKING:
     from domain.abilities.factory import Ability
@@ -72,7 +74,8 @@ class Character:
 
     # SKILLS & ABILITIES
 
-    skills: dict[str, int] = field(default_factory=dict)
+    skill_sources: dict[str, dict[str, int]] = field(default_factory=dict)
+    skill_levels: dict[str, int] = field(default_factory=dict)
 
     # Transitional: still useful while ability rebuild/runtime settles
     abilities: list["Ability"] = field(default_factory=list)
@@ -182,7 +185,13 @@ class Character:
         return self.has_progression("adventure", job_name)
 
     def get_skill(self, name: str) -> int:
-        return self.skills.get(name, 0)
+        return sum(self.skill_sources.get(name, {}).values())
+    
+    def get_skill_level(self, skill_name: str, default: int = 0) -> int:
+        return self.skill_levels.get(skill_name, default)
+
+    def has_skill(self, skill_name: str) -> bool:
+        return get_total_skill_levels(self, skill_name) > 0
 
     # SERIALIZATION
 
@@ -197,7 +206,7 @@ class Character:
             "race_template": self.race_template,
             "race_material": self.race_material,
             "attributes": self.attributes.to_dict(),
-            "skills": self.skills,
+            "skills": self.skill_sources,            
             "resources": {
                 "hp": self.current_hp,
                 "sanity": self.current_sanity,

@@ -1,11 +1,19 @@
+from __future__ import annotations
 from domain.effects.base import EffectContext
 from domain.effects import SpendResource
 from domain.calculations import recalculate
 from domain.content_registry import get_ability
-
 from application.targeting import resolve_targets
 from application.events import emit_event
-
+from domain.content_registry import (
+    get_ability,
+    get_progression_ability_grants,
+)
+from domain.skill_ownership import (
+    add_skill_levels,
+    has_skill,
+    rebuild_skill_level_summary,
+)
 
 def prompt_for_variable_cost(ability) -> int:
     pool_name = ability.cost_pool or "fortune"
@@ -19,6 +27,33 @@ def prompt_for_variable_cost(ability) -> int:
 
         return int(raw)
 
+def award_generic_skill(character, skill_name: str, source: str = "runtime:first_use", levels: int = 1) -> bool:
+    """
+    Award a generic skill the first time it is successfully used.
+    Returns True if the skill was newly awarded.
+    """
+    if character.has_skill(skill_name):
+        return False
+
+    add_skill_levels(character, skill_name, source=source, levels=levels)
+    recalculate(character)
+    return True
+
+# DEBUG VERSION with print statements to trace the issue in test_skill_recalc_survival.py
+# def award_generic_skill(character, skill_name: str, source: str = "runtime:first_use", levels: int = 1) -> bool:
+#     print("award start", skill_name, character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+
+#     if character.has_skill(skill_name):
+#         print("already has skill -> False")
+#         return False
+
+#     add_skill_levels(character, skill_name, source, levels)
+#     print("after add", character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+
+#     recalculate(character)
+#     print("after recalc", character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+
+#     return True
 
 def prompt_for_context_options(ability) -> dict:
     metadata = {}
@@ -27,7 +62,6 @@ def prompt_for_context_options(ability) -> dict:
         metadata["chosen_stat"] = input("Choose a stat: ").strip().lower()
 
     return metadata
-
 
 def apply_effects(effects, context: EffectContext):
     if not effects:
@@ -52,7 +86,6 @@ def apply_effects(effects, context: EffectContext):
         emit_event("after_effect", context, effect=effect)
 
     emit_event("effects_applied", context)
-
 
 def execute_ability(
     character,
@@ -142,3 +175,71 @@ def execute_ability(
         "context": context,
         "effects_applied": effects,
     }
+
+def rebuild_abilities(character) -> None:
+    """
+    Rebuild final abilities and ability_levels from canonical character inputs.
+
+    Inputs:
+    - character.progressions
+    - character.skill_sources
+
+    Outputs:
+    - character.abilities
+    - character.ability_levels
+    - character.skill_levels (derived summary, optional)
+    """
+
+    character.abilities = []
+    character.ability_levels = {}
+    character.skill_levels = {}
+
+    progression_contributions: dict[str, int] = {}
+    owned_skill_contributions: dict[str, int] = rebuild_skill_level_summary(character)
+
+    # 1. Collect progression-granted abilities
+    progression_counts: dict[str, int] = {}
+
+    for (ptype, progression_name), progression in character.progressions.items():
+        grants = get_progression_ability_grants(ptype, progression_name)
+
+        for ability_name, required_level in grants:
+            if progression.level >= required_level:
+                progression_counts[ability_name] = progression_counts.get(ability_name, 0) + 1
+
+    # Existing duplicate stacking rule for progression grants
+    for ability_name, count in progression_counts.items():
+        if count <= 0:
+            continue
+        progression_contributions[ability_name] = 1 + (count - 1) * 5
+
+    # 2. Merge progression-granted abilities with character-owned levels
+    all_ability_names = set(progression_contributions) | set(owned_skill_contributions)
+
+    final_levels: dict[str, int] = {}
+
+    for ability_name in all_ability_names:
+        progression_level = progression_contributions.get(ability_name, 0)
+        owned_level = owned_skill_contributions.get(ability_name, 0)
+
+        # Transitional merge rule:
+        # take the larger of the two until full rules are finalized
+        final_level = max(progression_level, owned_level)
+
+        if final_level > 0:
+            final_levels[ability_name] = final_level
+
+    # 3. Resolve canonical Ability objects
+    resolved_abilities = []
+    for ability_name, level in final_levels.items():
+        ability = get_ability(ability_name)
+        if ability is None:
+            raise ValueError(f"Ability {ability_name!r} is not registered but is owned by character")
+        resolved_abilities.append(ability)
+
+    # Stable ordering helps deterministic tests and output
+    resolved_abilities.sort(key=lambda a: a.name)
+
+    character.abilities = resolved_abilities
+    character.ability_levels = final_levels
+    character.skill_levels = owned_skill_contributions

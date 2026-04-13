@@ -1,10 +1,9 @@
-def rebuild_skills(character, effects=None) -> None:
-    skills: dict[str, int] = {}
+from domain.skill_ownership import rebuild_skill_level_summary
 
-    for ability in getattr(character, "abilities", []):
-        if not ability.is_skill:
-            continue
 
-        skills[ability.name] = character.ability_levels.get(ability.name, 1)
-
-    character.skills = skills
+def rebuild_skills(character) -> None:
+    """
+    Rebuild final character skill_levels from canonical skill_sources.
+    """
+    character.skill_levels.clear()
+    character.skill_levels = rebuild_skill_level_summary(character)

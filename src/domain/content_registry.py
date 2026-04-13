@@ -242,6 +242,7 @@ def initialize_ability_modules(force: bool = False) -> int:
     from domain.abilities.shared import combat as shared_combat
     from domain.abilities.shared import stealth as shared_stealth
     from domain.abilities.shared import utility as shared_utility
+    from domain.abilities.shared import generic as shared_generic
 
     from domain.abilities import advanced as ability_advanced
     from domain.abilities import definitions as ability_definitions
@@ -251,7 +252,7 @@ def initialize_ability_modules(force: bool = False) -> int:
     loaded = 0
 
     # shared first
-    for group in (shared_combat, shared_stealth, shared_utility):
+    for group in (shared_combat, shared_stealth, shared_utility, shared_generic):
         loaded += _import_modules_from_package(group)
 
     # progression content second

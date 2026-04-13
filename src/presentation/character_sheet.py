@@ -3,7 +3,6 @@ from domain.character import Character
 from domain.calculations import calculate_pools, calculate_defenses
 from domain.content_registry import get_ability
 from domain.race_resolution import get_race_display_name
-from domain import character
 
 POOL_COLORS = {
     "hp": "\033[91m",
@@ -206,9 +205,7 @@ def print_tags(character: Character):
 
 
 def print_jobs(character: Character):
-    print("\n==============================")
-    print("         JOBS")
-    print("==============================")
+    divider("Jobs")
 
     adventure_entries = get_progression_entries(character, "adventure")
     profession_entries = get_progression_entries(character, "profession")
@@ -248,20 +245,33 @@ def print_race(character: Character):
 def print_skills(character: Character):
     divider("Skills")
 
-    skills = getattr(character, "skills", {}) or {}
+    generic_skills = getattr(character, "skill_levels", {}) or {}
 
-    if not skills:
+    ability_skills = {
+        ability.name: getattr(character, "ability_levels", {}).get(ability.name, 1)
+        for ability in getattr(character, "abilities", [])
+        if getattr(ability, "is_skill", False)
+    }
+
+    if not generic_skills and not ability_skills:
         print("None")
         return
 
-    for skill, level in sorted(skills.items()):
-        print(f"{skill}: {level}")
+    if generic_skills:
+        print("Generic Skills:")
+        for skill, level in sorted(generic_skills.items()):
+            print(f"{skill}: {level}")
+
+    if ability_skills:
+        if generic_skills:
+            print()
+        print("Ability Skills:")
+        for skill, level in sorted(ability_skills.items()):
+            print(f"{skill}: {level}")
 
 
 def print_abilities(character: Character):
-    print("\n==============================")
-    print("        ABILITIES")
-    print("==============================")
+    divider("Abilities")
 
     abilities = get_ability_objects(character)
 
@@ -301,9 +311,7 @@ def print_abilities(character: Character):
             print(f"    {description}\n")
 
 def debug_print_character(character: Character):
-    print("\n==============================")
-    print("      CHARACTER SHEET")
-    print("==============================")
+    divider("Character Sheet")
 
     print(f"Name: {character.name}")
 

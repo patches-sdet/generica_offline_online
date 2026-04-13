@@ -13,7 +13,7 @@ build_job("Frosted Giant", [
                 event_name="attribute_raised",
                 effect=SpendGrindPointEffect(1),
                 condition=lambda ctx: (
-                    ctx.action_type is "raise_attribute_with_grind"
+                    ctx.action_type == "raise_attribute_with_grind"
                     and ctx.attribute_name in {"intelligence", "wisdom", "perception", "willpower"}
                     ),
                 ),
