@@ -7,7 +7,7 @@ build_job("Bear", [
     {"grant": "Forage", "required_level": 1},
     {"grant": "Scents and Sensibility", "required_level": 1},
     {"grant": "Toughness", "required_level": 1},
-    {"grant": "Growl", "required_level": 1},
+    {"grant": "Growl", "required_level": 5},
 ],
 source_type="race",
 )

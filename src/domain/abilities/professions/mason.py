@@ -8,7 +8,7 @@ STONE_DIFFICULTIES = {
     "rare": 300,
 }
 
-build_job("Jeweler", [
+build_job("Mason", [
 
     # Stonecutting
     {

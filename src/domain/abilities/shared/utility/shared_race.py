@@ -70,6 +70,7 @@ DARKSPAWN= {
             ),
             condition=lambda ctx, target: ctx.source.is_in_darkness(),
         ),
+    "is_skill": True,
     "scales_with_level": True,
     "type": "skill",
 }
@@ -120,6 +121,7 @@ GOLEM_BODY = {
             lambda ctx: ctx.modify_light_and_shadow_immunity(True),
             lambda ctx: ctx.modify_sleep_requirements(increase=True),
         ]),
+    "is_skill": True,
     "scales_with_level": True,
 }
 
@@ -145,6 +147,7 @@ MAGIC_RESISTANCE = {
             stats={"willpower": 1},
             condition=lambda ctx: ctx.action_type == "targeted_by_non_beneficial_magic",
         ),
+    "is_skill": True,
     "scales_with_level": True,
 }
 
@@ -165,6 +168,7 @@ SCENTS_AND_SENSIBILITY = {
             stats={"perception": 1},
             condition=lambda ctx: ctx.action_type == "use_scent",
         ),
+        "is_skill": True,
     "scales_with_level": True,
 }
 

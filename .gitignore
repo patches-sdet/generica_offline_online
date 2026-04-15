@@ -8,3 +8,4 @@ __pycache__/
 .idea/
 *.old
 check_unbalanced.py
+*_population_audit.md

@@ -9,13 +9,19 @@ FOOD_DIFFICULTIES = DifficultyTable({
     "rare": 300,
 })
 
+TARGET_FOOD_AGE = DifficultyTable({
+    "recently gone bad": 120,
+    "week to a month old": 180,
+    "older up to one year old": 250,
+})
+
 FOOD_COSTS = {
     "common": 1,
     "uncommon": 10,
     "rare": 30,
 }
 
-build_job("Carpenter", [
+build_job("Cook", [
 
     # Level 1
     {
@@ -105,12 +111,12 @@ build_job("Carpenter", [
         "cost": 50,
         "cost_pool": "fortune",
         "description": "You can create a 'doggy bag' from a meal you or an ally has just finished. You have a number of hours to eat this meal equal to your Cook level.",
-        "duration": lambda ctx: f"{ctx.source.get_progression_level("Professions", "Cook")} hours",
+        "duration": lambda ctx: f"{ctx.source.get_progression_level('Professions', 'Cook')} hours",
         "effects": create_item(
                     factory_fn=lambda item_ctx, target: create_item(
                         caster=item_ctx.source,
                         target=target,
-                        product_type=item_ctx.require_option(CONTEXT_OPTIONS.TARGET_WOOD_TYPE),
+                        product_type=item_ctx.require_option(CONTEXT_OPTIONS.TARGET_FOOD_TYPE),
                         ),
                     ),
         "is_passive": False,

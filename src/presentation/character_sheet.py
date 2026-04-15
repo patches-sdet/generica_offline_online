@@ -5,11 +5,11 @@ from domain.content_registry import get_ability
 from domain.race_resolution import get_race_display_name
 
 POOL_COLORS = {
-    "hp": "\033[91m",
-    "sanity": "\033[94m",
-    "stamina": "\033[92m",
-    "moxie": "\033[95m",
-    "fortune": "\033[93m",
+    "hp": "\033[1;91m",       # Red
+    "sanity": "\033[1;94m",   # Blue
+    "stamina": "\033[1;93m",  # Yellow
+    "moxie": "\033[1;92m",    # Green
+    "fortune": "\033[1;97m",  # White
 }
 
 RESET_COLOR = "\033[0m"

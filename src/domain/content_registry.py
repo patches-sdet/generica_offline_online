@@ -12,7 +12,7 @@ from domain.advanced import AdvancedJob, ADVANCED_JOB_DEFINITIONS
 from domain.abilities.factory import Ability
 
 # CANONICAL CONTENT REGISTRIES
-
+AbilityGrant = tuple[str, int]
 _BASE_RACE_REGISTRY: dict[str, BaseRace] = {}
 _RACE_TEMPLATE_REGISTRY: dict[str, RaceTemplate] = {}
 _ADVENTURE_JOB_REGISTRY: dict[str, AdventureJob] = {}
@@ -21,7 +21,7 @@ _ADVANCED_JOB_REGISTRY: dict[str, AdvancedJob] = {}
 _ABILITY_REGISTRY: dict[str, Ability] = {}
 
 # progression key: (ptype, progression_name)
-_PROGRESSION_ABILITY_GRANTS: dict[tuple[str, str], list[tuple[str, int]]] = {}
+_PROGRESSION_ABILITY_GRANTS: dict[tuple[str, str], list[AbilityGrant]] = {}
 
 # guard to avoid repeated import-discovery work
 _ABILITY_MODULES_INITIALIZED = False
@@ -54,25 +54,20 @@ def get_base_race(name: str) -> BaseRace:
     except KeyError as exc:
         raise ValueError(f"Base race '{name}' not registered") from exc
 
-
 def get_race_template(name: str) -> RaceTemplate:
     try:
         return _RACE_TEMPLATE_REGISTRY[name]
     except KeyError as exc:
         raise ValueError(f"Race template '{name}' not registered") from exc
 
-
 def has_base_race(name: str) -> bool:
     return name in _BASE_RACE_REGISTRY
-
 
 def has_race_template(name: str) -> bool:
     return name in _RACE_TEMPLATE_REGISTRY
 
-
 def get_all_base_races() -> list[BaseRace]:
     return list(_BASE_RACE_REGISTRY.values())
-
 
 def get_all_race_templates() -> list[RaceTemplate]:
     return list(_RACE_TEMPLATE_REGISTRY.values())
@@ -84,18 +79,15 @@ def register_adventure_job(job: AdventureJob) -> None:
         raise ValueError(f"Adventure job already registered: {job.name}")
     _ADVENTURE_JOB_REGISTRY[job.name] = job
 
-
 def register_profession_job(job: ProfessionJob) -> None:
     if job.name in _PROFESSION_JOB_REGISTRY:
         raise ValueError(f"Profession job already registered: {job.name}")
     _PROFESSION_JOB_REGISTRY[job.name] = job
 
-
 def register_advanced_job(job: AdvancedJob) -> None:
     if job.name in _ADVANCED_JOB_REGISTRY:
         raise ValueError(f"Advanced job already registered: {job.name}")
     _ADVANCED_JOB_REGISTRY[job.name] = job
-
 
 def get_adventure_job(name: str) -> AdventureJob:
     try:
@@ -103,13 +95,11 @@ def get_adventure_job(name: str) -> AdventureJob:
     except KeyError as exc:
         raise ValueError(f"Adventure job '{name}' not registered") from exc
 
-
 def get_profession_job(name: str) -> ProfessionJob:
     try:
         return _PROFESSION_JOB_REGISTRY[name]
     except KeyError as exc:
         raise ValueError(f"Profession job '{name}' not registered") from exc
-
 
 def get_advanced_job(name: str) -> AdvancedJob:
     try:
@@ -117,26 +107,20 @@ def get_advanced_job(name: str) -> AdvancedJob:
     except KeyError as exc:
         raise ValueError(f"Advanced job '{name}' not registered") from exc
 
-
 def has_adventure_job(name: str) -> bool:
     return name in _ADVENTURE_JOB_REGISTRY
-
 
 def has_profession_job(name: str) -> bool:
     return name in _PROFESSION_JOB_REGISTRY
 
-
 def has_advanced_job(name: str) -> bool:
     return name in _ADVANCED_JOB_REGISTRY
-
 
 def get_all_adventure_jobs() -> list[AdventureJob]:
     return list(_ADVENTURE_JOB_REGISTRY.values())
 
-
 def get_all_profession_jobs() -> list[ProfessionJob]:
     return list(_PROFESSION_JOB_REGISTRY.values())
-
 
 def get_all_advanced_jobs() -> list[AdvancedJob]:
     return list(_ADVANCED_JOB_REGISTRY.values())
@@ -148,13 +132,11 @@ def register_ability(ability: Ability) -> None:
         raise ValueError(f"Ability already registered: {ability.name}")
     _ABILITY_REGISTRY[ability.name] = ability
 
-
 def get_ability(name: str) -> Ability:
     try:
         return _ABILITY_REGISTRY[name]
     except KeyError as exc:
         raise ValueError(f"Ability '{name}' not registered") from exc
-
 
 def has_ability(name: str) -> bool:
     return name in _ABILITY_REGISTRY
@@ -192,14 +174,26 @@ def register_progression_ability_grant(
     if grant not in _PROGRESSION_ABILITY_GRANTS[key]:
         _PROGRESSION_ABILITY_GRANTS[key].append(grant)
 
-def get_progression_ability_grants(ptype: str, progression_name: str,) -> tuple[tuple[str, int], ...]:
+def get_progression_ability_grants(ptype: str, progression_name: str,) -> tuple[AbilityGrant, ...]:
     return tuple(_PROGRESSION_ABILITY_GRANTS.get((ptype, progression_name), ()))
-
 
 def get_progression_ability_names(ptype: str, progression_name: str) -> tuple[str, ...]:
     return tuple(
         ability_name
         for ability_name, _required_level in get_progression_ability_grants(ptype, progression_name)
+    )
+
+def get_unlocked_progression_ability_grants(
+    ptype: str,
+    progression_name: str,
+    level: int,
+) -> tuple[str, ...]:
+    normalized_level = max(1, int(level))
+    return tuple(
+        ability_name
+        for ability_name, required_level
+        in get_progression_ability_grants(ptype, progression_name)
+        if required_level <= normalized_level
     )
 
 # UNIFIED PROGRESSION SOURCE RESOLUTION
