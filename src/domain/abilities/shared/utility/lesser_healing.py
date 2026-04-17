@@ -18,7 +18,7 @@ LESSER_HEALING = {
         "effects": heal_hp(
                 scale_fn=lambda c: (
                     c.get_progression_level("adventure", "Cleric", 0)
-                    + c.ability_levels.get("Lesser Healing", 0)
+                    + c.get_ability_effective_level("Lesser Healing", 0)
                 ) // 2,
                 condition=IS_ALLY,
             ),

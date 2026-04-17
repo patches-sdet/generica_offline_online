@@ -13,4 +13,4 @@ def test_recalculate_consumes_and_preserves_skill_sources():
     recalculate(c)
 
     assert c.skill_sources["Dodge"]["generic_points"] == 5
-    assert c.ability_levels.get("Dodge") == 5
+    assert c.get_ability_effective_level("Dodge") == 5

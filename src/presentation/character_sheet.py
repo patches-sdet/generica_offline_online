@@ -279,8 +279,6 @@ def print_abilities(character: Character):
         print("None")
         return
 
-    ability_levels = getattr(character, "ability_levels", {}) or {}
-
     def ability_sort_key(ability):
         return (
             getattr(ability, "is_passive", False),
@@ -288,7 +286,7 @@ def print_abilities(character: Character):
         )
 
     for ability in sorted(abilities, key=ability_sort_key):
-        level = ability_levels.get(ability.name, 1)
+        level = character.get_ability_effective_level(ability.name)
 
         type_tag = "[Passive]" if getattr(ability, "is_passive", False) else "[Active]"
         skill_tag = "[Skill]" if getattr(ability, "is_skill", False) else ""

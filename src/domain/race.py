@@ -482,6 +482,7 @@ BASE_RACE_DEFINITIONS: tuple[BaseRace, ...] = (
             "cool": 3,
         },
         tags=("animal",),
+        starting_racial_skills=("Animalistic Interface", "Beast", "Claw Swipes", "Forage", "Scents and Sensibility", "Toughness", "Growl"),
         crossbreed_eligible=False,
     ),
 )

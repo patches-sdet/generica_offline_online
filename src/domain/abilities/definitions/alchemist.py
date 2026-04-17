@@ -67,7 +67,7 @@ def _alchemist_level(character) -> int:
 
 
 def _ability_level(character, ability_name: str) -> int:
-    return character.ability_levels.get(ability_name, 0)
+    return character.get_ability_effective_level(ability_name, 0)
 
 
 def _target_agility_difficulty(ctx, target) -> int:

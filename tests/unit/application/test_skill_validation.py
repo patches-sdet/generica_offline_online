@@ -1,5 +1,4 @@
 import pytest
-
 from domain.character import Character
 from domain.progression import Progression
 from application.skill_validation import (

@@ -16,7 +16,7 @@ GROWL = {
                 difficulty=lambda target: target.roll_willpower(),
                 on_success=[
                     moxie_damage(
-                        scale_fn=lambda c: c.ability_levels.get("Growl", 0),
+                        scale_fn=lambda c: c.get_ability_effective_level("Growl", 0),
                         condition=IS_ENEMY,
                     )
                 ],

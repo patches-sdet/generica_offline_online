@@ -6,13 +6,26 @@ from .special.action import ExtraAttackEffect, ActionOverrideEffect, InspectEffe
 from .special.attack import ModifyNextAttackEffect
 from .special.crafting import CreateItemEffect, CreateEntityEffect
 from .special.damage import BonusDamageEffect
-from .special.event import EventListenerEffect, GainGrindPointsEffect, ModifyGrindPointAwardEffect, GainLevelPointsEffect, ModifyLevelPointAwardEffect
+from .special.event import (
+    EventListenerEffect, 
+    GainGrindPointsEffect, 
+    ModifyGrindPointAwardEffect, 
+    GainLevelPointsEffect, 
+    ModifyLevelPointAwardEffect,
+)
 from .special.state import ApplyStateEffect 
 from .special.tag import ApplyTagEffect
+from.special.minions import (
+    ApplyAffiliationTagEffect, 
+    RemoveAffiliationTagEffect, 
+    ScaledNonZeroAttributeBuffEffect, 
+    ScaledAttributeBuffEffect, 
+    ScaledDerivedStatBuffEffect, 
+    ScaledSkillBuffEffect,
+)
 
 # Conditional / wrappers
 from .conditional import ConditionalEffect, CompositeEffect, HighestWeaponSkillBonus
-
 from .targeting import TargetFilterEffect
 
 
@@ -59,4 +72,12 @@ __all__ = [
     "CompositeEffect",
     "TargetFilterEffect",
     "HighestWeaponSkillBonus",
+
+    # Minions
+    "ApplyAffiliationTagEffect",
+    "RemoveAffiliationTagEffect",
+    "ScaledNonZeroAttributeBuffEffect",
+    "ScaledAttributeBuffEffect",
+    "ScaledDerivedStatBuffEffect",
+    "ScaledSkillBuffEffect",
 ]

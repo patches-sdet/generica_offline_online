@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from email.policy import default
 from typing import Any, DefaultDict, Optional, TYPE_CHECKING
 from collections import defaultdict
 from domain.attributes import Attributes, Defenses
@@ -88,6 +87,10 @@ class Character:
         init=False,
     )
     _derived_overrides: dict[str, int] = field(default_factory=dict, init=False)
+
+    # Derived Effective Ability/Skill level helper, this is to keep things working until I refactor how levels are derived.
+    def get_ability_effective_level(self, ability_name: str) -> int:
+        return self.ability_levels.get(ability_name, 0)
 
     # ATTRIBUTE API
 

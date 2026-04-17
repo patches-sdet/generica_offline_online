@@ -7,7 +7,7 @@ POISON_RESISTANCE = {
     "description": "You may make Constitution rolls to resist poison and add your level in this skill to the roll.",
     "effects": conditional_effect(
         scaled_stat_buff(
-            scale_fn=lambda ctx: ctx.ability_levels.get("Poison Resistance", 0),
+            scale_fn=lambda ctx: ctx.get_ability_effective_level("Poison Resistance", 0),
             stats="constitution",
         ),
         condition=lambda ctx: ctx.action_type == "resist_poison",
