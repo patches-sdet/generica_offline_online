@@ -6,6 +6,7 @@ from domain.effects.base import Effect, EffectContext
 class ApplyStateEffect(Effect):
     state_name: str
     value_fn: Callable | None = None
+    aura_id: Callable | None = None
 
     def apply(self, context: EffectContext) -> None:
         value = self.value_fn(context.source) if self.value_fn else True

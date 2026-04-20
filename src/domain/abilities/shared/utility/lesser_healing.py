@@ -8,7 +8,7 @@ LESSER_HEALING = {
         "cost_pool": "sanity",
         "description": (
             "Instantly heal a living creature within 100 feet for an amount equal to "
-            "your Cleric level plus the level of this skill, divided by 2. This skill "
+            "your applicable job level plus the level of this skill, divided by 2. This skill "
             "is a spell.\n"
             "If used on Undead or Dark-aligned targets, it instead inflicts the same "
             "amount of damage, bypassing defenses and automatically hitting. This skill "

@@ -1,7 +1,3 @@
-Yes — if this is the rule for **all leveled skills**, then it should absolutely be generalized.
-
-What you have is not really a “Growl exception.” It is a broader progression model for **leveled abilities/skills**:
-
 ```text
 first grant establishes the primary source
 additional grants add +5 each

@@ -1,13 +1,10 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
-    DifficultyTable,
     apply_state,
     create_item,
-    hp_damage,
     inspect,
-    skill_check,
+    passive_modifier,
 )
-from domain.conditions import IS_ENEMY
 
 # Local metadata keys
 
@@ -19,46 +16,11 @@ TARGET_DISEASE_DIFFICULTY = "target_disease_difficulty"
 TRANQUILIZER_TIER = "tranquilizer_tier"        # "basic" | "heavy"
 TRANQUILIZER_FORM = "tranquilizer_form"        # "potion" | "poison"
 COLOR_STEPS = "color_steps"                    # int >= 1
-EXTRA_SILVER = "extra_silver"                  # optional crafting bonus
+EXTRA_SILVER = "extra_silver"
 SUBSTANCE_DIFFICULTY = "substance_difficulty"
 SUBSTANCE_RARITY = "substance_rarity"
 SUBSTANCE_PROPERTIES = "substance_properties"
 SUBSTANCE_ALCHEMY_VALUE = "substance_alchemy_value"
-
-# Difficulty tables
-
-POTION_DIFFICULTIES = DifficultyTable({
-    "basic": 100,
-    "potent": 200,
-    "greater": 300,
-})
-
-DISTILL_I_DIFFICULTIES = DifficultyTable({
-    "reagent": 80,
-    "crystal": 120,
-})
-
-DISTILL_II_DIFFICULTIES = DifficultyTable({
-    "reagent": 120,
-    "crystal": 180,
-})
-
-ATTRIBUTE_BOOSTER_DIFFICULTIES = DifficultyTable({
-    "basic": 150,
-    "potent": 250,
-    "greater": 350,
-})
-
-SPEED_POTION_DIFFICULTIES = DifficultyTable({
-    "basic": 200,
-    "potent": 300,
-    "greater": 400,
-})
-
-TRANQUILIZER_DIFFICULTIES = DifficultyTable({
-    "basic": 180,
-    "heavy": 280,
-})
 
 # Rule helpers
 
@@ -67,39 +29,16 @@ def _alchemist_level(character) -> int:
 
 
 def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name, 0)
+    return character.get_ability_effective_level(ability_name)
 
 
-def _target_agility_difficulty(ctx, target) -> int:
-    if hasattr(target, "roll_agility"):
-        return target.roll_agility()
-    return getattr(getattr(target, "attributes", None), "agility", 0)
+def _ensure_states(target) -> dict:
+    states = getattr(target, "states", None)
+    if states is None:
+        states = {}
+        setattr(target, "states", states)
+    return states
 
-
-def _substance_difficulty(ctx, _target) -> int:
-    return int(ctx.require_option(SUBSTANCE_DIFFICULTY))
-
-
-def _poison_or_disease_difficulty(ctx, _target) -> int:
-    poison = ctx.get_option(TARGET_POISON_DIFFICULTY)
-    disease = ctx.get_option(TARGET_DISEASE_DIFFICULTY)
-
-    if poison is not None and disease is not None:
-        return max(int(poison), int(disease))
-    if poison is not None:
-        return int(poison)
-    if disease is not None:
-        return int(disease)
-
-    raise ValueError(
-        "Universal Antidote requires target_poison_difficulty "
-        "or target_disease_difficulty in context metadata"
-    )
-
-
-def _philosophers_stone_difficulty(ctx, _target) -> int:
-    color_steps = max(1, int(ctx.get_option(COLOR_STEPS, 1)))
-    return 180 + ((color_steps - 1) * 100)
 
 # Item factory helpers
 
@@ -113,6 +52,7 @@ def _make_distilled_material_factory(product_type: str, *, tier: str):
             "source_job": "Alchemist",
         }
     return factory_fn
+
 
 def _make_healing_potion_factory(tier: str):
     reagent_tier = {
@@ -132,6 +72,7 @@ def _make_healing_potion_factory(tier: str):
         }
     return factory_fn
 
+
 def _make_mana_potion_factory(tier: str):
     reagent_tier = {
         "basic": "red",
@@ -150,6 +91,7 @@ def _make_mana_potion_factory(tier: str):
         }
     return factory_fn
 
+
 def _make_attribute_booster_factory(tier: str, booster_stat: str):
     def factory_fn(source, _target):
         return {
@@ -163,6 +105,7 @@ def _make_attribute_booster_factory(tier: str, booster_stat: str):
         }
     return factory_fn
 
+
 def _make_universal_antidote_factory():
     def factory_fn(source, target):
         return {
@@ -173,6 +116,7 @@ def _make_universal_antidote_factory():
             "source_job": "Alchemist",
         }
     return factory_fn
+
 
 def _make_speed_potion_factory(tier: str):
     reagent_count = {
@@ -193,6 +137,7 @@ def _make_speed_potion_factory(tier: str):
         }
     return factory_fn
 
+
 def _make_tranquilizer_factory(tier: str, form: str):
     crystal_tier = "level_1" if tier == "basic" else "level_2"
 
@@ -207,6 +152,7 @@ def _make_tranquilizer_factory(tier: str, form: str):
         }
     return factory_fn
 
+
 def _make_upgraded_reagent_factory(color_steps: int):
     def factory_fn(source, _target):
         return {
@@ -218,6 +164,34 @@ def _make_upgraded_reagent_factory(color_steps: int):
         }
     return factory_fn
 
+
+# Passive helpers
+
+def _internal_chemistry_modifier(ctx) -> None:
+    states = _ensure_states(ctx.source)
+    states["internal_chemistry"] = {
+        "active": True,
+        "choose_one_on_potion_use": True,
+        "options": (
+            "double_duration",
+            "double_one_numerical_value",
+            "delay_reaction",
+        ),
+        "max_delay_minutes": _alchemist_level(ctx.source),
+        "source_ability": "Internal Chemistry",
+    }
+
+
+def _alchemical_experimentation_modifier(ctx) -> None:
+    states = _ensure_states(ctx.source)
+    states["alchemical_experimentation"] = {
+        "active": True,
+        "experimental_skill_capacity": _alchemist_level(ctx.source) // 10,
+        "extra_experimental_skills_stored_in_journals": True,
+        "source_ability": "Alchemical Experimentation",
+    }
+
+
 build_job("Alchemist", [
 
     # Level 1
@@ -228,35 +202,26 @@ build_job("Alchemist", [
         "type": "skill",
         "cost": 5,
         "cost_pool": "sanity",
-        "duration": "10 seconds",
+        "duration": "10 Seconds",
         "description": (
-            "Determine the properties of a studied liquid, powder, crystal, or reagent. "
-            "Roll Intelligence + Analyze against the difficulty of the substance. "
-            "Failure reveals nothing that day."
+            "Determine the properties of a studied liquid, powder, crystal, or reagent."
         ),
-        "effects": skill_check(
-            ability="Analyze",
-            stat="intelligence",
-            difficulty=_substance_difficulty,
-            on_success=inspect(
-                reveal_fn=lambda ctx, target: {
-                    "properties": getattr(
-                        target,
-                        "properties",
-                        ctx.get_option(SUBSTANCE_PROPERTIES),
-                    ),
-                    "rarity": getattr(
-                        target,
-                        "rarity",
-                        ctx.get_option(SUBSTANCE_RARITY),
-                    ),
-                    "alchemy_value": getattr(
-                        target,
-                        "alchemy_value",
-                        ctx.get_option(SUBSTANCE_ALCHEMY_VALUE),
-                    ),
-                }
-            ),
+        "effects": inspect(
+            reveal_fn=lambda source: {
+                "effect": "analyze",
+                "check": {
+                    "stat": "intelligence",
+                    "skill": "Analyze",
+                    "difficulty_from_context": SUBSTANCE_DIFFICULTY,
+                },
+                "reveals": {
+                    "properties": SUBSTANCE_PROPERTIES,
+                    "rarity": SUBSTANCE_RARITY,
+                    "alchemy_value": SUBSTANCE_ALCHEMY_VALUE,
+                },
+                "failure_blocks_further_attempts_today": True,
+                "source_ability": "Analyze",
+            },
         ),
         "is_skill": True,
         "scales_with_level": False,
@@ -269,21 +234,23 @@ build_job("Alchemist", [
         "type": "skill",
         "cost": 10,
         "cost_pool": "stamina",
-        "duration": "1 attack",
+        "duration": "1 Attack",
         "description": (
-            "Throw an improvised bomb. Roll Dexterity + Bomb against the target's agility. "
-            "The bomb is treated as a weapon with a damage boost equal to Alchemist level, "
-            "and also damages nearby foes. Current implementation models the level-scaled "
-            "damage effect; splash-shape and weapon-boost details remain runtime-facing."
+            "Throw an improvised bomb that damages the target and nearby foes."
         ),
-        "effects": skill_check(
-            ability="Bomb",
-            stat="dexterity",
-            difficulty=_target_agility_difficulty,
-            on_success=hp_damage(
-                scale_fn=_alchemist_level,
-                condition=IS_ENEMY,
-            ),
+        "effects": apply_state(
+            "bomb_active",
+            value_fn=lambda source: {
+                "active": True,
+                "attack_stat": "dexterity",
+                "attack_skill": "Bomb",
+                "target_stat": "agility",
+                "damage_pool": "hp",
+                "damage_bonus_from_alchemist_level": _alchemist_level(source),
+                "affects_nearby_foes": True,
+                "splash_shape_runtime_defined": True,
+                "source_ability": "Bomb",
+            },
         ),
         "is_skill": True,
         "scales_with_level": True,
@@ -298,22 +265,13 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Turn valuable substances into red reagents or level 1 crystals. "
-            "Reagent difficulty 80, crystal difficulty 120. Components are consumed either way. "
-            "Extra material can improve the odds, but that remains descriptive metadata here."
+            "Turn valuable substances into red reagents or level 1 crystals."
         ),
-        "effects": skill_check(
-            ability="Distill",
-            stat="intelligence",
-            difficulty=lambda ctx, target: DISTILL_I_DIFFICULTIES[
-                ctx.require_option(PRODUCT_TYPE)
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_distilled_material_factory(
-                    source.get_option(PRODUCT_TYPE) if hasattr(source, "get_option") else "reagent",
-                    tier="level_1",
-                )(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_distilled_material_factory(
+                product_type="reagent",
+                tier="level_1",
+            )(source, target),
         ),
         "is_skill": True,
         "scales_with_level": False,
@@ -328,19 +286,10 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Create a basic, potent, or greater healing potion. "
-            "Difficulty is 100 / 200 / 300 by tier. Reagent substitutions and critical "
-            "double-batch remain represented by metadata/description rather than hard runtime rules."
+            "Create a basic, potent, or greater healing potion."
         ),
-        "effects": skill_check(
-            ability="Healing Potion",
-            stat="intelligence",
-            difficulty=lambda ctx, target: POTION_DIFFICULTIES[
-                ctx.get_option(TIER, "basic")
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_healing_potion_factory("basic")(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_healing_potion_factory("basic")(source, target),
         ),
         "is_skill": True,
         "scales_with_level": False,
@@ -355,19 +304,10 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Create a basic, potent, or greater mana potion. "
-            "Difficulty is 100 / 200 / 300 by tier. Reagent substitutions and critical "
-            "double-batch remain represented by metadata/description rather than hard runtime rules."
+            "Create a basic, potent, or greater mana potion."
         ),
-        "effects": skill_check(
-            ability="Mana Potion",
-            stat="intelligence",
-            difficulty=lambda ctx, target: POTION_DIFFICULTIES[
-                ctx.get_option(TIER, "basic")
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_mana_potion_factory("basic")(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_mana_potion_factory("basic")(source, target),
         ),
         "is_skill": True,
         "scales_with_level": False,
@@ -384,24 +324,16 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Create a basic, potent, or greater attribute booster of a chosen type. "
-            "Difficulty is 150 / 250 / 350. Critical double-batch remains descriptive for now."
+            "Create a basic, potent, or greater attribute booster of a chosen type."
         ),
-        "effects": skill_check(
-            ability="Attribute Booster",
-            stat="intelligence",
-            difficulty=lambda ctx, target: ATTRIBUTE_BOOSTER_DIFFICULTIES[
-                ctx.get_option(TIER, "basic")
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_attribute_booster_factory(
-                    "basic",
-                    "strength",
-                )(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_attribute_booster_factory(
+                "basic",
+                "strength",
+            )(source, target),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "self",
     },
 
@@ -413,11 +345,18 @@ build_job("Alchemist", [
         "cost_pool": "stamina",
         "duration": "Instant",
         "description": (
-            "Fall prone without spending an action. While prone, reduce chemical or elemental "
-            "damage by Duck and Cover skill level. The prone state is modeled here; the special "
-            "damage-reduction and experience-roll behavior remain runtime TODOs."
+            "Fall prone without spending an action, reducing certain incoming damage while prone."
         ),
-        "effects": apply_state("prone"),
+        "effects": apply_state(
+            "duck_and_cover_active",
+            value_fn=lambda source: {
+                "active": True,
+                "apply_condition": "prone",
+                "chemical_damage_reduction": _ability_level(source, "Duck and Cover"),
+                "elemental_damage_reduction": _ability_level(source, "Duck and Cover"),
+                "source_ability": "Duck and Cover",
+            },
+        ),
         "is_skill": True,
         "scales_with_level": True,
         "target": "self",
@@ -429,21 +368,15 @@ build_job("Alchemist", [
         "type": "skill",
         "cost": 40,
         "cost_pool": "sanity",
-        "duration": "1 dosage",
+        "duration": "1 Dosage",
         "description": (
-            "Examine a poisoned or diseased subject for one minute, then create a cure for that "
-            "target alone. Difficulty equals the poison or disease difficulty."
+            "Create a cure for a studied poison or disease affecting a specific target."
         ),
-        "effects": skill_check(
-            ability="Universal Antidote",
-            stat="intelligence",
-            difficulty=_poison_or_disease_difficulty,
-            on_success=create_item(
-                factory_fn=_make_universal_antidote_factory(),
-            ),
+        "effects": create_item(
+            factory_fn=_make_universal_antidote_factory(),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "ally",
     },
 
@@ -455,20 +388,23 @@ build_job("Alchemist", [
         "type": "skill",
         "cost": 20,
         "cost_pool": "stamina",
-        "duration": "1 attack",
+        "duration": "1 Attack",
         "description": (
-            "Throw improvised napalm. Roll Dexterity + Geek Fire against the target's agility. "
-            "Damage is level-scaled fire damage and conceptually ignores conventional armor. "
-            "Critical-burning behavior is left as a runtime TODO."
+            "Throw improvised napalm, dealing fire damage and potentially igniting the target."
         ),
-        "effects": skill_check(
-            ability="Geek Fire",
-            stat="dexterity",
-            difficulty=_target_agility_difficulty,
-            on_success=hp_damage(
-                scale_fn=_alchemist_level,
-                condition=IS_ENEMY,
-            ),
+        "effects": apply_state(
+            "geek_fire_active",
+            value_fn=lambda source: {
+                "active": True,
+                "attack_stat": "dexterity",
+                "attack_skill": "Geek Fire",
+                "target_stat": "agility",
+                "damage_pool": "hp",
+                "damage_bonus_from_alchemist_level": _alchemist_level(source),
+                "damage_type": "fire",
+                "critical_burning_runtime_defined": True,
+                "source_ability": "Geek Fire",
+            },
         ),
         "is_skill": True,
         "scales_with_level": True,
@@ -481,11 +417,9 @@ build_job("Alchemist", [
         "type": "passive",
         "duration": "Passive Constant",
         "description": (
-            "Choose one enhancement whenever consuming a potion: double duration, double one "
-            "numerical value, or delay the reaction up to Alchemist level minutes. "
-            "Modeled as a passive placeholder until potion-consumption hooks are formalized."
+            "Choose one enhancement whenever consuming a potion."
         ),
-        "effects": lambda ctx: [],
+        "effects": passive_modifier(_internal_chemistry_modifier),
         "scales_with_level": False,
     },
 
@@ -499,25 +433,16 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Turn valuable substances into orange reagents or level 2 crystals. "
-            "Reagent difficulty 120, crystal difficulty 180. Extra material improves the odds "
-            "at +1 per five silver worth spent."
+            "Turn valuable substances into orange reagents or level 2 crystals."
         ),
-        "effects": skill_check(
-            ability="Distill II",
-            stat="intelligence",
-            difficulty=lambda ctx, target: DISTILL_II_DIFFICULTIES[
-                ctx.require_option(PRODUCT_TYPE)
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_distilled_material_factory(
-                    source.get_option(PRODUCT_TYPE) if hasattr(source, "get_option") else "reagent",
-                    tier="level_2",
-                )(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_distilled_material_factory(
+                product_type="reagent",
+                tier="level_2",
+            )(source, target),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "self",
     },
 
@@ -527,17 +452,17 @@ build_job("Alchemist", [
         "type": "skill",
         "cost": 50,
         "cost_pool": "stamina",
-        "duration": "1 turn per alchemist level",
+        "duration": "1 Turn per Alchemist Level",
         "description": (
-            "Drink a volatile concoction to gain access to Rage at a level equal to Distilled Id, "
-            "or buff existing Rage if already known. This is modeled as a stateful placeholder "
-            "until temporary borrowed-skill support is formalized."
+            "Drink a volatile concoction to gain or enhance Rage temporarily."
         ),
         "effects": apply_state(
             "distilled_id_active",
             value_fn=lambda source: {
+                "active": True,
                 "rage_proxy_level": _ability_level(source, "Distilled Id"),
                 "duration_turns": _alchemist_level(source),
+                "source_ability": "Distilled Id",
             },
         ),
         "is_skill": True,
@@ -555,22 +480,13 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Create a basic, potent, or greater speed potion. Difficulty is 200 / 300 / 400. "
-            "Basic uses 1 red reagent, potent uses 2, greater uses 3. Critical double-batch "
-            "remains descriptive for now."
+            "Create a basic, potent, or greater speed potion."
         ),
-        "effects": skill_check(
-            ability="Speed Potion",
-            stat="intelligence",
-            difficulty=lambda ctx, target: SPEED_POTION_DIFFICULTIES[
-                ctx.get_option(TIER, "basic")
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_speed_potion_factory("basic")(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_speed_potion_factory("basic")(source, target),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "self",
     },
 
@@ -582,25 +498,16 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Create a dose of tranquilizer as either a potion or a weapon-applied poison. "
-            "Basic difficulty is 180 with a level 1 crystal; heavy-duty is 280 with a level 2 crystal. "
-            "Critical double-batch remains descriptive for now."
+            "Create a dose of tranquilizer as either a potion or a weapon-applied poison."
         ),
-        "effects": skill_check(
-            ability="Tranquilizer",
-            stat="intelligence",
-            difficulty=lambda ctx, target: TRANQUILIZER_DIFFICULTIES[
-                ctx.get_option(TRANQUILIZER_TIER, "basic")
-            ],
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_tranquilizer_factory(
-                    "basic",
-                    "potion",
-                )(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_tranquilizer_factory(
+                "basic",
+                "potion",
+            )(source, target),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "self",
     },
 
@@ -610,13 +517,11 @@ build_job("Alchemist", [
         "name": "Alchemical Experimentation",
         "required_level": 25,
         "type": "passive",
-        "duration": "N/A",
+        "duration": "Passive Constant",
         "description": (
-            "Experiment to discover new alchemical skills. Number of experimental skills usable "
-            "at once equals Alchemist level divided by ten; extras must be stored in journals. "
-            "Modeled as a passive placeholder until experimentation/equipment systems are formalized."
+            "Experiment to discover new alchemical skills."
         ),
-        "effects": lambda ctx: [],
+        "effects": passive_modifier(_alchemical_experimentation_modifier),
         "scales_with_level": False,
     },
 
@@ -628,23 +533,16 @@ build_job("Alchemist", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Attempt to transmute a reagent into a higher-level reagent. "
-            "Base difficulty is 180, plus 100 for each additional color step beyond the first. "
-            "Requires six hours of uninterrupted work and consumes materials regardless of success."
+            "Attempt to transmute a reagent into a higher-level reagent."
         ),
-        "effects": skill_check(
-            ability="Philosopher's Stone",
-            stat="intelligence",
-            difficulty=_philosophers_stone_difficulty,
-            on_success=create_item(
-                factory_fn=lambda source, target: _make_upgraded_reagent_factory(1)(source, target),
-            ),
+        "effects": create_item(
+            factory_fn=lambda source, target: _make_upgraded_reagent_factory(1)(source, target),
         ),
         "is_skill": True,
-        "scales_with_level": False,
+        "scales_with_level": True,
         "target": "self",
     },
 
-    {"grant": "Poison Resistance", "required_level": 25,},
+    {"grant": "Poison Resistance", "required_level": 25},
 
 ], source_type="adventure")

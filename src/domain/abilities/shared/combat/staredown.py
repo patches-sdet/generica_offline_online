@@ -32,4 +32,4 @@ STAREDOWN = {
     "type": "skill",
 }
 
-build_shared_ability("shared.social", STAREDOWN, source_type="adventure")
+build_shared_ability("shared.social", STAREDOWN, source_type="shared")

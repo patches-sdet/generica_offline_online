@@ -1,25 +1,33 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
+
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
+    apply_state,
     composite,
     heal_hp,
     inspect,
-    skill_check,
     summon,
 )
-from domain.conditions import IS_CONSTRUCT, IS_OBJECT, IN_PARTY, NOT_IN_PARTY
-from domain.effects.base import Effect, EffectContext
+from domain.conditions import IS_CONSTRUCT, IS_OBJECT, IN_PARTY
+from domain.effects.base import EffectContext
 from domain.effects.special.minions import ScaledNonZeroAttributeBuffEffect
 
+
+# ---------------------------------------------------------------------------
 # Local metadata keys
+# ---------------------------------------------------------------------------
 
 COMMAND_TEXT = "command"
 WEAPON_SKILL = "weapon_skill"
 DOLLSEYE_POWER = "dollseye_power"
 EYE_INDEX = "eye_index"
 
+
+# ---------------------------------------------------------------------------
 # Animus reference tables
+# ---------------------------------------------------------------------------
 
 ANIMUS_SIZE_TABLE = {
     "small": {
@@ -69,7 +77,10 @@ ANIMUS_MATERIAL_ARMOR = {
     "metal": 25,
 }
 
+
+# ---------------------------------------------------------------------------
 # Runtime animi entity
+# ---------------------------------------------------------------------------
 
 @dataclass(slots=True)
 class Animi:
@@ -108,6 +119,9 @@ class Animi:
     def get_stat(self, stat: str, default: int = 0) -> int:
         return self.attributes.get(stat, default)
 
+    def get_skill_level(self, skill_name: str, default: int = 0) -> int:
+        return self.skill_levels.get(skill_name, default)
+
     def roll_willpower(self, *_args) -> int:
         return self.get_stat("willpower", 0)
 
@@ -132,24 +146,32 @@ class Animi:
     def spend_resource(self, pool: str, amount: int) -> bool:
         return self.modify_resource(pool, -amount)
 
+
+# ---------------------------------------------------------------------------
 # Rule helpers
+# ---------------------------------------------------------------------------
 
 def _animator_level(character) -> int:
     return character.get_progression_level("adventure", "Animator", 0)
 
+
 def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name, 0)
+    return character.get_ability_effective_level(ability_name)
+
 
 def _ensure_party(owner) -> list:
     if not hasattr(owner, "party") or owner.party is None:
         owner.party = []
     return owner.party
 
-def _ensure_bucket(obj, key: str) -> dict:
-    if not hasattr(obj, "states") or obj.states is None:
-        obj.states = {}
-    obj.states.setdefault(key, {})
-    return obj.states[key]
+
+def _ensure_states(target) -> dict:
+    states = getattr(target, "states", None)
+    if states is None:
+        states = {}
+        setattr(target, "states", states)
+    return states
+
 
 def _size_key(obj) -> str:
     size = getattr(obj, "animus_size", None) or getattr(obj, "size", None)
@@ -162,6 +184,7 @@ def _size_key(obj) -> str:
 
     return size
 
+
 def _material_key(obj) -> str:
     material = getattr(obj, "animus_material", None) or getattr(obj, "material", None)
     if not material:
@@ -173,8 +196,10 @@ def _material_key(obj) -> str:
 
     return material
 
+
 def _length_feet(obj) -> int:
     return int(getattr(obj, "length_feet", 10) or 10)
+
 
 def _enormous_extra_cost(obj) -> int:
     if _size_key(obj) != "enormous":
@@ -182,6 +207,7 @@ def _enormous_extra_cost(obj) -> int:
 
     extra_feet = max(0, _length_feet(obj) - 10)
     return (extra_feet // 10) * 50
+
 
 def _animus_profile(obj) -> dict:
     size = _size_key(obj)
@@ -195,11 +221,12 @@ def _animus_profile(obj) -> dict:
     base["total_cost"] = base["cost"] + base["extra_cost"]
     return base
 
+
 def _animus_duration_minutes(caster) -> int:
     return max(1, _ability_level(caster, "Animus")) * 10
 
 
-def _construct_resist_difficulty(ctx, target) -> int:
+def _construct_resist_difficulty(source, target) -> int:
     creator = getattr(target, "creator", None)
     if creator is not None and target in getattr(creator, "party", []):
         roll_fn = getattr(creator, "roll_willpower", None)
@@ -211,6 +238,7 @@ def _construct_resist_difficulty(ctx, target) -> int:
         return roll_fn()
 
     return getattr(target, "willpower", 0)
+
 
 def _estimate_animus_value(target) -> dict:
     try:
@@ -231,7 +259,10 @@ def _estimate_animus_value(target) -> dict:
         "sanity_cost": profile["total_cost"],
     }
 
-# Entity factory
+
+# ---------------------------------------------------------------------------
+# Entity factory helpers
+# ---------------------------------------------------------------------------
 
 def create_animi_from_object(
     caster,
@@ -294,139 +325,127 @@ def create_animi_from_object(
 
     return animi
 
-# Custom effects
 
-class SpendAnimusExtraSanityEffect(Effect):
-    """
-    Base Animus cost remains 10 sanity in the ability schema.
-    This effect spends only the extra amount required by the chosen object.
-    """
+def _animus_factory(source, target):
+    if target is None:
+        raise ValueError("Animus requires a target object.")
 
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
+    profile = _animus_profile(target)
+    return create_animi_from_object(
+        caster=source,
+        obj=target,
+        profile=profile,
+        duration_minutes=_animus_duration_minutes(source),
+    )
 
-        obj = context.targets[0]
-        extra_cost = max(0, _animus_profile(obj)["total_cost"] - 10)
-        if extra_cost <= 0:
-            return
 
-        ok = context.source.spend_resource("sanity", extra_cost)
-        if ok is False:
-            raise ValueError("Not enough sanity for Animus extra cost.")
+def _animus_blade_factory(source, target):
+    if target is None:
+        raise ValueError("Animus Blade requires a weapon target.")
 
-class CommandAnimusEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
+    return create_animi_from_object(
+        caster=source,
+        obj=target,
+        profile={
+            "hp": 50,
+            "strength": source.get_stat("willpower", 0),
+            "agility": 50,
+            "sanity": 0,
+            "armor": 0,
+            "size": "small",
+            "material": getattr(target, "material", "metal"),
+        },
+        duration_minutes=_animator_level(source) * 10,
+        name=getattr(target, "name", "Animus Blade"),
+        extra_tags={"weapon_animi", "flying"},
+        states={
+            "source_ability": "Animus Blade",
+            "attack_mode": "melee_slashing",
+            "max_attacks_per_turn": 1,
+            "orbits_creator": True,
+        },
+    )
 
-        target = context.targets[0]
-        command = context.get_option(COMMAND_TEXT)
-        bucket = _ensure_bucket(target, "command_animus")
-        bucket["controller"] = context.source
-        bucket["command"] = command
-        bucket["source"] = "Command Animus"
 
-class TeachWeaponSkillEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
+def _animus_shield_factory(source, target):
+    if target is None:
+        raise ValueError("Animus Shield requires a shield target.")
 
-        target = context.targets[0]
-        weapon_skill = context.require_option(WEAPON_SKILL)
+    skill_level = _ability_level(source, "Animus Shield")
+    return create_animi_from_object(
+        caster=source,
+        obj=target,
+        profile={
+            "hp": 100,
+            "strength": source.get_stat("willpower", 0),
+            "agility": 30,
+            "sanity": 0,
+            "armor": getattr(target, "armor", 0),
+            "size": "medium",
+            "material": getattr(target, "material", "metal"),
+        },
+        duration_minutes=_animator_level(source) * 10,
+        name=getattr(target, "name", "Animus Shield"),
+        extra_tags={"shield_animi", "flying"},
+        states={
+            "source_ability": "Animus Shield",
+            "max_attacks_per_turn": 1,
+            "orbits_creator": True,
+            "granted_skills": {
+                "Shield": skill_level,
+                "Bodyguard": skill_level,
+            },
+        },
+    )
 
-        owner_level = context.source.get_skill_level(weapon_skill, 0)
-        imparted = min(_ability_level(context.source, "Arm Creation"), owner_level)
 
-        bucket = _ensure_bucket(target, "arm_creation_skills")
-        bucket[weapon_skill] = imparted
+def _animus_bow_factory(source, target):
+    if target is None:
+        raise ValueError("Animus Bow requires a bow or crossbow target.")
 
-class ActivateDollseyeEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
+    return create_animi_from_object(
+        caster=source,
+        obj=target,
+        profile={
+            "hp": 50,
+            "strength": 0,
+            "agility": 50,
+            "sanity": 0,
+            "armor": 0,
+            "size": "small",
+            "material": getattr(target, "material", "wood"),
+        },
+        duration_minutes=_animator_level(source) * 10,
+        name=getattr(target, "name", "Animus Bow"),
+        extra_tags={"weapon_animi", "ranged_weapon_animi", "flying"},
+        states={
+            "source_ability": "Animus Bow",
+            "attack_mode": "ranged_bow",
+            "max_attacks_per_turn": 1,
+            "orbits_creator": True,
+            "dexterity_override": source.get_stat("willpower", 0),
+        },
+    )
 
-        target = context.targets[0]
-        requested_power = context.get_option(DOLLSEYE_POWER)
-        eye_index = int(context.get_option(EYE_INDEX, 0))
 
-        max_power = _ability_level(context.source, "Dollseye")
-        applied_power = max_power if requested_power is None else min(int(requested_power), max_power)
+# ---------------------------------------------------------------------------
+# Passive effect helper
+# ---------------------------------------------------------------------------
 
-        bucket = _ensure_bucket(context.source, "dollseye_links")
-        bucket[eye_index] = {
-            "target": target,
-            "power": applied_power,
-        }
+def _creators_guardians_effect(ctx: EffectContext):
+    return ScaledNonZeroAttributeBuffEffect(
+        scale_fn=lambda c: (
+            c.get_stat("willpower", 0)
+            + _ability_level(c, "Creator's Guardians")
+        ) // 10,
+        condition=lambda inner_ctx, target: IS_CONSTRUCT(inner_ctx, target) and IN_PARTY(inner_ctx, target),
+        source_name="Creator's Guardians",
+    )
 
-class MagicMouthEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
 
-        target = context.targets[0]
-        bucket = _ensure_bucket(target, "magic_mouth")
-        bucket["speaker"] = context.source
-        bucket["duration_minutes"] = _ability_level(context.source, "Magic Mouth") * 10
-
-class NoDefenseDamageEffect(Effect):
-    """
-    Placeholder direct-damage effect for rare rules that bypass normal defenses.
-    Used for Deanimate until full roll / damage resolution exists.
-    """
-
-    def __init__(self, amount_fn, condition=None):
-        self.amount_fn = amount_fn
-        self.condition = condition
-
-    def apply(self, context: EffectContext) -> None:
-        for target in context.targets:
-            if self.condition is not None and not self.condition(context, target):
-                continue
-
-            amount = int(self.amount_fn(context.source, target))
-            if amount <= 0:
-                continue
-
-            target.modify_resource("hp", -amount)
-
-class EnableNextAnimusAtRangeEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        bucket = _ensure_bucket(context.source, "next_animus_at_range")
-        bucket["range_feet"] = _animator_level(context.source)
-        bucket["source"] = "Distant Animus"
-
-class ActivateDollsbodyEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
-
-        target = context.targets[0]
-        bucket = _ensure_bucket(context.source, "dollsbody")
-        bucket["target"] = target
-        bucket["duration_minutes"] = _ability_level(context.source, "Dollsbody")
-        bucket["source"] = "Dollsbody"
-
-class EnableAnimusAllEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        bucket = _ensure_bucket(context.source, "animus_all")
-        bucket["max_targets"] = 6
-        bucket["duration_minutes"] = 1
-        bucket["source"] = "Animus All"
-
-class FocusWillEffect(Effect):
-    def apply(self, context: EffectContext) -> None:
-        if not context.targets:
-            return
-
-        target = context.targets[0]
-        bucket = _ensure_bucket(context.source, "focus_will")
-        bucket["target"] = target
-        bucket["bonus"] = _ability_level(context.source, "Focus Will")
-        bucket["sanity_per_minute"] = 50
-        bucket["source"] = "Focus Will"
-
+# ---------------------------------------------------------------------------
 # Job definition
+# ---------------------------------------------------------------------------
 
 build_job("Animator", [
 
@@ -440,24 +459,24 @@ build_job("Animator", [
         "cost_pool": "sanity",
         "duration": "10 minutes per Animus level",
         "description": (
-            "Turns a touched object into an animi, capable of movement, combat, and simple tasks "
+            "Turn a touched object into an animi, capable of movement, combat, and simple tasks "
             "as ordered by its creator. Must be in its creator's party to do anything beyond defend itself."
         ),
         "effects": composite(
-            SpendAnimusExtraSanityEffect(),
-            skill_check(
-                ability="Animus",
-                stat="intelligence",
-                difficulty=lambda ctx, target: _animus_profile(target)["difficulty"],
-                on_success=summon(
-                    factory_fn=lambda source, target: create_animi_from_object(
-                        caster=source,
-                        obj=target,
-                        profile=_animus_profile(target),
-                        duration_minutes=_animus_duration_minutes(source),
-                    ),
-                    condition=IS_OBJECT,
-                ),
+            apply_state(
+                "animus_cast",
+                value_fn=lambda source: {
+                    "active": True,
+                    "requires_object_target": True,
+                    "animus_duration_minutes": _animus_duration_minutes(source),
+                    "difficulty_from_target_profile": True,
+                    "extra_sanity_cost_from_target_profile": True,
+                    "source_ability": "Animus",
+                },
+            ),
+            summon(
+                factory_fn=_animus_factory,
+                condition=IS_OBJECT,
             ),
         ),
         "is_spell": True,
@@ -473,14 +492,22 @@ build_job("Animator", [
         "cost_pool": "sanity",
         "duration": "Until no longer possible",
         "description": (
-            "Allows the caster to issue one command to an animi not in the creator's party. "
-            "On success, the animi follows the command as best it can until impossible."
+            "Issue one command to an animi not in the creator's party. On success, it follows the command "
+            "as best it can until impossible."
         ),
-        "effects": skill_check(
-            ability="Command Animus",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=CommandAnimusEffect(),
+        "effects": apply_state(
+            "command_animus_active",
+            value_fn=lambda source: {
+                "active": True,
+                "contest": {
+                    "caster_stat": "intelligence",
+                    "caster_skill": "Command Animus",
+                    "target_difficulty": "construct_resist_difficulty",
+                },
+                "stores_command_text_from_context": True,
+                "controller": source,
+                "source_ability": "Command Animus",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,
@@ -495,14 +522,9 @@ build_job("Animator", [
         "description": (
             "Enhances animi in the creator's party, boosting all non-zero attributes."
         ),
-        "effects": ScaledNonZeroAttributeBuffEffect(
-            scale_fn=lambda c: (
-                c.get_stat("willpower")
-                + c.get_ability_effective_level("Creator's Guardians", 0)
-            ) // 10,
-            condition=lambda ctx, target: IS_CONSTRUCT(ctx, target) and IN_PARTY(ctx, target),
-            source_name="Creator's Guardians",
-        ),
+        "effects": _creators_guardians_effect,
+        "scales_with_level": True,
+        "target": "party",
     },
 
     {
@@ -513,24 +535,28 @@ build_job("Animator", [
         "cost_pool": "sanity",
         "duration": "1 minute",
         "description": (
-            "Allows the Animator to examine any animi, golem, construct, or object for animus potential and sanity cost."
+            "Examine an animi, golem, construct, or object for animus potential and sanity cost."
         ),
-        "effects": skill_check(
-            ability="Eye for Detail",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=inspect(
-                reveal_fn=lambda ctx, target: {
-                    "type": getattr(target, "type", None),
-                    "hp": getattr(target, "current_hp", getattr(target, "hp", None)),
-                    "attributes": getattr(target, "attributes", None),
-                    "animus_potential": _estimate_animus_value(target),
+        "effects": inspect(
+            reveal_fn=lambda source: {
+                "effect": "eye_for_detail",
+                "valid_targets": ("construct", "object"),
+                "check": {
+                    "stat": "intelligence",
+                    "skill": "Eye for Detail",
+                    "difficulty": "construct_resist_difficulty",
                 },
-                condition=lambda ctx, target: IS_CONSTRUCT(ctx, target) or IS_OBJECT(ctx, target),
-            ),
+                "reveals": {
+                    "type": True,
+                    "hp": True,
+                    "attributes": True,
+                    "animus_potential": True,
+                },
+                "source_ability": "Eye for Detail",
+            },
         ),
         "is_spell": True,
-        "scales_with_level": True,
+        "scales_with_level": False,
         "target": "animus_or_object",
     },
 
@@ -567,28 +593,7 @@ build_job("Animator", [
             "Animates a slashing weapon and grants it minor flight, causing it to move and attack on its own."
         ),
         "effects": summon(
-            factory_fn=lambda source, target: create_animi_from_object(
-                caster=source,
-                obj=target,
-                profile={
-                    "hp": 50,
-                    "strength": source.get_stat("willpower"),
-                    "agility": 50,
-                    "sanity": 0,
-                    "armor": 0,
-                    "size": "small",
-                    "material": getattr(target, "material", "metal"),
-                },
-                duration_minutes=_animator_level(source) * 10,
-                name=getattr(target, "name", "Animus Blade"),
-                extra_tags={"weapon_animi", "flying"},
-                states={
-                    "source_ability": "Animus Blade",
-                    "attack_mode": "melee_slashing",
-                    "max_attacks_per_turn": 1,
-                    "orbits_creator": True,
-                },
-            ),
+            factory_fn=_animus_blade_factory,
             condition=IS_OBJECT,
         ),
         "is_spell": True,
@@ -604,14 +609,22 @@ build_job("Animator", [
         "cost_pool": "sanity",
         "duration": "Permanent",
         "description": (
-            "Teaches an animi a weapon skill that you know, up to this skill's level, "
-            "but never above your own skill."
+            "Teach an animi a weapon skill that you know, up to this skill's level, but never above your own skill."
         ),
-        "effects": skill_check(
-            ability="Arm Creation",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=TeachWeaponSkillEffect(),
+        "effects": apply_state(
+            "arm_creation_active",
+            value_fn=lambda source: {
+                "active": True,
+                "contest": {
+                    "caster_stat": "intelligence",
+                    "caster_skill": "Arm Creation",
+                    "target_difficulty": "construct_resist_difficulty",
+                },
+                "stores_weapon_skill_from_context": True,
+                "teaches_up_to_arm_creation_level": True,
+                "never_above_creator_skill": True,
+                "source_ability": "Arm Creation",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,
@@ -628,11 +641,20 @@ build_job("Animator", [
         "description": (
             "Allows the animator to see through one of their animi. The caster may choose to use less than full skill power."
         ),
-        "effects": skill_check(
-            ability="Dollseye",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=ActivateDollseyeEffect(),
+        "effects": apply_state(
+            "dollseye_active",
+            value_fn=lambda source: {
+                "active": True,
+                "contest": {
+                    "caster_stat": "intelligence",
+                    "caster_skill": "Dollseye",
+                    "target_difficulty": "construct_resist_difficulty",
+                },
+                "stores_eye_index_from_context": True,
+                "stores_requested_power_from_context": True,
+                "max_power": _ability_level(source, "Dollseye"),
+                "source_ability": "Dollseye",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,
@@ -653,31 +675,7 @@ build_job("Animator", [
             "It gains Shield and Bodyguard at the level of this skill."
         ),
         "effects": summon(
-            factory_fn=lambda source, target: create_animi_from_object(
-                caster=source,
-                obj=target,
-                profile={
-                    "hp": 100,
-                    "strength": source.get_stat("willpower"),
-                    "agility": 30,
-                    "sanity": 0,
-                    "armor": getattr(target, "armor", 0),
-                    "size": "medium",
-                    "material": getattr(target, "material", "metal"),
-                },
-                duration_minutes=_animator_level(source) * 10,
-                name=getattr(target, "name", "Animus Shield"),
-                extra_tags={"shield_animi", "flying"},
-                states={
-                    "source_ability": "Animus Shield",
-                    "max_attacks_per_turn": 1,
-                    "orbits_creator": True,
-                    "granted_skills": {
-                        "Shield": _ability_level(source, "Animus Shield"),
-                        "Bodyguard": _ability_level(source, "Animus Shield"),
-                    },
-                },
-            ),
+            factory_fn=_animus_shield_factory,
             condition=IS_OBJECT,
         ),
         "is_spell": True,
@@ -685,26 +683,7 @@ build_job("Animator", [
         "target": "shield",
     },
 
-    {
-        "name": "Magic Mouth",
-        "required_level": 10,
-        "type": "skill",
-        "cost": 20,
-        "cost_pool": "sanity",
-        "duration": "10 minutes per skill level",
-        "description": (
-            "Allows the animator to speak through one of the animi or constructs currently in their party."
-        ),
-        "effects": skill_check(
-            ability="Magic Mouth",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=MagicMouthEffect(),
-        ),
-        "is_spell": True,
-        "scales_with_level": True,
-        "target": "party_construct",
-    },
+    {"grant": "Magic Mouth", "required_level": 10},
 
     # Level 15
 
@@ -717,18 +696,22 @@ build_job("Animator", [
         "duration": "1 attack",
         "description": (
             "A ray that inflicts damage on an animus, construct, golem, or other animated object. "
-            "Roll Dexterity + Deanimate against the target's agility. Damage equals the margin of "
-            "success. Armor and Resist Magic do not reduce this damage. Current implementation keeps "
-            "this as a success-gated no-defense damage placeholder until rolls are formalized."
+            "Armor and Resist Magic do not reduce this damage."
         ),
-        "effects": skill_check(
-            ability="Deanimate",
-            stat="dexterity",
-            difficulty=lambda ctx, target: getattr(target, "agility", 0),
-            on_success=NoDefenseDamageEffect(
-                amount_fn=lambda caster, target: _ability_level(caster, "Deanimate"),
-                condition=IS_CONSTRUCT,
-            ),
+        "effects": apply_state(
+            "deanimate_active",
+            value_fn=lambda source: {
+                "active": True,
+                "attack_stat": "dexterity",
+                "attack_skill": "Deanimate",
+                "target_stat": "agility",
+                "damage_pool": "hp",
+                "damage_amount": "margin_of_success",
+                "bypasses_armor": True,
+                "bypasses_resist_magic": True,
+                "valid_targets": ("construct", "animated_object", "golem", "animi"),
+                "source_ability": "Deanimate",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,
@@ -745,7 +728,15 @@ build_job("Animator", [
         "description": (
             "The next Animus spell the Animator casts animates an object at range instead of touch."
         ),
-        "effects": EnableNextAnimusAtRangeEffect(),
+        "effects": apply_state(
+            "distant_animus_ready",
+            value_fn=lambda source: {
+                "active": True,
+                "applies_to_next_animus": True,
+                "range_feet": _animator_level(source),
+                "source_ability": "Distant Animus",
+            },
+        ),
         "is_spell": True,
         "scales_with_level": False,
         "target": "self",
@@ -764,29 +755,7 @@ build_job("Animator", [
             "Animates a bow or crossbow and grants it minor flight, causing it to move and attack on its own."
         ),
         "effects": summon(
-            factory_fn=lambda source, target: create_animi_from_object(
-                caster=source,
-                obj=target,
-                profile={
-                    "hp": 50,
-                    "strength": 0,
-                    "agility": 50,
-                    "sanity": 0,
-                    "armor": 0,
-                    "size": "small",
-                    "material": getattr(target, "material", "wood"),
-                },
-                duration_minutes=_animator_level(source) * 10,
-                name=getattr(target, "name", "Animus Bow"),
-                extra_tags={"weapon_animi", "ranged_weapon_animi", "flying"},
-                states={
-                    "source_ability": "Animus Bow",
-                    "attack_mode": "ranged_bow",
-                    "max_attacks_per_turn": 1,
-                    "orbits_creator": True,
-                    "dexterity_override": source.get_stat("willpower"),
-                },
-            ),
+            factory_fn=_animus_bow_factory,
             condition=IS_OBJECT,
         ),
         "is_spell": True,
@@ -804,11 +773,19 @@ build_job("Animator", [
         "description": (
             "Moves the animator's consciousness out of their body and temporarily into an animi."
         ),
-        "effects": skill_check(
-            ability="Dollsbody",
-            stat="intelligence",
-            difficulty=_construct_resist_difficulty,
-            on_success=ActivateDollsbodyEffect(),
+        "effects": apply_state(
+            "dollsbody_active",
+            value_fn=lambda source: {
+                "active": True,
+                "contest": {
+                    "caster_stat": "intelligence",
+                    "caster_skill": "Dollsbody",
+                    "target_difficulty": "construct_resist_difficulty",
+                },
+                "duration_minutes": _ability_level(source, "Dollsbody"),
+                "moves_consciousness_into_target_animi": True,
+                "source_ability": "Dollsbody",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,
@@ -827,7 +804,16 @@ build_job("Animator", [
         "description": (
             "The next Animus spell the Animator casts animates up to six objects simultaneously."
         ),
-        "effects": EnableAnimusAllEffect(),
+        "effects": apply_state(
+            "animus_all_ready",
+            value_fn=lambda source: {
+                "active": True,
+                "applies_to_next_animus": True,
+                "max_targets": 6,
+                "duration_minutes": 1,
+                "source_ability": "Animus All",
+            },
+        ),
         "is_spell": True,
         "scales_with_level": False,
         "target": "self",
@@ -843,11 +829,20 @@ build_job("Animator", [
         "description": (
             "The animator focuses their will on a single animus, supercharging it while the rest deanimate."
         ),
-        "effects": skill_check(
-            ability="Focus Will",
-            stat="willpower",
-            difficulty=_construct_resist_difficulty,
-            on_success=FocusWillEffect(),
+        "effects": apply_state(
+            "focus_will_active",
+            value_fn=lambda source: {
+                "active": True,
+                "contest": {
+                    "caster_stat": "willpower",
+                    "caster_skill": "Focus Will",
+                    "target_difficulty": "construct_resist_difficulty",
+                },
+                "bonus": _ability_level(source, "Focus Will"),
+                "sanity_per_minute": 50,
+                "all_other_animi_deanimate": True,
+                "source_ability": "Focus Will",
+            },
         ),
         "is_spell": True,
         "scales_with_level": True,

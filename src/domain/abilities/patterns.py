@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable
 
 from domain.effects import (
@@ -373,8 +373,7 @@ def apply_state(
 def aura(effect: Effect, aura_id: str | None = None) -> Effect:
     if aura_id is None:
         aura_id = f"aura:{id(effect)}"
-    effect.aura_id = aura_id
-    return effect
+    return replace(effect, aura_id=aura_id)
 
 def modify_next_attack(modifier_fn: Callable) -> Effect:
     """

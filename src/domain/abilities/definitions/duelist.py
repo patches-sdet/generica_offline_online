@@ -4,6 +4,7 @@ from domain.abilities.patterns import (
     modify_next_attack,
     passive_modifier,
     scaled_derived_buff,
+    aura
 )
 from domain.effects.base import Effect, EffectContext
 from domain.effects.stat_effects import DerivedStatBonus
@@ -198,7 +199,8 @@ build_job("Duelist", [
             "This does not change pools. Only one stance may be active at a time."
         ),
         "duration": "Until Dropped or End of Fight",
-        "effects": apply_state(
+        "effects": aura(
+            apply_state(
             "guard_stance_active",
             value_fn=lambda source: {
                 "active": True,
@@ -213,9 +215,10 @@ build_job("Duelist", [
                     "dexterity": "chosen_value",
                 },
                 "does_not_modify_pools": True,
-                "exclusive_stance_group": "duelist_stance",
                 "source_ability": "Guard Stance",
             },
+        ),
+        aura_id="duelist_stance",
         ),
         "is_passive": False,
         "is_spell": False,
@@ -360,7 +363,8 @@ build_job("Duelist", [
             "This does not change pools. Only one stance may be active at a time."
         ),
         "duration": "Until Dropped or End of Fight",
-        "effects": apply_state(
+        "effects": aura(
+            apply_state(
             "offensive_stance_active",
             value_fn=lambda source: {
                 "active": True,
@@ -374,9 +378,10 @@ build_job("Duelist", [
                     "dodge": "chosen_value",
                 },
                 "does_not_modify_pools": True,
-                "exclusive_stance_group": "duelist_stance",
                 "source_ability": "Offensive Stance",
             },
+        ),
+        aura_id="duelist_stance",
         ),
         "is_passive": False,
         "is_spell": False,
@@ -401,7 +406,8 @@ build_job("Duelist", [
             "Only one stance may be active at a time."
         ),
         "duration": "Until Dropped or End of Fight",
-        "effects": apply_state(
+        "effects": aura(
+            apply_state(
             "mobility_stance_active",
             value_fn=lambda source: {
                 "active": True,
@@ -416,9 +422,10 @@ build_job("Duelist", [
                     "dodge": "chosen_value",
                 },
                 "does_not_modify_pools": True,
-                "exclusive_stance_group": "duelist_stance",
                 "source_ability": "Mobility Stance",
             },
+        ),
+        aura_id="duelist_stance",
         ),
         "is_passive": False,
         "is_spell": False,

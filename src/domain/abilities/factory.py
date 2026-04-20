@@ -10,7 +10,7 @@ class Ability:
 
     # Progression, scaling, and eventual metadata fields
     # required_level should not be in here, since it's dependent on the source that granted it. It's in teh grant registration section
-    level: int = 0
+    level: int = 0 # I think I moved this to Character.py so that it would be unique to each character's progression in a skill, rather than by the ability itself
     scales_with_level: bool = True
 
     # Ability properties
