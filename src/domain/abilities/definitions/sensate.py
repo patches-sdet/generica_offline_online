@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     passive_modifier,
@@ -6,14 +7,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _sensate_level(character) -> int:
-    return character.get_progression_level("adventure", "Sensate", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -25,11 +18,11 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _arts_and_crafts_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _arts_and_crafts_modifier(source) -> None:
+    states = _ensure_states(source)
     states["arts_and_crafts"] = {
         "active": True,
-        "bonus": _sensate_level(ctx.source),
+        "bonus": progression_level(source, "adventure", "Sensate"),
         "applies_to": "level_1_crafting_skill_rolls",
         "source_ability": "Arts and Crafts",
     }
@@ -64,14 +57,14 @@ build_job("Sensate", [
             "dull_sense_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Dull Sense",
                     "target_stat": "wisdom",
                 },
                 "on_success": {
-                    "perception_penalty": _ability_level(source, "Dull Sense"),
+                    "perception_penalty": ability_level(source, "Dull Sense"),
                     "target_unaware_of_effect": True,
                     "target_unaware_of_caster": True,
                 },
@@ -101,8 +94,8 @@ build_job("Sensate", [
             "heighten_sense_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
-                "perception_bonus": _ability_level(source, "Heighten Sense"),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
+                "perception_bonus": ability_level(source, "Heighten Sense"),
                 "source_ability": "Heighten Sense",
             },
         ),
@@ -125,7 +118,7 @@ build_job("Sensate", [
             "phantasmal_picture_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "illusion_type": "visual",
                 "illusion_moves": False,
                 "area_square_meters": 3,
@@ -191,7 +184,7 @@ build_job("Sensate", [
             "deafen_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Deafen",
@@ -252,7 +245,7 @@ build_job("Sensate", [
             "bad_gas_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Bad Gas",
@@ -281,7 +274,7 @@ build_job("Sensate", [
             "phantasm_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "illusion_type": "visual",
                 "illusion_moves": True,
                 "movement_radius_meters": 100,
@@ -319,7 +312,7 @@ build_job("Sensate", [
             "numbness_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _sensate_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Numbness",
@@ -400,7 +393,7 @@ build_job("Sensate", [
             "vomit_comet_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _sensate_level(source),
+                "duration_turns": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Vomit Comet",
@@ -432,7 +425,7 @@ build_job("Sensate", [
             "blind_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _sensate_level(source),
+                "duration_turns": progression_level(source, "adventure", "Sensate"),
                 "contest": {
                     "caster_stat": "intelligence",
                     "caster_skill": "Blind",
@@ -464,7 +457,7 @@ build_job("Sensate", [
                 "requires_existing_phantasm": True,
                 "phantasm_deals_real_damage": True,
                 "damage_pool": "hp",
-                "damage_amount": _sensate_level(source),
+                "damage_amount": progression_level(source, "adventure", "Sensate"),
                 "bypasses_defenses": True,
                 "source_ability": "Vivid Hallucination",
             },

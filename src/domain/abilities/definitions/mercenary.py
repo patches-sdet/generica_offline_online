@@ -1,8 +1,8 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     composite,
-    conditional_damage,
     heal_hp,
     inspect,
     passive_modifier,
@@ -13,14 +13,6 @@ from domain.conditions import IS_ENEMY
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _mercenary_level(character) -> int:
-    return character.get_progression_level("adventure", "Mercenary", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -62,14 +54,14 @@ build_job("Mercenary", [
         "duration": "1 Action",
         "effects": composite(
             heal_hp(
-                scale_fn=lambda c: _ability_level(c, "Blood is Gold") * 3,
+                scale_fn=lambda c: ability_level(c, "Blood is Gold") * 3,
             ),
             apply_state(
                 "blood_is_gold_active",
                 value_fn=lambda source: {
                     "active": True,
                     "coin_heal_rate_copper_per_hp": 5,
-                    "max_heal_per_use": _ability_level(source, "Blood is Gold") * 3,
+                    "max_heal_per_use": ability_level(source, "Blood is Gold") * 3,
                     "requires_spendable_coin": True,
                     "consumed_coin_is_destroyed": True,
                     "source_ability": "Blood is Gold",
@@ -95,10 +87,10 @@ build_job("Mercenary", [
             "do_the_job_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Do the Job"),
+                "duration_minutes": ability_level(source, "Do the Job"),
                 "requires_rewarded_quest": True,
                 "requires_actively_pursuing_quest": True,
-                "all_roll_bonus": _ability_level(source, "Do the Job"),
+                "all_roll_bonus": ability_level(source, "Do the Job"),
                 "source_ability": "Do the Job",
             },
         ),
@@ -119,7 +111,7 @@ build_job("Mercenary", [
         "duration": "1 Turn per Skill Level",
         "effects": composite(
             scaled_stat_buff(
-                scale_fn=_mercenary_level,
+                scale_fn=lambda source: progression_level(source, "adventure", "Mercenary"),
                 stats={
                     "constitution": 1,
                     "strength": 1,
@@ -127,7 +119,7 @@ build_job("Mercenary", [
                 },
             ),
             scaled_skill_buff(
-                scale_fn=_mercenary_level,
+                scale_fn=lambda source: progression_level(source, "adventure", "Mercenary"),
                 skills={
                     "all_weapon_skills": 1,
                 },
@@ -136,9 +128,9 @@ build_job("Mercenary", [
                 "fight_the_battles_active",
                 value_fn=lambda source: {
                     "active": True,
-                    "duration_turns": _ability_level(source, "Fight the Battles"),
+                    "duration_turns": ability_level(source, "Fight the Battles"),
                     "weapon_skill_scope": "all_weapon_skills",
-                    "bonus_amount": _mercenary_level(source),
+                    "bonus_amount": progression_level(source, "adventure", "Mercenary"),
                     "source_ability": "Fight the Battles",
                 },
             ),
@@ -163,7 +155,7 @@ build_job("Mercenary", [
             value_fn=lambda source: {
                 "active": True,
                 "trigger": "quest_giver_refuses_payment",
-                "luck_penalty": _ability_level(source, "Get Paid"),
+                "luck_penalty": ability_level(source, "Get Paid"),
                 "restored_if_paid": True,
                 "levels_on_use": True,
                 "source_ability": "Get Paid",
@@ -187,8 +179,8 @@ build_job("Mercenary", [
             "take_the_hits_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Take the Hits"),
-                "hp_bonus": _ability_level(source, "Take the Hits"),
+                "duration_turns": ability_level(source, "Take the Hits"),
+                "hp_bonus": ability_level(source, "Take the Hits"),
                 "source_ability": "Take the Hits",
             },
         ),
@@ -241,8 +233,8 @@ build_job("Mercenary", [
             value_fn=lambda source: {
                 "active": True,
                 "duration_hours": 1,
-                "walking_bonus": _ability_level(source, "Forced March"),
-                "running_bonus": _ability_level(source, "Forced March"),
+                "walking_bonus": ability_level(source, "Forced March"),
+                "running_bonus": ability_level(source, "Forced March"),
                 "per_person_cost": 10,
                 "cost_pool": "stamina",
                 "source_ability": "Forced March",
@@ -299,7 +291,7 @@ build_job("Mercenary", [
                 "duration_turns": 1,
                 "trigger": "enemy_moves_adjacent",
                 "grants_free_attack": True,
-                "damage_bonus_on_hit": _ability_level(source, "Set Spears"),
+                "damage_bonus_on_hit": ability_level(source, "Set Spears"),
                 "applies_to_party": True,
                 "counts_charge_as_trigger": True,
                 "source_ability": "Set Spears",
@@ -324,7 +316,7 @@ build_job("Mercenary", [
             value_fn=lambda source: {
                 "active": True,
                 "swap_positions": True,
-                "max_range_feet": _ability_level(source, "Switch Ranks"),
+                "max_range_feet": ability_level(source, "Switch Ranks"),
                 "requires_party_target": True,
                 "source_ability": "Switch Ranks",
             },

@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -7,14 +8,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _merchant_level(character) -> int:
-    return character.get_progression_level("adventure", "Merchant", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -26,11 +19,11 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _quality_work_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _quality_work_modifier(source) -> None:
+    states = _ensure_states(source)
     states["quality_work"] = {
         "active": True,
-        "bonus": _merchant_level(ctx.source),
+        "bonus": progression_level(source, "adventure", "Merchant"),
         "applies_to": (
             "crafting_mundane_items",
             "crafting_job_services",
@@ -97,7 +90,7 @@ build_job("Merchant", [
             value_fn=lambda source: {
                 "active": True,
                 "duration_minutes": 5,
-                "negotiation_roll_bonus": _ability_level(source, "Haggle"),
+                "negotiation_roll_bonus": ability_level(source, "Haggle"),
                 "source_ability": "Haggle",
             },
         ),
@@ -151,10 +144,10 @@ build_job("Merchant", [
             "pack_of_holding_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _merchant_level(source),
+                "duration_hours": progression_level(source, "adventure", "Merchant"),
                 "requires_container_target": True,
                 "creates_extradimensional_room": True,
-                "capacity_cubic_meters": _ability_level(source, "Pack of Holding"),
+                "capacity_cubic_meters": ability_level(source, "Pack of Holding"),
                 "single_active_pack_only": True,
                 "destroyed_container_ejects_contents": True,
                 "source_ability": "Pack of Holding",
@@ -197,9 +190,9 @@ build_job("Merchant", [
             "yah_mule_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _merchant_level(source),
+                "duration_hours": progression_level(source, "adventure", "Merchant"),
                 "applies_to_pack_animals_being_driven_or_ridden": True,
-                "movement_rate_bonus": _ability_level(source, "Yah Mule"),
+                "movement_rate_bonus": ability_level(source, "Yah Mule"),
                 "source_ability": "Yah Mule",
             },
         ),
@@ -258,7 +251,7 @@ build_job("Merchant", [
             "not_in_the_face_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Not in the Face!"),
+                "duration_turns": ability_level(source, "Not in the Face!"),
                 "requires_non_hostile_behavior": True,
                 "requires_non_hindering_behavior": True,
                 "attackers_must_roll": {
@@ -352,7 +345,7 @@ build_job("Merchant", [
             "lockbox_of_loot_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_days": _merchant_level(source),
+                "duration_days": progression_level(source, "adventure", "Merchant"),
                 "requires_lockbox_target": True,
                 "creates_stationary_pack_of_holding": True,
                 "follows_pack_of_holding_rules": True,
@@ -384,9 +377,9 @@ build_job("Merchant", [
             "claim_store_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_months": _merchant_level(source),
+                "duration_months": progression_level(source, "adventure", "Merchant"),
                 "requires_legally_owned_building": True,
-                "store_roll_bonus": _merchant_level(source),
+                "store_roll_bonus": progression_level(source, "adventure", "Merchant"),
                 "self_cleaning": True,
                 "comfortable_temperature_for_merchant": True,
                 "stored_items_self_maintain": True,
@@ -413,9 +406,9 @@ build_job("Merchant", [
             "upgrade_item_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Upgrade Item"),
+                "duration_turns": ability_level(source, "Upgrade Item"),
                 "requires_item_target": True,
-                "roll_bonus_while_using_item": _merchant_level(source),
+                "roll_bonus_while_using_item": progression_level(source, "adventure", "Merchant"),
                 "artifact_behavior_may_be_unpredictable": True,
                 "source_ability": "Upgrade Item",
             },

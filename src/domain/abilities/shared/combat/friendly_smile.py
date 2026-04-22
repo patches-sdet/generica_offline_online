@@ -1,5 +1,6 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 from domain.abilities.patterns import apply_state
+from domain.abilities import ctx_progression_level
 
 FRIENDLY_SMILE = {
         "name": "Friendly Smile",
@@ -14,7 +15,7 @@ FRIENDLY_SMILE = {
             "friendly_smile_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns_on_success": _merchant_level(source),
+                "duration_turns_on_success": ctx_progression_level(source, str, str),
                 "contest": {
                     "caster_stat": "charisma",
                     "caster_skill": "Friendly Smile",
@@ -23,7 +24,7 @@ FRIENDLY_SMILE = {
                 "target_must_see_smile": True,
                 "no_vocalization_required": True,
                 "prevents_target_attacking_caster": True,
-                "charisma_bonus_against_target": _merchant_level(source),
+                "charisma_bonus_against_target": ctx_progression_level(source, str, str),
                 "source_ability": "Friendly Smile",
             },
         ),

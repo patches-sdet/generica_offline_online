@@ -1,8 +1,10 @@
 from __future__ import annotations
-
 from dataclasses import dataclass, field
-
+from domain.conditions import IS_CONSTRUCT, IS_OBJECT, IN_PARTY
+from domain.effects.base import EffectContext
+from domain.effects.special.minions import ScaledNonZeroAttributeBuffEffect
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, progression_level
 from domain.abilities.patterns import (
     apply_state,
     composite,
@@ -10,24 +12,15 @@ from domain.abilities.patterns import (
     inspect,
     summon,
 )
-from domain.conditions import IS_CONSTRUCT, IS_OBJECT, IN_PARTY
-from domain.effects.base import EffectContext
-from domain.effects.special.minions import ScaledNonZeroAttributeBuffEffect
 
-
-# ---------------------------------------------------------------------------
 # Local metadata keys
-# ---------------------------------------------------------------------------
 
 COMMAND_TEXT = "command"
 WEAPON_SKILL = "weapon_skill"
 DOLLSEYE_POWER = "dollseye_power"
 EYE_INDEX = "eye_index"
 
-
-# ---------------------------------------------------------------------------
 # Animus reference tables
-# ---------------------------------------------------------------------------
 
 ANIMUS_SIZE_TABLE = {
     "small": {
@@ -77,10 +70,7 @@ ANIMUS_MATERIAL_ARMOR = {
     "metal": 25,
 }
 
-
-# ---------------------------------------------------------------------------
 # Runtime animi entity
-# ---------------------------------------------------------------------------
 
 @dataclass(slots=True)
 class Animi:
@@ -146,24 +136,12 @@ class Animi:
     def spend_resource(self, pool: str, amount: int) -> bool:
         return self.modify_resource(pool, -amount)
 
-
-# ---------------------------------------------------------------------------
 # Rule helpers
-# ---------------------------------------------------------------------------
-
-def _animator_level(character) -> int:
-    return character.get_progression_level("adventure", "Animator", 0)
-
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
 
 def _ensure_party(owner) -> list:
     if not hasattr(owner, "party") or owner.party is None:
         owner.party = []
     return owner.party
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -171,7 +149,6 @@ def _ensure_states(target) -> dict:
         states = {}
         setattr(target, "states", states)
     return states
-
 
 def _size_key(obj) -> str:
     size = getattr(obj, "animus_size", None) or getattr(obj, "size", None)
@@ -184,7 +161,6 @@ def _size_key(obj) -> str:
 
     return size
 
-
 def _material_key(obj) -> str:
     material = getattr(obj, "animus_material", None) or getattr(obj, "material", None)
     if not material:
@@ -196,10 +172,8 @@ def _material_key(obj) -> str:
 
     return material
 
-
 def _length_feet(obj) -> int:
     return int(getattr(obj, "length_feet", 10) or 10)
-
 
 def _enormous_extra_cost(obj) -> int:
     if _size_key(obj) != "enormous":
@@ -207,7 +181,6 @@ def _enormous_extra_cost(obj) -> int:
 
     extra_feet = max(0, _length_feet(obj) - 10)
     return (extra_feet // 10) * 50
-
 
 def _animus_profile(obj) -> dict:
     size = _size_key(obj)
@@ -221,10 +194,8 @@ def _animus_profile(obj) -> dict:
     base["total_cost"] = base["cost"] + base["extra_cost"]
     return base
 
-
 def _animus_duration_minutes(caster) -> int:
-    return max(1, _ability_level(caster, "Animus")) * 10
-
+    return max(1, ability_level(caster, "Animus")) * 10
 
 def _construct_resist_difficulty(source, target) -> int:
     creator = getattr(target, "creator", None)
@@ -238,7 +209,6 @@ def _construct_resist_difficulty(source, target) -> int:
         return roll_fn()
 
     return getattr(target, "willpower", 0)
-
 
 def _estimate_animus_value(target) -> dict:
     try:
@@ -259,10 +229,7 @@ def _estimate_animus_value(target) -> dict:
         "sanity_cost": profile["total_cost"],
     }
 
-
-# ---------------------------------------------------------------------------
 # Entity factory helpers
-# ---------------------------------------------------------------------------
 
 def create_animi_from_object(
     caster,
@@ -325,7 +292,6 @@ def create_animi_from_object(
 
     return animi
 
-
 def _animus_factory(source, target):
     if target is None:
         raise ValueError("Animus requires a target object.")
@@ -337,7 +303,6 @@ def _animus_factory(source, target):
         profile=profile,
         duration_minutes=_animus_duration_minutes(source),
     )
-
 
 def _animus_blade_factory(source, target):
     if target is None:
@@ -355,7 +320,7 @@ def _animus_blade_factory(source, target):
             "size": "small",
             "material": getattr(target, "material", "metal"),
         },
-        duration_minutes=_animator_level(source) * 10,
+        duration_minutes=progression_level(source, "adventure", "Animator") * 10,
         name=getattr(target, "name", "Animus Blade"),
         extra_tags={"weapon_animi", "flying"},
         states={
@@ -366,12 +331,10 @@ def _animus_blade_factory(source, target):
         },
     )
 
-
 def _animus_shield_factory(source, target):
     if target is None:
         raise ValueError("Animus Shield requires a shield target.")
 
-    skill_level = _ability_level(source, "Animus Shield")
     return create_animi_from_object(
         caster=source,
         obj=target,
@@ -384,7 +347,7 @@ def _animus_shield_factory(source, target):
             "size": "medium",
             "material": getattr(target, "material", "metal"),
         },
-        duration_minutes=_animator_level(source) * 10,
+        duration_minutes=progression_level(source, "adventure", "Animator") * 10,
         name=getattr(target, "name", "Animus Shield"),
         extra_tags={"shield_animi", "flying"},
         states={
@@ -392,12 +355,11 @@ def _animus_shield_factory(source, target):
             "max_attacks_per_turn": 1,
             "orbits_creator": True,
             "granted_skills": {
-                "Shield": skill_level,
-                "Bodyguard": skill_level,
+                "Shield": ability_level(source, "Animus Shield"),
+                "Bodyguard": ability_level(source, "Animus Shield"),
             },
         },
     )
-
 
 def _animus_bow_factory(source, target):
     if target is None:
@@ -415,7 +377,7 @@ def _animus_bow_factory(source, target):
             "size": "small",
             "material": getattr(target, "material", "wood"),
         },
-        duration_minutes=_animator_level(source) * 10,
+        duration_minutes=progression_level(source, "adventure", "Animator") * 10,
         name=getattr(target, "name", "Animus Bow"),
         extra_tags={"weapon_animi", "ranged_weapon_animi", "flying"},
         states={
@@ -427,25 +389,19 @@ def _animus_bow_factory(source, target):
         },
     )
 
-
-# ---------------------------------------------------------------------------
 # Passive effect helper
-# ---------------------------------------------------------------------------
 
 def _creators_guardians_effect(ctx: EffectContext):
     return ScaledNonZeroAttributeBuffEffect(
         scale_fn=lambda c: (
             c.get_stat("willpower", 0)
-            + _ability_level(c, "Creator's Guardians")
+            + ability_level(c, "Creator's Guardians")
         ) // 10,
         condition=lambda inner_ctx, target: IS_CONSTRUCT(inner_ctx, target) and IN_PARTY(inner_ctx, target),
         source_name="Creator's Guardians",
     )
 
-
-# ---------------------------------------------------------------------------
 # Job definition
-# ---------------------------------------------------------------------------
 
 build_job("Animator", [
 
@@ -572,7 +528,7 @@ build_job("Animator", [
             "(Animator level + Mend level) // 2."
         ),
         "effects": heal_hp(
-            scale_fn=lambda c: (_animator_level(c) + _ability_level(c, "Mend")) // 2,
+            scale_fn=lambda c: (progression_level(c, "adventure", "Animator") + ability_level(c, "Mend")) // 2,
             condition=lambda ctx, target: IS_CONSTRUCT(ctx, target) or IS_OBJECT(ctx, target),
         ),
         "is_spell": True,
@@ -652,7 +608,7 @@ build_job("Animator", [
                 },
                 "stores_eye_index_from_context": True,
                 "stores_requested_power_from_context": True,
-                "max_power": _ability_level(source, "Dollseye"),
+                "max_power": ability_level(source, "Dollseye"),
                 "source_ability": "Dollseye",
             },
         ),
@@ -733,7 +689,7 @@ build_job("Animator", [
             value_fn=lambda source: {
                 "active": True,
                 "applies_to_next_animus": True,
-                "range_feet": _animator_level(source),
+                "range_feet": progression_level(source, "adventure", "Animator"),
                 "source_ability": "Distant Animus",
             },
         ),
@@ -782,7 +738,7 @@ build_job("Animator", [
                     "caster_skill": "Dollsbody",
                     "target_difficulty": "construct_resist_difficulty",
                 },
-                "duration_minutes": _ability_level(source, "Dollsbody"),
+                "duration_minutes": ability_level(source, "Dollsbody"),
                 "moves_consciousness_into_target_animi": True,
                 "source_ability": "Dollsbody",
             },
@@ -838,7 +794,7 @@ build_job("Animator", [
                     "caster_skill": "Focus Will",
                     "target_difficulty": "construct_resist_difficulty",
                 },
-                "bonus": _ability_level(source, "Focus Will"),
+                "bonus": ability_level(source, "Focus Will"),
                 "sanity_per_minute": 50,
                 "all_other_animi_deanimate": True,
                 "source_ability": "Focus Will",

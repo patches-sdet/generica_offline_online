@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -7,14 +8,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _ruler_level(character) -> int:
-    return character.get_progression_level("adventure", "Ruler", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -26,13 +19,13 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _noblesse_oblige_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _noblesse_oblige_modifier(source) -> None:
+    states = _ensure_states(source)
     states["noblesse_oblige"] = {
         "active": True,
         "applies_to": ("sworn_subjects", "party_members"),
         "buff_stat": "highest_attribute",
-        "buff_amount": _ruler_level(ctx.source),
+        "buff_amount": progression_level(source, "adventure", "Ruler"),
         "source_ability": "Noblesse Oblige",
     }
 
@@ -73,12 +66,12 @@ build_job("Ruler", [
             "emboldening_speech_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ruler_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Ruler"),
                 "requires_full_turn": True,
                 "cannot_do_anything_else_while_activating": True,
                 "affects_allies_within_earshot": True,
-                "moxie_bonus": (source.get_stat("charisma", 0) // 5) + _ability_level(source, "Emboldening Speech"),
-                "sanity_bonus": (source.get_stat("charisma", 0) // 5) + _ability_level(source, "Emboldening Speech"),
+                "moxie_bonus": (source.get_stat("charisma", 0) // 5) + ability_level(source, "Emboldening Speech"),
+                "sanity_bonus": (source.get_stat("charisma", 0) // 5) + ability_level(source, "Emboldening Speech"),
                 "source_ability": "Emboldening Speech",
             },
         ),
@@ -143,8 +136,8 @@ build_job("Ruler", [
             "royal_audience_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ruler_level(source),
-                "charisma_bonus": _ability_level(source, "Royal Audience"),
+                "duration_minutes": progression_level(source, "adventure", "Ruler"),
+                "charisma_bonus": ability_level(source, "Royal Audience"),
                 "only_applies_with_sworn_subjects": True,
                 "source_ability": "Royal Audience",
             },
@@ -199,7 +192,7 @@ build_job("Ruler", [
             "appoint_official_active",
             value_fn=lambda source: {
                 "active": True,
-                "official_limit": _ruler_level(source),
+                "official_limit": progression_level(source, "adventure", "Ruler"),
                 "official_must_be_subject": True,
                 "officials_may_accept_fealty": True,
                 "accepted_subjects_join_your_subject_pool": True,
@@ -228,7 +221,7 @@ build_job("Ruler", [
                 "choose_one_shared_quest": True,
                 "applies_while_working_toward_quest": True,
                 "affects": ("party_members", "subjects"),
-                "all_attribute_bonus": _ruler_level(source),
+                "all_attribute_bonus": progression_level(source, "adventure", "Ruler"),
                 "only_one_organized_task": True,
                 "source_ability": "Organize Minions",
             },
@@ -322,7 +315,7 @@ build_job("Ruler", [
             value_fn=lambda source: {
                 "active": True,
                 "promote_one_or_more_party_members": True,
-                "weapon_skill_bonus": _ruler_level(source),
+                "weapon_skill_bonus": progression_level(source, "adventure", "Ruler"),
                 "pool_bonus": source.get_stat("charisma", 0),
                 "source_ability": "Kingsguard",
             },
@@ -348,9 +341,9 @@ build_job("Ruler", [
                 "active": True,
                 "choose_nation_or_organization": True,
                 "all_subjects_notified": True,
-                "attack_roll_penalty_against_treaty_group": _ruler_level(source),
-                "charisma_bonus_with_treaty_group": _ruler_level(source),
-                "perception_bonus_with_treaty_group": _ruler_level(source),
+                "attack_roll_penalty_against_treaty_group": progression_level(source, "adventure", "Ruler"),
+                "charisma_bonus_with_treaty_group": progression_level(source, "adventure", "Ruler"),
+                "perception_bonus_with_treaty_group": progression_level(source, "adventure", "Ruler"),
                 "source_ability": "Proclaim Treaty",
             },
         ),
@@ -437,8 +430,8 @@ build_job("Ruler", [
                 "flag_must_stand_for_days": 7,
                 "land_becomes_claimed_on_success": True,
                 "non_enemies_in_domain_become_subjects": True,
-                "self_attribute_bonus_in_domain": _ruler_level(source),
-                "self_defense_bonus_in_domain": _ruler_level(source),
+                "self_attribute_bonus_in_domain": progression_level(source, "adventure", "Ruler"),
+                "self_defense_bonus_in_domain": progression_level(source, "adventure", "Ruler"),
                 "source_ability": "Claim Domain",
             },
         ),
@@ -462,8 +455,8 @@ build_job("Ruler", [
                 "active": True,
                 "choose_enemy_species_or_organization": True,
                 "affects": ("subjects", "party_members"),
-                "attack_roll_bonus_against_declared_enemy": _ruler_level(source),
-                "defense_bonus_against_declared_enemy": _ruler_level(source),
+                "attack_roll_bonus_against_declared_enemy": progression_level(source, "adventure", "Ruler"),
+                "defense_bonus_against_declared_enemy": progression_level(source, "adventure", "Ruler"),
                 "source_ability": "Declaration of War",
             },
         ),

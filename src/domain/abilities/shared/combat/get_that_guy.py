@@ -1,5 +1,6 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 from domain.abilities.patterns import apply_state
+from domain.abilities import ability_level, ctx_progression_level
 
 GET_THAT_GUY = {
         "name": "Get That Guy!",
@@ -13,14 +14,11 @@ GET_THAT_GUY = {
         "effects": apply_state(
             "get_that_guy",
             value_fn=lambda source: {
-                "duration_turns": _ability_level(source, "Get That Guy!"),
-                "attack_bonus": _bandit_level(source),
+                "duration_turns": ability_level(source, "Get That Guy!"),
+                "attack_bonus": ctx_progression_level(source, str, str),
                 "applies_to": "bastards_against_marked_target",
             },
         ),
-        "is_passive": False,
-        "is_skill": True,
-        "is_spell": False,
         "required_level": 10,
         "scales_with_level": True,
         "target": "enemy",

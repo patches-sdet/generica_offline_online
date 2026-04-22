@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ctx_ability_level, progression_level, ctx_progression_level, ability_level
 from domain.abilities.patterns import (
     apply_state,
     create_item,
@@ -24,21 +25,12 @@ SUBSTANCE_ALCHEMY_VALUE = "substance_alchemy_value"
 
 # Rule helpers
 
-def _alchemist_level(character) -> int:
-    return character.get_progression_level("adventure", "Alchemist", 0)
-
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
     if states is None:
         states = {}
         setattr(target, "states", states)
     return states
-
 
 # Item factory helpers
 
@@ -52,7 +44,6 @@ def _make_distilled_material_factory(product_type: str, *, tier: str):
             "source_job": "Alchemist",
         }
     return factory_fn
-
 
 def _make_healing_potion_factory(tier: str):
     reagent_tier = {
@@ -72,7 +63,6 @@ def _make_healing_potion_factory(tier: str):
         }
     return factory_fn
 
-
 def _make_mana_potion_factory(tier: str):
     reagent_tier = {
         "basic": "red",
@@ -91,7 +81,6 @@ def _make_mana_potion_factory(tier: str):
         }
     return factory_fn
 
-
 def _make_attribute_booster_factory(tier: str, booster_stat: str):
     def factory_fn(source, _target):
         return {
@@ -105,7 +94,6 @@ def _make_attribute_booster_factory(tier: str, booster_stat: str):
         }
     return factory_fn
 
-
 def _make_universal_antidote_factory():
     def factory_fn(source, target):
         return {
@@ -116,7 +104,6 @@ def _make_universal_antidote_factory():
             "source_job": "Alchemist",
         }
     return factory_fn
-
 
 def _make_speed_potion_factory(tier: str):
     reagent_count = {
@@ -137,7 +124,6 @@ def _make_speed_potion_factory(tier: str):
         }
     return factory_fn
 
-
 def _make_tranquilizer_factory(tier: str, form: str):
     crystal_tier = "level_1" if tier == "basic" else "level_2"
 
@@ -152,7 +138,6 @@ def _make_tranquilizer_factory(tier: str, form: str):
         }
     return factory_fn
 
-
 def _make_upgraded_reagent_factory(color_steps: int):
     def factory_fn(source, _target):
         return {
@@ -163,7 +148,6 @@ def _make_upgraded_reagent_factory(color_steps: int):
             "source_job": "Alchemist",
         }
     return factory_fn
-
 
 # Passive helpers
 
@@ -177,20 +161,18 @@ def _internal_chemistry_modifier(ctx) -> None:
             "double_one_numerical_value",
             "delay_reaction",
         ),
-        "max_delay_minutes": _alchemist_level(ctx.source),
+        "max_delay_minutes": ctx_progression_level(ctx, "adventure", "Alchemist"),
         "source_ability": "Internal Chemistry",
     }
-
 
 def _alchemical_experimentation_modifier(ctx) -> None:
     states = _ensure_states(ctx.source)
     states["alchemical_experimentation"] = {
         "active": True,
-        "experimental_skill_capacity": _alchemist_level(ctx.source) // 10,
+        "experimental_skill_capacity": ctx_progression_level(ctx, "adventure", "Alchemist") // 10,
         "extra_experimental_skills_stored_in_journals": True,
         "source_ability": "Alchemical Experimentation",
     }
-
 
 build_job("Alchemist", [
 
@@ -240,13 +222,13 @@ build_job("Alchemist", [
         ),
         "effects": apply_state(
             "bomb_active",
-            value_fn=lambda source: {
+            value_fn=lambda c: {
                 "active": True,
                 "attack_stat": "dexterity",
                 "attack_skill": "Bomb",
                 "target_stat": "agility",
                 "damage_pool": "hp",
-                "damage_bonus_from_alchemist_level": _alchemist_level(source),
+                "damage_bonus_from_alchemist_level": progression_level(c, "adventure", "Alchemist"),
                 "affects_nearby_foes": True,
                 "splash_shape_runtime_defined": True,
                 "source_ability": "Bomb",
@@ -349,11 +331,11 @@ build_job("Alchemist", [
         ),
         "effects": apply_state(
             "duck_and_cover_active",
-            value_fn=lambda source: {
+            value_fn=lambda ctx: {
                 "active": True,
                 "apply_condition": "prone",
-                "chemical_damage_reduction": _ability_level(source, "Duck and Cover"),
-                "elemental_damage_reduction": _ability_level(source, "Duck and Cover"),
+                "chemical_damage_reduction": ctx_ability_level(ctx, "Duck and Cover"),
+                "elemental_damage_reduction": ctx_ability_level(ctx, "Duck and Cover"),
                 "source_ability": "Duck and Cover",
             },
         ),
@@ -394,13 +376,13 @@ build_job("Alchemist", [
         ),
         "effects": apply_state(
             "geek_fire_active",
-            value_fn=lambda source: {
+            value_fn=lambda c: {
                 "active": True,
                 "attack_stat": "dexterity",
                 "attack_skill": "Geek Fire",
                 "target_stat": "agility",
                 "damage_pool": "hp",
-                "damage_bonus_from_alchemist_level": _alchemist_level(source),
+                "damage_bonus_from_alchemist_level": progression_level(c, "adventure", "Alchemist"),
                 "damage_type": "fire",
                 "critical_burning_runtime_defined": True,
                 "source_ability": "Geek Fire",
@@ -458,10 +440,10 @@ build_job("Alchemist", [
         ),
         "effects": apply_state(
             "distilled_id_active",
-            value_fn=lambda source: {
+            value_fn=lambda ctx: {
                 "active": True,
-                "rage_proxy_level": _ability_level(source, "Distilled Id"),
-                "duration_turns": _alchemist_level(source),
+                "rage_proxy_level": ctx_ability_level(ctx, "Distilled Id"),
+                "duration_turns": ctx_progression_level(ctx, "adventure", "Alchemist"),
                 "source_ability": "Distilled Id",
             },
         ),

@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     heal_hp,
@@ -8,14 +9,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _shaman_level(character) -> int:
-    return character.get_progression_level("adventure", "Shaman", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -27,12 +20,12 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _secret_herbs_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _secret_herbs_modifier(source) -> None:
+    states = _ensure_states(source)
     states["secret_herbs_and_spices"] = {
         "active": True,
-        "duration_minutes": _shaman_level(ctx.source),
-        "plant_roll_bonus": _ability_level(ctx.source, "Secret Herbs and Spices"),
+        "duration_minutes": progression_level(source, "adventure", "Shaman"),
+        "plant_roll_bonus": ability_level(source, "Secret Herbs and Spices"),
         "identifies_unknown_plants_and_uses": True,
         "counts_as_skill": "Herbalism",
         "applies_to": (
@@ -56,7 +49,7 @@ build_job("Shaman", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=_shaman_level,
+            scale_fn=lambda source: progression_level(source, "adventure", "Shaman"),
             stat="fate",
         ),
         "required_level": 1,
@@ -96,11 +89,11 @@ build_job("Shaman", [
             "slow_regeneration_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "water_based_healing": True,
                 "valid_targets_include_water_elementals": True,
-                "total_healing": _ability_level(source, "Slow Regeneration"),
-                "healing_per_turn": max(1, _ability_level(source, "Slow Regeneration") // 6),
+                "total_healing": ability_level(source, "Slow Regeneration"),
+                "healing_per_turn": max(1, ability_level(source, "Slow Regeneration") // 6),
                 "may_be_cast_preemptively": True,
                 "cannot_heal_past_max_hp": True,
                 "source_ability": "Slow Regeneration",
@@ -155,10 +148,10 @@ build_job("Shaman", [
             "beastly_skill_borrow_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "choose_beast_type": True,
                 "gain_level_1_beast_skills": True,
-                "borrowed_skill_rating": _ability_level(source, "Beastly Skill Borrow") // 2,
+                "borrowed_skill_rating": ability_level(source, "Beastly Skill Borrow") // 2,
                 "source_ability": "Beastly Skill Borrow",
             },
         ),
@@ -181,13 +174,13 @@ build_job("Shaman", [
             "call_vines_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "requires_nearby_plantlife": True,
                 "creates_mobile_vines": True,
-                "vine_strength": _ability_level(source, "Call Vines"),
-                "vine_brawling": _ability_level(source, "Call Vines"),
-                "vine_armor": _shaman_level(source),
-                "vine_hp": _shaman_level(source) * 10,
+                "vine_strength": ability_level(source, "Call Vines"),
+                "vine_brawling": ability_level(source, "Call Vines"),
+                "vine_armor": progression_level(source, "adventure", "Shaman"),
+                "vine_hp": progression_level(source, "adventure", "Shaman") * 10,
                 "source_ability": "Call Vines",
             },
         ),
@@ -249,9 +242,9 @@ build_job("Shaman", [
             "call_thorns_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "requires_nearby_plantlife": True,
-                "thorn_damage_hp": _ability_level(source, "Call Thorns"),
+                "thorn_damage_hp": ability_level(source, "Call Thorns"),
                 "damages_targets_moving_through_or_pushed_into_vegetation": True,
                 "synergy_with_call_vines": {
                     "increases_vine_damage": True,
@@ -281,10 +274,10 @@ build_job("Shaman", [
             "fast_regeneration_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "water_based_healing": True,
                 "valid_targets_include_water_elementals": True,
-                "healing_per_turn": _ability_level(source, "Fast Regeneration"),
+                "healing_per_turn": ability_level(source, "Fast Regeneration"),
                 "may_be_cast_preemptively": True,
                 "cannot_heal_past_max_hp": True,
                 "source_ability": "Fast Regeneration",
@@ -311,12 +304,12 @@ build_job("Shaman", [
             "beast_shape_i_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "choose_tier_1_animal": True,
                 "gain_animal_job_levels": 1,
                 "gain_temporary_attribute_adjustments": True,
                 "gain_full_access_to_animal_skills": True,
-                "leveled_animal_skills_use": _ability_level(source, "Beast Shape I"),
+                "leveled_animal_skills_use": ability_level(source, "Beast Shape I"),
                 "source_ability": "Beast Shape I",
             },
         ),
@@ -435,12 +428,12 @@ build_job("Shaman", [
             "beast_shape_v_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _shaman_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Shaman"),
                 "choose_animal": True,
                 "gain_animal_job_levels": 5,
                 "gain_temporary_attribute_adjustments": True,
                 "gain_full_access_to_animal_skills": True,
-                "leveled_animal_skills_use": _ability_level(source, "Beast Shape V"),
+                "leveled_animal_skills_use": ability_level(source, "Beast Shape V"),
                 "source_ability": "Beast Shape V",
             },
         ),

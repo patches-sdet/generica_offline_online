@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     create_item,
@@ -10,14 +11,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _knight_level(character) -> int:
-    return character.get_progression_level("adventure", "Knight", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -37,9 +30,9 @@ def _shield_saint_modifier(ctx) -> None:
     states = _ensure_states(ctx.source)
     states["shield_saint_active"] = {
         "active": True,
-        "duration_turns": _ability_level(ctx.source, "Shield Saint"),
+        "duration_turns": ability_level(ctx, "Shield Saint"),
         "requires_shield": True,
-        "agility_targeting_penalty": _ability_level(ctx.source, "Shield Saint"),
+        "agility_targeting_penalty": ability_level(ctx, "Shield Saint"),
         "shield_armor_bonus_suppressed": True,
         "source_ability": "Shield Saint",
     }
@@ -59,7 +52,7 @@ def _duty_is_no_burden_modifier(ctx) -> None:
 
 def _dolorous_strike_modifier(ctx, attack) -> None:
     _set_attack_attr(attack, "requires_melee_range", True)
-    _set_attack_attr(attack, "damage_bonus", _ability_level(ctx.source, "Dolorous Strike"))
+    _set_attack_attr(attack, "damage_bonus", ability_level(ctx, "Dolorous Strike"))
     _set_attack_attr(attack, "dolorous_strike", True)
 
 
@@ -69,7 +62,7 @@ def _make_lance(source):
     return {
         "name": "Lance",
         "base_type": "spear",
-        "weapon_level": _knight_level(source),
+        "weapon_level": progression_level(source, "adventure", "Knight"),
         "created_by": "Lancer",
         "temporary": True,
         "duration_minutes": 5,
@@ -87,7 +80,7 @@ build_job("Knight", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=_knight_level,
+            scale_fn=lambda ctx: ctx_progression_level(ctx, "adventure", "Grifter"),
             stat="armor",
         ),
         "required_level": 1,
@@ -104,7 +97,7 @@ build_job("Knight", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=lambda c: _ability_level(c, "Code of Chivalry") // 2,
+            scale_fn=lambda c: ability_level(c, "Code of Chivalry") // 2,
             stat="armor",
         ),
         "required_level": 1,
@@ -125,8 +118,8 @@ build_job("Knight", [
             "horsemanship_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _knight_level(source) * 10,
-                "ride_bonus": _ability_level(source, "Horsemanship"),
+                "duration_minutes": progression_level(source, "adventure", "Grifter") * 10,
+                "ride_bonus": ability_level(source, "Horsemanship"),
                 "source_ability": "Horsemanship",
             },
         ),
@@ -145,7 +138,7 @@ build_job("Knight", [
         ),
         "duration": "1 Action",
         "effects": heal_moxie(
-            scale_fn=lambda c: _ability_level(c, "Rally Troops"),
+            scale_fn=lambda c: ability_level(c, "Rally Troops"),
         ),
         "required_level": 1,
         "scales_with_level": True,
@@ -183,7 +176,7 @@ build_job("Knight", [
                 "active": True,
                 "duration_minutes": 10,
                 "requires_no_armor": True,
-                "armor_bonus": _knight_level(source),
+                "armor_bonus": progression_level(source, "adventure", "Grifter"),
                 "source_ability": "Always in Uniform",
             },
         ),
@@ -278,7 +271,7 @@ build_job("Knight", [
             value_fn=lambda source: {
                 "active": True,
                 "guardian": source,
-                "duration_turns": _ability_level(source, "Shield Friend"),
+                "duration_turns": ability_level(source, "Shield Friend"),
                 "redirect_attacks_to_guardian": True,
                 "requires_adjacent_ally": True,
                 "guardian_defense_penalty": {
@@ -310,7 +303,7 @@ build_job("Knight", [
             value_fn=lambda source: {
                 "active": True,
                 "favored_by": source,
-                "all_attribute_bonus": _knight_level(source),
+                "all_attribute_bonus": progression_level(source, "adventure", "Grifter"),
                 "single_favored_mount_per_knight": True,
                 "source_ability": "Favored Mount",
             },
@@ -342,7 +335,7 @@ build_job("Knight", [
                 "speed_multiplier": 2,
                 "ignore_terrain_modifiers": True,
                 "must_move_for_benefits": True,
-                "post_movement_melee_attack_bonus": _ability_level(source, "Charge!"),
+                "post_movement_melee_attack_bonus": ability_level(source, "Charge!"),
                 "works_for": ("running", "mounted"),
                 "source_ability": "Charge!",
             },
@@ -368,7 +361,7 @@ build_job("Knight", [
                 "active": True,
                 "duration_minutes": 10,
                 "shares_ability": "Charge!",
-                "shared_charge_level": _ability_level(source, "Charge!"),
+                "shared_charge_level": ability_level(source, "Charge!"),
                 "allies_pay_own_costs": True,
                 "source_ability": "The Last Crusade",
             },
@@ -407,7 +400,7 @@ build_job("Knight", [
             "unyielding_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Unyielding"),
+                "duration_turns": ability_level(source, "Unyielding"),
                 "downgrade_critical_hits_to_normal_hits": True,
                 "source_ability": "Unyielding",
             },

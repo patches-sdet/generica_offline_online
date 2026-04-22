@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -7,14 +8,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _scout_level(character) -> int:
-    return character.get_progression_level("adventure", "Scout", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -26,12 +19,12 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _sturdy_back_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _sturdy_back_modifier(source) -> None:
+    states = _ensure_states(source)
     states["sturdy_back"] = {
         "active": True,
         "non_equipped_item_weight_reduction_percent": min(
-            _ability_level(ctx.source, "Sturdy Back"),
+            ability_level(source, "Sturdy Back"),
             90,
         ),
         "does_not_apply_to_equipped_weapons_or_armor": True,
@@ -40,21 +33,21 @@ def _sturdy_back_modifier(ctx) -> None:
 
 
 def _alertness_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+    states = _ensure_states(ctx)
     states["alertness"] = {
         "active": True,
         "auto_activate_sensory_skills_when_ambushed_or_unseen_danger": True,
-        "activation_chance_percent": _ability_level(ctx.source, "Alertness"),
+        "activation_chance_percent": ctx_ability_level(ctx, "Alertness"),
         "free_activation_no_pool_cost": True,
         "source_ability": "Alertness",
     }
 
 
-def _wild_child_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _wild_child_modifier(source) -> None:
+    states = _ensure_states(source)
     states["wild_child"] = {
         "active": True,
-        "all_roll_bonus_in_wilderness": _scout_level(ctx.source),
+        "all_roll_bonus_in_wilderness": progression_level(source, "adventure", "Scout"),
         "equivalent_environments_also_count": True,
         "source_ability": "Wild Child",
     }
@@ -79,7 +72,7 @@ build_job("Scout", [
                 "active": True,
                 "cost_per_minute": 5,
                 "cost_pool": "sanity",
-                "stealth_bonus": _ability_level(source, "Camouflage"),
+                "stealth_bonus": ability_level(source, "Camouflage"),
                 "wilderness_scaling": {
                     "base_levels": 2,
                     "effective_levels": 3,
@@ -139,8 +132,8 @@ build_job("Scout", [
             "keen_eye_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _scout_level(source),
-                "perception_bonus": _ability_level(source, "Keen Eye"),
+                "duration_minutes": progression_level(source, "adventure", "Scout"),
+                "perception_bonus": ability_level(source, "Keen Eye"),
                 "source_ability": "Keen Eye",
             },
         ),
@@ -177,10 +170,10 @@ build_job("Scout", [
                 "active": True,
                 "silent_activation": True,
                 "named_target_required": True,
-                "range_meters": _ability_level(source, "Wind's Whisper") * 50,
+                "range_meters": ability_level(source, "Wind's Whisper") * 50,
                 "word_limit": (
-                    _ability_level(source, "Wind's Whisper") // 2
-                    + _scout_level(source)
+                    ability_level(source, "Wind's Whisper") // 2
+                    + progression_level(source, "adventure", "Scout")
                 ),
                 "source_ability": "Wind's Whisper",
             },
@@ -219,7 +212,7 @@ build_job("Scout", [
             "best_route_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _scout_level(source),
+                "duration_hours": progression_level(source, "adventure", "Scout"),
                 "requires_visible_terrain_feature": True,
                 "route_visible_to_party": True,
                 "route_quality_table": {
@@ -252,7 +245,7 @@ build_job("Scout", [
         "effects": inspect(
             reveal_fn=lambda source: {
                 "effect": "scouter",
-                "duration_seconds": _scout_level(source) * 10,
+                "duration_seconds": progression_level(source, "adventure", "Scout") * 10,
                 "contest": {
                     "caster_stat": "perception",
                     "caster_skill": "Scouter",
@@ -313,7 +306,7 @@ build_job("Scout", [
                 "active": True,
                 "cost_per_hour": 5,
                 "cost_pool": "stamina",
-                "max_duration_days": _scout_level(source),
+                "max_duration_days": progression_level(source, "adventure", "Scout"),
                 "ignore_hunger": True,
                 "on_end_gain_condition": "Starving",
                 "condition_removed_by": "full_meal",
@@ -340,12 +333,12 @@ build_job("Scout", [
             "party_whisper_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _scout_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Scout"),
                 "all_party_members_can_whisper_silently": True,
-                "range_meters": _ability_level(source, "Wind's Whisper") * 50,
+                "range_meters": ability_level(source, "Wind's Whisper") * 50,
                 "word_limit": (
-                    _ability_level(source, "Wind's Whisper") // 2
-                    + _scout_level(source)
+                    ability_level(source, "Wind's Whisper") // 2
+                    + progression_level(source, "adventure", "Scout")
                 ),
                 "uses_winds_whisper_range_and_word_rules": True,
                 "source_ability": "Party Whisper",
@@ -371,7 +364,7 @@ build_job("Scout", [
                 "active": True,
                 "cost_per_hour": 5,
                 "cost_pool": "stamina",
-                "max_duration_hours": _scout_level(source) * 6,
+                "max_duration_hours": progression_level(source, "adventure", "Scout") * 6,
                 "ignore_thirst": True,
                 "on_end_gain_condition": "Dehydrated",
                 "condition_removed_by": "full_drink",
@@ -401,7 +394,7 @@ build_job("Scout", [
                 "cost_per_subject_per_minute": 10,
                 "cost_pool": "sanity",
                 "extends_camouflage_to_party_members": True,
-                "stealth_bonus": _ability_level(source, "Camouflage"),
+                "stealth_bonus": ability_level(source, "Camouflage"),
                 "wilderness_scaling": {
                     "base_levels": 2,
                     "effective_levels": 3,

@@ -1,4 +1,6 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.effects.base import EffectContext
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     composite,
@@ -11,7 +13,6 @@ from domain.abilities.patterns import (
     passive_modifier,
     summon,
 )
-from domain.effects.base import EffectContext
 from domain.effects.special.minions import (
     GrantControlledGroupMembershipEffect,
     ScaledSkillBuffEffect,
@@ -19,14 +20,6 @@ from domain.effects.special.minions import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _elementalist_level(character) -> int:
-    return character.get_progression_level("adventure", "Elementalist", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -69,7 +62,7 @@ def _call_element_factory(source):
         "name": f"{affinity.title()} Element",
         "description": "A quantity of called elemental material.",
         "element": affinity,
-        "volume_cubic_feet": _ability_level(source, "Call Element"),
+        "volume_cubic_feet": ability_level(source, "Call Element"),
         "created_by": "Call Element",
         "temporary": True,
     }
@@ -84,10 +77,10 @@ def _elemental_factory(rank_name: str, class_rank: int):
             "entity_type": "elemental",
             "element": affinity,
             "class_rank": class_rank,
-            "level": _elementalist_level(source),
+            "level": progression_level(source, "adventure", "Elementalist"),
             "loyal_to_summoner": True,
             "follows_commands": True,
-            "duration_hours": _elementalist_level(source),
+            "duration_hours": progression_level(source, "adventure", "Elementalist"),
             "created_by": rank_name,
         }
     return factory
@@ -176,7 +169,7 @@ build_job("Elementalist", [
                 "active": True,
                 "duration_hours": 1,
                 "choose_from_affinities": _get_affinities(source),
-                "elemental_resistance_percent": _ability_level(source, "Endure Element"),
+                "elemental_resistance_percent": ability_level(source, "Endure Element"),
                 "stacks_with_elemental_affinity": True,
                 "source_ability": "Endure Element",
             },
@@ -203,7 +196,7 @@ build_job("Elementalist", [
                 condition=lambda ctx, target: True,
                 controller_state_key="controller",
                 duration_state_key="duration_hours",
-                duration_fn=lambda ctx, target: _elementalist_level(ctx.source),
+                duration_fn=lambda ctx, target: ctx_progression_level(ctx, "adventure", "Elementalist"),
                 extra_state={
                     "elemental_affinity": "match_summoner_affinity",
                     "elemental_rank": 1,
@@ -283,7 +276,7 @@ build_job("Elementalist", [
             "destroy_element_active",
             value_fn=lambda source: {
                 "active": True,
-                "destroy_volume_cubic_feet": _ability_level(source, "Destroy Element"),
+                "destroy_volume_cubic_feet": ability_level(source, "Destroy Element"),
                 "matching_affinity_required": True,
                 "attack_stat": "intelligence",
                 "attack_skill": "Destroy Element",
@@ -315,10 +308,10 @@ build_job("Elementalist", [
             "shape_element_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _elementalist_level(source),
-                "shape_volume_cubic_feet": _ability_level(source, "Shape Element"),
+                "duration_turns": progression_level(source, "adventure", "Elementalist"),
+                "shape_volume_cubic_feet": ability_level(source, "Shape Element"),
                 "matching_affinity_required": True,
-                "contact_damage": _elementalist_level(source) * 2,
+                "contact_damage": progression_level(source, "adventure", "Elementalist") * 2,
                 "contact_damage_pool": "hp",
                 "bypasses_defenses": True,
                 "source_ability": "Shape Element",
@@ -340,7 +333,7 @@ build_job("Elementalist", [
         ),
         "duration": "Passive Constant",
         "effects": ScaledSkillBuffEffect(
-            scale_fn=_elementalist_level,
+            scale_fn=lambda source: progression_level(source, "adventure", "Elementalist"),
             skills=("attack",),
             condition=_is_controlled_elemental,
         ),
@@ -366,7 +359,7 @@ build_job("Elementalist", [
                 condition=lambda ctx, target: True,
                 controller_state_key="controller",
                 duration_state_key="duration_hours",
-                duration_fn=lambda ctx, target: _elementalist_level(ctx.source),
+                duration_fn=lambda ctx, target: ctx_progression_level(ctx, "adventure", "Elementalist"),
                 extra_state={
                     "elemental_affinity": "match_summoner_affinity",
                     "elemental_rank": 2,
@@ -441,7 +434,7 @@ build_job("Elementalist", [
                 "duration_turns": 1,
                 "requires_matching_entry_element": True,
                 "requires_matching_exit_element": True,
-                "max_range_miles": _elementalist_level(source),
+                "max_range_miles": progression_level(source, "adventure", "Elementalist"),
                 "valid_affinities": _get_affinities(source),
                 "source_ability": "Elemental Jaunt",
             },
@@ -470,16 +463,16 @@ build_job("Elementalist", [
                     "active": True,
                     "duration_minutes": 1,
                     "trigger_ability": "Destroy Element",
-                    "heal_all_pools_on_success": _elementalist_level(source),
+                    "heal_all_pools_on_success": progression_level(source, "adventure", "Elementalist"),
                     "matching_affinity_required": True,
                     "source_ability": "Consume Element",
                 },
             ),
-            heal_hp(scale_fn=_elementalist_level),
-            heal_sanity(scale_fn=_elementalist_level),
-            heal_stamina(scale_fn=_elementalist_level),
-            heal_moxie(scale_fn=_elementalist_level),
-            heal_fortune(scale_fn=_elementalist_level),
+            heal_hp(scale_fn=lambda source: progression_level(source, "adventure", "Elementalist")),
+            heal_sanity(scale_fn=lambda source: progression_level(source, "adventure", "Elementalist")),
+            heal_stamina(scale_fn=lambda source: progression_level(source, "adventure", "Elementalist")),
+            heal_moxie(scale_fn=lambda source: progression_level(source, "adventure", "Elementalist")),
+            heal_fortune(scale_fn=lambda source: progression_level(source, "adventure", "Elementalist")),
         ),
         "is_spell": True,
         "required_level": 20,
@@ -503,7 +496,7 @@ build_job("Elementalist", [
                 condition=lambda ctx, target: True,
                 controller_state_key="controller",
                 duration_state_key="duration_hours",
-                duration_fn=lambda ctx, target: _elementalist_level(ctx.source),
+                duration_fn=lambda ctx, target: ctx_progression_level(ctx, "adventure", "Elementalist"),
                 extra_state={
                     "elemental_affinity": "match_summoner_affinity",
                     "elemental_rank": 3,
@@ -564,7 +557,7 @@ build_job("Elementalist", [
                 condition=lambda ctx, target: True,
                 controller_state_key="controller",
                 duration_state_key="duration_hours",
-                duration_fn=lambda ctx, target: _elementalist_level(ctx.source),
+                duration_fn=lambda ctx, target: ctx_progression_level(ctx, "adventure", "Elementalist"),
                 extra_state={
                     "elemental_affinity": "match_summoner_affinity",
                     "elemental_rank": 4,

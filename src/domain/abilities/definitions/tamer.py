@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     heal_hp,
@@ -9,14 +10,6 @@ from domain.effects.special.minions import GrantControlledGroupMembershipEffect
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _tamer_level(character) -> int:
-    return character.get_progression_level("adventure", "Tamer", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -88,7 +81,7 @@ build_job("Tamer", [
             "bake_monster_treats_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _tamer_level(source),
+                "duration_hours": progression_level(source, "adventure", "Tamer"),
                 "choose_monster_type": True,
                 "ingredient_cost_copper": 2,
                 "baking_roll": {
@@ -171,10 +164,10 @@ build_job("Tamer", [
             "track_monster_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _ability_level(source, "Track Monster"),
+                "duration_hours": ability_level(source, "Track Monster"),
                 "modes": {
                     "follow_identified_tracks": {
-                        "perception_bonus": _ability_level(source, "Track Monster"),
+                        "perception_bonus": ability_level(source, "Track Monster"),
                     },
                     "search_for_creature_category": {
                         "roll": {
@@ -219,7 +212,7 @@ build_job("Tamer", [
         ),
         "duration": "1 Action",
         "effects": heal_hp(
-            scale_fn=lambda c: (_tamer_level(c) * 2) + _ability_level(c, "Heal Monster"),
+            scale_fn=lambda source: (progression_level(source, "adventure", "Tamer") * 2) + ability_level(source, "Heal Monster"),
         ),
         "is_spell": True,
         "required_level": 5,
@@ -312,7 +305,7 @@ build_job("Tamer", [
                 "active": True,
                 "requires_tamed_companion_target": True,
                 "target_must_clearly_hear_you": True,
-                "boost_next_attack_or_skill_roll_by": _ability_level(source, "Cheer On"),
+                "boost_next_attack_or_skill_roll_by": ability_level(source, "Cheer On"),
                 "requires_clear_spoken_instruction": True,
                 "source_ability": "Cheer On",
             },
@@ -348,7 +341,7 @@ build_job("Tamer", [
             "spook_monster_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _tamer_level(source),
+                "duration_turns": progression_level(source, "adventure", "Tamer"),
                 "only_works_if_target_intelligence_below": 20,
                 "contest": {
                     "caster_stat": "charisma",
@@ -420,11 +413,11 @@ build_job("Tamer", [
             "borrow_monster_skill_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _tamer_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Tamer"),
                 "requires_previously_encountered_monster_skill": True,
                 "max_borrowable_skill_level": 25,
-                "uses_borrow_monster_skill_level_for_leveled_skills": _ability_level(source, "Borrow Monster Skill"),
-                "uses_tamer_level_in_place_of_monster_job_level": _tamer_level(source),
+                "uses_borrow_monster_skill_level_for_leveled_skills": ability_level(source, "Borrow Monster Skill"),
+                "uses_tamer_level_in_place_of_monster_job_level": progression_level(source, "adventure", "Tamer"),
                 "source_ability": "Borrow Monster Skill",
             },
         ),

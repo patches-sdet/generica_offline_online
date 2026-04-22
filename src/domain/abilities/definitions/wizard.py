@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -10,14 +11,6 @@ from domain.effects.special.minions import GrantControlledGroupMembershipEffect
 
 # Local helpers
 
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _wizard_level(character) -> int:
-    return character.get_progression_level("adventure", "Wizard", 0)
-
-
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
     if states is None:
@@ -28,21 +21,21 @@ def _ensure_states(target) -> dict:
 
 # Passive helpers
 
-def _magical_experimentation_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _magical_experimentation_modifier(source) -> None:
+    states = _ensure_states(source)
     states["magical_experimentation"] = {
         "active": True,
-        "experimental_skill_capacity": _wizard_level(ctx.source) // 10,
+        "experimental_skill_capacity": progression_level(source, "adventure", "Wizard") // 10,
         "unequipped_experimental_skills_stored_in_spellbooks": True,
         "source_ability": "Magical Experimentation",
     }
 
 
-def _mana_meditation_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _mana_meditation_modifier(source) -> None:
+    states = _ensure_states(source)
     states["mana_meditation"] = {
         "active": True,
-        "extra_sanity_regen_per_ten_minutes": (_wizard_level(ctx.source) + 9) // 10,
+        "extra_sanity_regen_per_ten_minutes": (progression_level(source, "adventure", "Wizard"), + 9) // 10,
         "source_ability": "Mana Meditation",
     }
 
@@ -96,7 +89,7 @@ build_job("Wizard", [
                 "active": True,
                 "applies_to_spell_cast_same_action": True,
                 "extra_cost_multiplier": 2,
-                "boost_amount": _ability_level(source, "Empower Spell"),
+                "boost_amount": ability_level(source, "Empower Spell"),
                 "does_nothing_for_nonleveled_spells": True,
                 "source_ability": "Empower Spell",
             },
@@ -148,8 +141,8 @@ build_job("Wizard", [
             "force_shield_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _wizard_level(source),
-                "armor_bonus": _ability_level(source, "Force Shield"),
+                "duration_minutes": progression_level(source, "adventure", "Wizard"),
+                "armor_bonus": ability_level(source, "Force Shield"),
                 "double_value_against_hp_targeting_spells": True,
                 "source_ability": "Force Shield",
             },
@@ -208,7 +201,7 @@ build_job("Wizard", [
             value_fn=lambda source: {
                 "active": True,
                 "duration_turns": 1,
-                "telekinetic_strength": _ability_level(source, "Magic Fingers"),
+                "telekinetic_strength": ability_level(source, "Magic Fingers"),
                 "can_lift_and_move_objects": True,
                 "cannot_directly_attack_or_deal_real_damage": True,
                 "can_shove_with_check": {
@@ -233,7 +226,7 @@ build_job("Wizard", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=_wizard_level,
+            scale_fn=lambda source: progression_level(source, "adventure", "Wizard"),
             stat="mental_fortitude",
         ),
         "required_level": 5,
@@ -258,7 +251,7 @@ build_job("Wizard", [
             "float_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _wizard_level(source),
+                "duration_turns": progression_level(source, "adventure", "Wizard"),
                 "hover_height_feet": 1,
                 "bypass_ground_traps": True,
                 "move_over_lava_and_water": True,
@@ -286,9 +279,9 @@ build_job("Wizard", [
             "conceal_magic_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _wizard_level(source) * 4,
+                "duration_hours": progression_level(source, "adventure", "Wizard") * 4,
                 "valid_targets": ("magical_item", "spell", "creature"),
-                "increase_analysis_difficulty_by": _ability_level(source, "Conceal Magic"),
+                "increase_analysis_difficulty_by": ability_level(source, "Conceal Magic"),
                 "applies_to": ("Analyze Magic", "similar_skills"),
                 "source_ability": "Conceal Magic",
             },
@@ -314,7 +307,7 @@ build_job("Wizard", [
                 "active": True,
                 "cost_per_minute": 15,
                 "cost_pool": "sanity",
-                "spellcasting_penalty_to_nearby_foes": _ability_level(source, "Counterspelling"),
+                "spellcasting_penalty_to_nearby_foes": ability_level(source, "Counterspelling"),
                 "requires_continuous_chanting": True,
                 "source_ability": "Counterspelling",
             },
@@ -340,7 +333,7 @@ build_job("Wizard", [
             "flying_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _wizard_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Wizard"),
                 "can_fly": True,
                 "flight_skill_substitutes_for_agility_rolls": True,
                 "flight_skill_substitutes_for_agility_target_numbers": True,
@@ -372,7 +365,7 @@ build_job("Wizard", [
                 "target_stat": "agility",
                 "damage_pool": "hp",
                 "damage_amount": "margin_of_success",
-                "radius_feet": _wizard_level(source),
+                "radius_feet": progression_level(source, "adventure", "Wizard"),
                 "minimum_radius_feet": 1,
                 "single_roll_applied_to_each_target": True,
                 "bypasses_nonmagical_armor": True,

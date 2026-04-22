@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -8,14 +9,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _oracle_level(character) -> int:
-    return character.get_progression_level("adventure", "Oracle", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -109,7 +102,7 @@ build_job("Oracle", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=_oracle_level,
+            scale_fn=lambda source: progression_level(source, "adventure", "Oracle"),
             stat="fate",
         ),
         "required_level": 1,
@@ -132,7 +125,7 @@ build_job("Oracle", [
             value_fn=lambda source: {
                 "active": True,
                 "duration_turns": 1,
-                "bonus_to_next_roll": _ability_level(source, "Foresight"),
+                "bonus_to_next_roll": ability_level(source, "Foresight"),
                 "on_failed_buffed_roll": {
                     "lockout_duration": "rest_of_day",
                     "locked_ability": "Foresight",
@@ -163,7 +156,7 @@ build_job("Oracle", [
             "afflict_self_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Afflict Self"),
+                "duration_turns": ability_level(source, "Afflict Self"),
                 "random_condition_table": {
                     "1-9": "Bleeding",
                     "10-19": "Blinded",
@@ -217,7 +210,7 @@ build_job("Oracle", [
                 "choose_from_current_afflictions": True,
                 "requires_touch_attack": True,
                 "touch_attack_stat_options": ("strength", "dexterity"),
-                "touch_attack_skill_bonus": _ability_level(source, "Transfer Condition"),
+                "touch_attack_skill_bonus": ability_level(source, "Transfer Condition"),
                 "preserves_original_duration": True,
                 "source_ability": "Transfer Condition",
             },
@@ -245,7 +238,7 @@ build_job("Oracle", [
                 "active": True,
                 "duration_turns": 1,
                 "requires_communicable_ally": True,
-                "ally_bonus_to_single_roll": _ability_level(source, "Influence Fate"),
+                "ally_bonus_to_single_roll": ability_level(source, "Influence Fate"),
                 "source_ability": "Influence Fate",
             },
         ),
@@ -330,10 +323,10 @@ build_job("Oracle", [
             "random_buff_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _oracle_level(source),
+                "duration_turns": progression_level(source, "adventure", "Oracle"),
                 "requires_touch": True,
                 "willing_target_or_self": True,
-                "buff_amount": _ability_level(source, "Random Buff"),
+                "buff_amount": ability_level(source, "Random Buff"),
                 "random_table": {
                     "1-2": "All physical attributes",
                     "3-4": "All mental attributes",
@@ -365,7 +358,7 @@ build_job("Oracle", [
             "trance_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _oracle_level(source),
+                "duration_turns": progression_level(source, "adventure", "Oracle"),
                 "contest": {
                     "caster_stat": "charisma",
                     "caster_skill": "Trance",
@@ -459,7 +452,7 @@ build_job("Oracle", [
             "truesight_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _oracle_level(source),
+                "duration_turns": progression_level(source, "adventure", "Oracle"),
                 "see_in_total_darkness": True,
                 "ignore_obscurement": True,
                 "cannot_be_fooled_by_illusions": True,

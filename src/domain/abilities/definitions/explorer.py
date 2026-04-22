@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     create_item,
@@ -8,14 +9,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _explorer_level(character) -> int:
-    return character.get_progression_level("adventure", "Explorer", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -32,7 +25,7 @@ def _make_magical_map(source):
         "created_by": "Magical Mapping",
         "visible_only_while_held": True,
         "exists_only_in_explorer_hand": True,
-        "duration_hours": _explorer_level(source),
+        "duration_hours": ctx_progression_level(source, "adventure", "Explorer"),
         "shows_visited_areas": True,
         "scalable_area_display": True,
     }
@@ -43,7 +36,7 @@ def _make_waystone(source):
         "name": "Waystone",
         "description": "A one-use teleportation stone linked to the Explorer's active waymark.",
         "created_by": "Create Waystone",
-        "duration_hours": _explorer_level(source),
+        "duration_hours": ctx_progression_level(source, "adventure", "Explorer"),
         "linked_to_active_waymark": True,
         "one_use": True,
         "breaks_after_use": True,
@@ -79,7 +72,7 @@ def _resist_nature_modifier(ctx) -> None:
     states = _ensure_states(ctx.source)
     states["resist_nature"] = {
         "active": True,
-        "natural_hazard_defense_bonus": _explorer_level(ctx.source),
+        "natural_hazard_defense_bonus": ctx_progression_level(ctx, "adventure", "Explorer"),
         "applies_to": (
             "storms",
             "forest_fires",
@@ -95,7 +88,7 @@ def _expedition_leader_modifier(ctx) -> None:
     states["expedition_leader"] = {
         "active": True,
         "explorer_buffs_extend_to_party": True,
-        "party_roll_bonus": _explorer_level(ctx.source),
+        "party_roll_bonus": ctx_progression_level(ctx, "adventure", "Explorer"),
         "party_bonus_applies_to": (
             "traveling",
             "foraging",
@@ -126,8 +119,8 @@ build_job("Explorer", [
                 "duration_hours": 1,
                 "ignore_terrain_penalties": True,
                 "ignore_movement_reductions": True,
-                "jumping_bonus_over_difficult_terrain": _ability_level(source, "All-Terrain Boots"),
-                "climbing_bonus_over_difficult_terrain": _ability_level(source, "All-Terrain Boots"),
+                "jumping_bonus_over_difficult_terrain": ctx_ability_level(source, "All-Terrain Boots"),
+                "climbing_bonus_over_difficult_terrain": ctx_ability_level(source, "All-Terrain Boots"),
                 "source_ability": "All-Terrain Boots",
             },
         ),
@@ -213,7 +206,7 @@ build_job("Explorer", [
             "set_waymark_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _explorer_level(source),
+                "duration_hours": ctx_progression_level(source, "adventure", "Explorer"),
                 "requires_touched_location": True,
                 "linked_waystones_created_after_establishment": True,
                 "detectable_only_by_magic": True,
@@ -247,7 +240,7 @@ build_job("Explorer", [
             "deep_breath_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Deep Breath"),
+                "duration_minutes": ability_level(source, "Deep Breath"),
                 "no_need_for_air": True,
                 "source_ability": "Deep Breath",
             },
@@ -300,10 +293,10 @@ build_job("Explorer", [
             "fair_winds_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_hours": _explorer_level(source),
+                "duration_hours": ctx_progression_level(source, "adventure", "Explorer"),
                 "applies_to_windpowered_craft": True,
-                "speed_roll_bonus": _ability_level(source, "Fair Winds"),
-                "maneuver_roll_bonus": _ability_level(source, "Fair Winds"),
+                "speed_roll_bonus": ctx_ability_level(source, "Fair Winds"),
+                "maneuver_roll_bonus": ctx_ability_level(source, "Fair Winds"),
                 "cannot_create_hurricane_conditions": True,
                 "source_ability": "Fair Winds",
             },
@@ -343,7 +336,7 @@ build_job("Explorer", [
             value_fn=lambda source: {
                 "active": True,
                 "duration": "1_chase",
-                "chase_roll_bonus": _ability_level(source, "Run, run away!"),
+                "chase_roll_bonus": ctx_ability_level(source, "Run, run away!"),
                 "applies_regardless_of_chase_side": True,
                 "source_ability": "Run, run away!",
             },

@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     inspect,
@@ -7,12 +8,6 @@ from domain.abilities.patterns import (
 )
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-def _grifter_level(character) -> int:
-    return character.get_progression_level("adventure", "Grifter", 0)
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -27,7 +22,7 @@ def _mega_moxie_modifier(ctx) -> None:
     states = _ensure_states(ctx.source)
     states["mega_moxie"] = {
         "active": True,
-        "max_moxie_percent_bonus": _grifter_level(ctx.source),
+        "max_moxie_percent_bonus": ctx_progression_level(ctx, "adventure", "Grifter"),
         "source_ability": "Mega-Moxie",
     }
 
@@ -48,8 +43,8 @@ build_job("Grifter", [
             "fools_gold_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Fools Gold") * 10,
-                "temporary_gold_coins": _grifter_level(source),
+                "duration_minutes": ctx_ability_level(source, "Fools Gold") * 10,
+                "temporary_gold_coins": ctx_progression_level(source, "adventure", "Grifter"),
                 "coins_are_false": True,
                 "detect_as_magical": True,
                 "dissipates_after_duration": True,
@@ -80,7 +75,7 @@ build_job("Grifter", [
             "master_of_disguise_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Master of Disguise") * 10,
+                "duration_minutes": ctx_ability_level(source, "Master of Disguise") * 10,
                 "pierce_check": {
                     "observer_stat": "perception",
                     "grifter_stat": "charisma",
@@ -138,8 +133,8 @@ build_job("Grifter", [
             "silver_tongue_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Silver Tongue") * 10,
-                "charisma_bonus_for_lies": _ability_level(source, "Silver Tongue"),
+                "duration_minutes": ctx_ability_level(source, "Silver Tongue") * 10,
+                "charisma_bonus_for_lies": ctx_ability_level(source, "Silver Tongue"),
                 "source_ability": "Silver Tongue",
             },
         ),
@@ -234,8 +229,8 @@ build_job("Grifter", [
             value_fn=lambda source: {
                 "active": True,
                 "applies_to_next_attempt": True,
-                "dexterity_bonus_for_pickpocketing": _ability_level(source, "Pickpocket"),
-                "dexterity_bonus_for_sleight_of_hand": _ability_level(source, "Pickpocket"),
+                "dexterity_bonus_for_pickpocketing": ctx_ability_level(source, "Pickpocket"),
+                "dexterity_bonus_for_sleight_of_hand": ctx_ability_level(source, "Pickpocket"),
                 "pairs_well_with": "Silent Activation",
                 "source_ability": "Pickpocket",
             },
@@ -253,7 +248,7 @@ build_job("Grifter", [
         ),
         "duration": "Passive Constant",
         "effects": scaled_derived_buff(
-            scale_fn=_grifter_level,
+            scale_fn=lambda ctx: progression_level(ctx, "adventure", "Grifter"),
             stat="cool",
         ),
         "required_level": 5,
@@ -276,7 +271,7 @@ build_job("Grifter", [
             "feign_death_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _grifter_level(source) * 5,
+                "duration_minutes": progression_level(source, "adventure", "Grifter") * 5,
                 "appear_dead": True,
                 "pierce_check": {
                     "observer_stat": "perception",
@@ -306,7 +301,7 @@ build_job("Grifter", [
             "old_buddy_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _grifter_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Grifter"),
                 "contest": {
                     "caster_stat": "charisma",
                     "caster_skill": "Old Buddy",
@@ -340,12 +335,12 @@ build_job("Grifter", [
             "bluster_active",
             value_fn=lambda source: {
                 "active": True,
-                "party_buff_amount": _grifter_level(source),
+                "party_buff_amount": progression_level(source, "adventure", "Grifter"),
                 "buffs": {
-                    "mental_fortitude": _grifter_level(source),
-                    "cool": _grifter_level(source),
-                    "perception": _grifter_level(source),
-                    "willpower": _grifter_level(source),
+                    "mental_fortitude": progression_level(source, "adventure", "Grifter"),
+                    "cool": progression_level(source, "adventure", "Grifter"),
+                    "perception": progression_level(source, "adventure", "Grifter"),
+                    "willpower": progression_level(source, "adventure", "Grifter"),
                 },
                 "does_not_affect_self": True,
                 "cannot_use_speech_required_skills": True,
@@ -391,7 +386,7 @@ build_job("Grifter", [
                 "mimic_other_job_skill": True,
                 "max_skill_level_to_copy": 10,
                 "cannot_copy_passive_constant_skills": True,
-                "copied_skill_uses_this_skill_level": _ability_level(source, "Fake it to Make it 10"),
+                "copied_skill_uses_this_skill_level": ability_level(source, "Fake it to Make it 10"),
                 "duration": "copied_skill_duration_or_until_rest",
                 "only_one_faked_skill_active": True,
                 "source_ability": "Fake it to Make it 10",

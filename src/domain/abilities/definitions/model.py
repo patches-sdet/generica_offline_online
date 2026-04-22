@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     passive_modifier,
@@ -7,14 +8,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _model_level(character) -> int:
-    return character.get_progression_level("adventure", "Model", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -27,12 +20,12 @@ def _ensure_states(target) -> dict:
 # Passive helpers
 
 def _dietary_restrictions_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+    states = _ensure_states(ctx)
     states["dietary_restrictions"] = {
         "active": True,
         "requires_no_unhealthy_food_for_last_week": True,
         "small_buff_to_all_pools": True,
-        "stack_limit": _ability_level(ctx.source, "Dietary Restrictions") * 2,
+        "stack_limit": ability_level(ctx, "Dietary Restrictions") * 2,
         "remove_all_stacks_if_unhealthy_food_eaten": True,
         "levels_per_week_on_diet": True,
         "cannot_be_raised_by_grind_points": True,
@@ -84,10 +77,10 @@ build_job("Model", [
                 "contest": {
                     "target_stat": "willpower",
                     "caster_stat": "charisma",
-                    "caster_bonus": _model_level(source),
+                    "caster_bonus": progression_level(source, "adventure", "Model"),
                 },
                 "on_failure": "target_becomes_fascinated",
-                "duration_turns": _ability_level(source, "Fascination"),
+                "duration_turns": ability_level(source, "Fascination"),
                 "source_ability": "Fascination",
             },
         ),
@@ -109,9 +102,9 @@ build_job("Model", [
             "flex_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "endurance_bonus": _ability_level(source, "Flex"),
-                "armor_bonus": _ability_level(source, "Flex"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "endurance_bonus": ability_level(source, "Flex"),
+                "armor_bonus": ability_level(source, "Flex"),
                 "source_ability": "Flex",
             },
         ),
@@ -133,9 +126,9 @@ build_job("Model", [
             "self_esteem_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "mental_fortitude_bonus": _ability_level(source, "Self-Esteem"),
-                "cool_bonus": _ability_level(source, "Self-Esteem"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "mental_fortitude_bonus": ability_level(source, "Self-Esteem"),
+                "cool_bonus": ability_level(source, "Self-Esteem"),
                 "source_ability": "Self-Esteem",
             },
         ),
@@ -205,7 +198,7 @@ build_job("Model", [
             value_fn=lambda source: {
                 "active": True,
                 "choose_one_skill": True,
-                "chosen_skill_bonus": _ability_level(source, "Makeup"),
+                "chosen_skill_bonus": ability_level(source, "Makeup"),
                 "makeup_must_match_job_theme": True,
                 "source_ability": "Makeup",
             },
@@ -229,8 +222,8 @@ build_job("Model", [
             "strong_pose_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "strength_bonus": _ability_level(source, "Strong Pose"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "strength_bonus": ability_level(source, "Strong Pose"),
                 "source_ability": "Strong Pose",
             },
         ),
@@ -256,8 +249,8 @@ build_job("Model", [
             "adjust_weight_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Adjust Weight"),
-                "weight_adjustment_percent_max": _model_level(source),
+                "duration_minutes": ability_level(source, "Adjust Weight"),
+                "weight_adjustment_percent_max": progression_level(source, "adventure", "Model"),
                 "can_increase_or_decrease_weight": True,
                 "body_shape_changes_with_weight": True,
                 "situational_effects_gm_defined": True,
@@ -283,8 +276,8 @@ build_job("Model", [
             "sexy_pose_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "charisma_bonus": _ability_level(source, "Sexy Pose"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "charisma_bonus": ability_level(source, "Sexy Pose"),
                 "only_applies_to_targets_capable_of_sexual_attraction": True,
                 "source_ability": "Sexy Pose",
             },
@@ -312,9 +305,9 @@ build_job("Model", [
             "flexible_pose_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "agility_bonus": _ability_level(source, "Flexible Pose"),
-                "dexterity_bonus": _ability_level(source, "Flexible Pose"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "agility_bonus": ability_level(source, "Flexible Pose"),
+                "dexterity_bonus": ability_level(source, "Flexible Pose"),
                 "source_ability": "Flexible Pose",
             },
         ),
@@ -342,7 +335,7 @@ build_job("Model", [
                 "attack_skill": "Scornful Laugh",
                 "target_stat": "willpower",
                 "target_pool": "moxie",
-                "radius_feet": _model_level(source),
+                "radius_feet": progression_level(source, "adventure", "Model"),
                 "multi_target_enemies_in_radius": True,
                 "source_ability": "Scornful Laugh",
             },
@@ -367,9 +360,9 @@ build_job("Model", [
             "do_you_even_lift_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _model_level(source),
-                "strength_roll_bonus_for_lifting": _ability_level(source, "Do You Even Lift?"),
-                "strength_roll_bonus_for_noncombat_feats": _ability_level(source, "Do You Even Lift?"),
+                "duration_turns": progression_level(source, "adventure", "Model"),
+                "strength_roll_bonus_for_lifting": ability_level(source, "Do You Even Lift?"),
+                "strength_roll_bonus_for_noncombat_feats": ability_level(source, "Do You Even Lift?"),
                 "combat_use_gm_discretion": True,
                 "source_ability": "Do You Even Lift?",
             },
@@ -393,9 +386,9 @@ build_job("Model", [
             "stubborn_pose_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _model_level(source),
-                "willpower_bonus": _ability_level(source, "Stubborn Pose"),
-                "wisdom_bonus": _ability_level(source, "Stubborn Pose"),
+                "duration_minutes": progression_level(source, "adventure", "Model"),
+                "willpower_bonus": ability_level(source, "Stubborn Pose"),
+                "wisdom_bonus": ability_level(source, "Stubborn Pose"),
                 "source_ability": "Stubborn Pose",
             },
         ),
@@ -422,7 +415,7 @@ build_job("Model", [
             value_fn=lambda source: {
                 "active": True,
                 "duration_turns": 1,
-                "physical_attribute_bonus": _ability_level(source, "Fitness Obsession"),
+                "physical_attribute_bonus": ability_level(source, "Fitness Obsession"),
                 "applies_to": (
                     "strength",
                     "constitution",

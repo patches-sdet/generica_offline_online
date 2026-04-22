@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     heal_hp,
@@ -12,14 +13,6 @@ from domain.conditions import IS_ENEMY
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _necromancer_level(character) -> int:
-    return character.get_progression_level("adventure", "Necromancer", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -42,11 +35,11 @@ def _animated_undead_state(source, undead_type: str, *, intelligent: bool) -> di
 
 # Passive helpers
 
-def _undead_experimentation_modifier(ctx) -> None:
-    states = _ensure_states(ctx.source)
+def _undead_experimentation_modifier(source) -> None:
+    states = _ensure_states(source)
     states["undead_experimentation"] = {
         "active": True,
-        "experimental_skill_capacity": _necromancer_level(ctx.source) // 10,
+        "experimental_skill_capacity": progression_level(source, "adventure", "Necromancer") // 10,
         "unequipped_experimental_skills_stored_in_spellbooks": True,
         "source_ability": "Undead Experimentation",
     }
@@ -100,7 +93,7 @@ build_job("Necromancer", [
             "command_the_dead_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _necromancer_level(source),
+                "duration_minutes": progression_level(source, "adventure", "Necromancer"),
                 "contest": {
                     "caster_stat": "willpower",
                     "caster_skill": "Command the Dead",
@@ -139,7 +132,7 @@ build_job("Necromancer", [
                     "newly_deceased_spirit",
                     "existing_incorporeal_undead",
                 ),
-                "housed_spirit_level": (_ability_level(source, "Soulstone") + 9) // 10,
+                "housed_spirit_level": (ability_level(source, "Soulstone") + 9) // 10,
                 "spirit_can_be_conversed_with": True,
                 "spirit_can_be_used_for_undead_creation": True,
                 "spirit_can_be_released": True,
@@ -166,7 +159,7 @@ build_job("Necromancer", [
             "speak_with_dead_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_minutes": _ability_level(source, "Speak with Dead"),
+                "duration_minutes": ability_level(source, "Speak with Dead"),
                 "valid_targets": (
                     "corpses",
                     "spirits",
@@ -228,7 +221,7 @@ build_job("Necromancer", [
         "effects": inspect(
             reveal_fn=lambda source: {
                 "effect": "deathsight",
-                "duration_minutes": _necromancer_level(source) * 5,
+                "duration_minutes": progression_level(source, "adventure", "Necromancer") * 5,
                 "reveals": "current_hit_points",
                 "may_fail_on_unknown_extreme_level_targets": True,
                 "source_ability": "Deathsight",
@@ -251,10 +244,10 @@ build_job("Necromancer", [
         "duration": "1 Hour per Necromancer Level",
         "effects": GrantControlledGroupMembershipEffect(
             tag="controlled_undead",
-            condition=lambda ctx, target: True,
+            condition=lambda source, target: True,
             controller_state_key="controller",
             duration_state_key="invited_duration_hours",
-            duration_fn=lambda ctx, target: _necromancer_level(ctx.source),
+            duration_fn=lambda source, target: progression_level(source, "adventure", "Necromancer"),
             extra_state={
                 "invited_by_necromancer": True,
                 "nonsapient_auto_joins_if_lower_level_and_unpartied": True,
@@ -370,7 +363,7 @@ build_job("Necromancer", [
         ),
         "duration": "Instant",
         "effects": heal_hp(
-            scale_fn=lambda c: c.get_stat("wisdom", 0) + _ability_level(c, "Repair Undead"),
+            scale_fn=lambda c: c.get_stat("wisdom", 0) + ability_level(c, "Repair Undead"),
         ),
         "is_spell": True,
         "required_level": 15,
@@ -393,10 +386,10 @@ build_job("Necromancer", [
             "death_ward_active",
             value_fn=lambda source: {
                 "active": True,
-                "duration_turns": _ability_level(source, "Death Ward"),
+                "duration_turns": ability_level(source, "Death Ward"),
                 "immune_to_shadow_attacks": True,
                 "immune_to_drain_life": True,
-                "defense_bonus_vs_undead_damage": _necromancer_level(source),
+                "defense_bonus_vs_undead_damage": progression_level(source, "adventure", "Necromancer"),
                 "undead_touch_check": {
                     "attacker_stat": "willpower",
                     "defender_stat": "willpower",

@@ -1,4 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
+from domain.abilities import ability_level, ctx_ability_level, progression_level, ctx_progression_level
 from domain.abilities.patterns import (
     apply_state,
     create_item,
@@ -8,14 +9,6 @@ from domain.abilities.patterns import (
 
 
 # Local helpers
-
-def _ability_level(character, ability_name: str) -> int:
-    return character.get_ability_effective_level(ability_name)
-
-
-def _enchanter_level(character) -> int:
-    return character.get_progression_level("adventure", "Enchanter", 0)
-
 
 def _ensure_states(target) -> dict:
     states = getattr(target, "states", None)
@@ -60,7 +53,7 @@ def _make_glowgleam_item(source):
         "name": "Glowgleam Enchantment",
         "description": "A simple light enchantment bound into an object.",
         "created_by": "Glowgleam",
-        "duration_hours": _enchanter_level(source),
+        "duration_hours": progression_level(source, "adventure", "Enchanter"),
         "light_strength_stat": "intelligence",
         "extinguish_difficulty": {
             "stat": "willpower",
@@ -74,7 +67,7 @@ def _enchantment_experimentation_modifier(ctx) -> None:
     states = _ensure_states(ctx.source)
     states["enchantment_experimentation"] = {
         "active": True,
-        "experimental_skill_capacity": _enchanter_level(ctx.source) // 10,
+        "experimental_skill_capacity": ctx_progression_level(ctx, "adventure", "Enchanter") // 10,
         "unequipped_experimental_skills_stored_in_spellbooks": True,
         "source_ability": "Enchantment Experimentation",
     }
@@ -144,7 +137,7 @@ build_job("Enchanter", [
                 "active": True,
                 "duration_minutes": 10,
                 "requires_object_or_construct_target": True,
-                "bonus_amount": _ability_level(source, "Harden") // 5,
+                "bonus_amount": ability_level(source, "Harden") // 5,
                 "applies_to": ("armor", "weapon_level"),
                 "source_ability": "Harden",
             },
@@ -171,7 +164,7 @@ build_job("Enchanter", [
                 "active": True,
                 "duration_minutes": 10,
                 "requires_object_or_construct_target": True,
-                "penalty_amount": _ability_level(source, "Soften") // 5,
+                "penalty_amount": ability_level(source, "Soften") // 5,
                 "applies_to": ("armor", "weapon_level"),
                 "levels_on_cast": True,
                 "source_ability": "Soften",
@@ -304,9 +297,9 @@ build_job("Enchanter", [
                 "active": True,
                 "choose_creature_type": True,
                 "area_effect": True,
-                "affected_creature_roll_penalty": _enchanter_level(source),
-                "damage_over_time_per_turn": _ability_level(source, "Wards"),
-                "spell_penalty_for_affected_creatures": _enchanter_level(source),
+                "affected_creature_roll_penalty": ctx_progression_level(source),
+                "damage_over_time_per_turn": ctx_ability_level(source, "Wards"),
+                "spell_penalty_for_affected_creatures": ctx_progression_level(source),
                 "affected_spell_damage_halved": True,
                 "can_be_dispelled": True,
                 "reagents_required": {
@@ -429,7 +422,7 @@ build_job("Enchanter", [
                 "resists_hostile_magic": True,
                 "resists_most_physical_damage": True,
                 "cannot_be_disenchanted_or_destroyed_without_long_breakdown": True,
-                "required_breakdown_days_per_creator_level": _enchanter_level(source),
+                "required_breakdown_days_per_creator_level": ctx_progression_level(source),
                 "reagents_required": {
                     "green": 3,
                 },
