@@ -20,7 +20,7 @@ def set_skill_levels(character, skill_name: str, source: str, levels: int) -> No
         remove_skill_source(character, skill_name, source)
         return
 
-    character.skill_sources.setdefault(skill_name, {})
+    _ensure_skill_entry(character, skill_name)
     character.skill_sources[skill_name][source] = levels
 
 def remove_skill_source(character, skill_name: str, source: str) -> None:
@@ -32,9 +32,6 @@ def remove_skill_source(character, skill_name: str, source: str) -> None:
 
     if not source_map:
         character.skill_sources.pop(skill_name, None)
-
-    _ensure_skill_entry(character, skill_name)
-    character.skill_sources[skill_name][source] = levels
 
 def get_total_skill_levels(character, skill_name: str) -> int:
     return sum(character.skill_sources.get(skill_name, {}).values())

@@ -14,6 +14,7 @@ from domain.skill_ownership import (
     has_skill,
     rebuild_skill_level_summary,
 )
+from domain.attributes import ATTRIBUTE_NAMES
 
 def prompt_for_variable_cost(ability) -> int:
     pool_name = ability.cost_pool or "fortune"
@@ -27,7 +28,12 @@ def prompt_for_variable_cost(ability) -> int:
 
         return int(raw)
 
-def award_generic_skill(character, skill_name: str, source: str = "runtime:first_use", levels: int = 1) -> bool:
+def award_generic_skill(
+    character,
+    skill_name: str,
+    source: str = "runtime:first_use",
+    levels: int = 1,
+) -> bool:
     """
     Award a generic skill the first time it is successfully used.
     Returns True if the skill was newly awarded.
@@ -39,21 +45,111 @@ def award_generic_skill(character, skill_name: str, source: str = "runtime:first
     recalculate(character)
     return True
 
-# DEBUG VERSION with print statements to trace the issue in test_skill_recalc_survival.py
-# def award_generic_skill(character, skill_name: str, source: str = "runtime:first_use", levels: int = 1) -> bool:
-#     print("award start", skill_name, character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+def award_attribute_from_runtime_use(
+    character,
+    stat: str,
+    amount: int = 1,
+    source: str = "runtime:experience_die",
+) -> None:
+    """
+    Permanent attribute increase earned through successful play.
+    This survives rebuild because it writes to canonical character storage.
+    """
+    if stat not in ATTRIBUTE_NAMES:
+        raise ValueError(f"Unknown attribute for runtime increase: {stat!r}")
+    if amount <= 0:
+        raise ValueError(f"Runtime attribute increase must be positive: {stat} -> {amount}")
 
-#     if character.has_skill(skill_name):
-#         print("already has skill -> False")
-#         return False
+    character.add_manual_attribute_increase(stat, amount, source=source)
+    recalculate(character)
 
-#     add_skill_levels(character, skill_name, source, levels)
-#     print("after add", character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+def award_skill_from_runtime_use(
+    character,
+    skill_name: str,
+    amount: int = 1,
+    source: str = "runtime:experience_die",
+) -> None:
+    if amount <= 0:
+        raise ValueError(f"Runtime skill increase must be positive: {skill_name} -> {amount}")
 
-#     recalculate(character)
-#     print("after recalc", character.skill_sources, character.skill_levels, character.has_skill(skill_name))
+    add_skill_levels(character, skill_name, source=source, levels=amount)
+    recalculate(character)
 
-#     return True
+def award_experience_die_result(
+    character,
+    *,
+    stat: str,
+    skill_name: str | None = None,
+    experience_die: int,
+) -> dict[str, int]:
+    """
+    Apply the permanent gain outcome from the experience die.
+
+    Rules implemented:
+    - attribute-only roll:
+        if experience_die * 10 > current attribute, gain +1 attribute
+        a 9 always grants +1 attribute
+    - skill roll:
+        if experience_die * 10 > current skill, gain +1 skill
+        a 9 grants +1 skill and +1 linked attribute
+
+    Returns a simple summary of what was awarded.
+    """
+    if stat not in ATTRIBUTE_NAMES:
+        raise ValueError(f"Unknown attribute for experience die award: {stat!r}")
+    if not 0 <= experience_die <= 9:
+        raise ValueError(f"Experience die must be between 0 and 9 inclusive: {experience_die}")
+
+    awarded = {
+        "attribute_increase": 0,
+        "skill_increase": 0,
+    }
+
+    threshold = experience_die * 10
+
+    if skill_name:
+        current_skill = character.get_skill_level(skill_name, 0)
+
+        if experience_die == 9:
+            award_skill_from_runtime_use(
+                character,
+                skill_name,
+                amount=1,
+                source="runtime:experience_die",
+            )
+            award_attribute_from_runtime_use(
+                character,
+                stat,
+                amount=1,
+                source="runtime:experience_die",
+            )
+            awarded["skill_increase"] = 1
+            awarded["attribute_increase"] = 1
+            return awarded
+
+        if threshold > current_skill:
+            award_skill_from_runtime_use(
+                character,
+                skill_name,
+                amount=1,
+                source="runtime:experience_die",
+            )
+            awarded["skill_increase"] = 1
+
+        return awarded
+
+    current_attr = character.get_stat(stat)
+
+    if experience_die == 9 or threshold > current_attr:
+        award_attribute_from_runtime_use(
+            character,
+            stat,
+            amount=1,
+            source="runtime:experience_die",
+        )
+        awarded["attribute_increase"] = 1
+
+    return awarded
 
 def prompt_for_context_options(ability) -> dict:
     metadata = {}

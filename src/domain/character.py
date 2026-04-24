@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class Character:
     name: str
+
     # PROGRESSION-DRIVEN IDENTITY
 
     # Single source of truth for all character growth/content membership
@@ -26,6 +27,17 @@ class Character:
 
     # Optional character-creation choices for advanced race systems
     selected_racial_skills: dict[str, str] = field(default_factory=dict)
+
+    # Persistent non-progression attribute gains that must survive rebuild.
+    # Example:
+    # {
+    #   "strength": {
+    #       "creation:manual": 5,
+    #       "runtime:experience_die": 2,
+    #       "level_up:adventure:Berserker": 1,
+    #   }
+    # }
+    manual_attribute_increases: dict[str, dict[str, int]] = field(default_factory=dict)
 
     # CORE STATS
 
@@ -63,6 +75,9 @@ class Character:
     current_stamina: int = 0
     current_moxie: int = 0
     current_fortune: int = 0
+    
+    level_points: int = 0
+    grind_points: int = 0
 
     # Optional max values if your pool calculators set them
     max_hp: int = 0
@@ -75,10 +90,17 @@ class Character:
 
     skill_sources: dict[str, dict[str, int]] = field(default_factory=dict)
     skill_levels: dict[str, int] = field(default_factory=dict)
+    skill_use_ranks: dict[str, int] = field(default_factory=dict)
 
     # Transitional: still useful while ability rebuild/runtime settles
     abilities: list["Ability"] = field(default_factory=list)
+
+    # Derived summary that should be what gets rebuilt
     ability_levels: dict[str, int] = field(default_factory=dict)
+
+    # TRUTH
+    ability_provenance: dict[str, dict[str, Any]] = field(default_factory=dict)
+    ability_use_ranks: dict[str, int] = field(default_factory=dict)
 
     # DERIVED STAT TRACKING
 
@@ -88,7 +110,10 @@ class Character:
     )
     _derived_overrides: dict[str, int] = field(default_factory=dict, init=False)
 
-    # Derived Effective Ability/Skill level helper, this is to keep things working until I refactor how levels are derived.
+    # CONVENIENCE / LOOKUP
+
+    # Derived Effective Ability/Skill level helper, this is to keep things
+    # working until I refactor how levels are derived.
     def get_ability_effective_level(self, ability_name: str) -> int:
         return self.ability_levels.get(ability_name, 0)
 
@@ -104,6 +129,31 @@ class Character:
 
     def get_stat(self, stat: str) -> int:
         return self.attributes.get(stat)
+
+    def add_manual_attribute_increase(self, stat: str, amount: int, source: str) -> None:
+        if amount <= 0:
+            raise ValueError(f"Manual attribute increase must be positive: {stat} -> {amount}")
+
+        self.manual_attribute_increases.setdefault(stat, {})
+        current = self.manual_attribute_increases[stat].get(source, 0)
+        self.manual_attribute_increases[stat][source] = current + amount
+
+    def set_manual_attribute_increase(self, stat: str, amount: int, source: str) -> None:
+        if amount < 0:
+            raise ValueError(f"Manual attribute increase cannot be negative: {stat} -> {amount}")
+
+        self.manual_attribute_increases.setdefault(stat, {})
+
+        if amount == 0:
+            self.manual_attribute_increases[stat].pop(source, None)
+            if not self.manual_attribute_increases[stat]:
+                self.manual_attribute_increases.pop(stat, None)
+            return
+
+        self.manual_attribute_increases[stat][source] = amount
+
+    def get_total_manual_attribute_increase(self, stat: str) -> int:
+        return sum(self.manual_attribute_increases.get(stat, {}).values())
 
     # RESOURCE API
 
@@ -137,7 +187,14 @@ class Character:
         self.set_progression_level(ptype, name, level)
 
     def set_progression_level(self, ptype: str, name: str, level: int) -> None:
-        self.progressions[(ptype, name)] = Progression(name=name, type=ptype, level=max(1, level),)
+        if level < 1:
+            raise ValueError(f"Progression levels must be >= 1: {(ptype, name)} -> {level}")
+
+        self.progressions[(ptype, name)] = Progression(
+            name=name,
+            type=ptype,
+            level=level,
+        )
 
     def get_progression(self, ptype: str, name: str) -> Optional[Progression]:
         return self.progressions.get((ptype, name))
@@ -155,10 +212,21 @@ class Character:
     # Level up
 
     def increment_progression(self, ptype: str, name: str, amount: int = 1) -> None:
+        if amount <= 0:
+            raise ValueError(f"Progression increment must be positive: {amount}")
+
         current = self.get_progression_level(ptype, name)
+        if current <= 0:
+            raise ValueError(f"Cannot increment missing progression {(ptype, name)}")
+
         self.set_progression_level(ptype, name, current + amount)
-    
-    def get_progression_level_for_ability(self, ptype: str, ability_name: str, default: int = 0) -> int:
+
+    def get_progression_level_for_ability(
+        self,
+        ptype: str,
+        ability_name: str,
+        default: int = 0,
+    ) -> int:
         best = default
 
         for (current_type, progression_name), progression in self.progressions.items():
@@ -168,7 +236,7 @@ class Character:
             granted = get_progression_ability_names(current_type, progression_name)
             if ability_name in granted:
                 best = max(best, progression.level)
-    
+
         return best
 
     # Convenience wrappers
@@ -189,7 +257,7 @@ class Character:
 
     def get_skill(self, name: str) -> int:
         return sum(self.skill_sources.get(name, {}).values())
-    
+
     def get_skill_level(self, skill_name: str, default: int = 0) -> int:
         return self.skill_levels.get(skill_name, default)
 
@@ -208,8 +276,9 @@ class Character:
             "race_bases": self.race_bases,
             "race_template": self.race_template,
             "race_material": self.race_material,
+            "manual_attribute_increases": self.manual_attribute_increases,
             "attributes": self.attributes.to_dict(),
-            "skills": self.skill_sources,            
+            "skills": self.skill_sources,
             "resources": {
                 "hp": self.current_hp,
                 "sanity": self.current_sanity,

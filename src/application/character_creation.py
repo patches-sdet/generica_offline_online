@@ -1,5 +1,5 @@
 import random
-from domain.attributes import DEFAULT_STATS
+from domain.attributes import DEFAULT_STATS, ATTRIBUTE_NAMES
 from domain.character import Character
 from domain.progression import Progression
 from domain.skill_ownership import set_skill_levels
@@ -14,9 +14,8 @@ from domain.content_registry import (
     get_profession_job,
 )
 from domain.race_resolution import get_race_effects
-from domain.skill_ownership import set_skill_levels
 
-# Rolling
+# ROLLING
 
 def roll_2d10() -> int:
     return random.randint(1, 10) + random.randint(1, 10)
@@ -29,6 +28,8 @@ def roll_attributes() -> list[Effect]:
         effects.append(StatIncrease(stat, roll_2d10(), source="roll"))
 
     return effects
+
+# INTERNAL HELPERS
 
 def _initialize_current_resources_to_max(character: Character) -> None:
     pools = calculate_pools(character)
@@ -111,20 +112,49 @@ def _seed_character_base_state(
     # references it anywhere.
     character.attribute_effects = []
 
-def apply_generic_skill_allocation(character, allocations: dict[str, int]) -> None:
-        """
-        allocations example:
-        {
-            "Riding": 10,
-            "Sword": 15,
-            "Awareness": 5,
-        }
-        """
-        for skill_name, levels in allocations.items():
-            if levels < 0:
-                raise ValueError(f"Generic skill levels cannot be negative: {skill_name}={levels}")
-            set_skill_levels(character, skill_name, source="generic_points", levels=levels)
+# PUBLIC ALLOCATION HELPERS
 
+def apply_manual_attribute_allocation(
+    character,
+    allocations: dict[str, int],
+    source: str = "creation:manual",
+) -> None:
+    """
+    allocations example:
+    {
+        "strength": 5,
+        "agility": 10,
+    }
+
+    These are persistent manual gains that survive rebuild.
+    """
+    for stat, amount in allocations.items():
+        if stat not in ATTRIBUTE_NAMES:
+            raise ValueError(f"Unknown attribute for manual allocation: {stat!r}")
+        if amount < 0:
+            raise ValueError(f"Manual attribute allocation cannot be negative: {stat}={amount}")
+        if amount == 0:
+            continue
+
+        character.add_manual_attribute_increase(stat, amount, source=source)
+
+    recalculate(character)
+
+def apply_generic_skill_allocation(character, allocations: dict[str, int]) -> None:
+    """
+    allocations example:
+    {
+        "Riding": 10,
+        "Sword": 15,
+        "Awareness": 5,
+    }
+    """
+    for skill_name, levels in allocations.items():
+        if levels < 0:
+            raise ValueError(f"Generic skill levels cannot be negative: {skill_name}={levels}")
+        set_skill_levels(character, skill_name, source="generic_points", levels=levels)
+
+    recalculate(character)
 
 def apply_job_skill_allocation(character, allocations: dict[str, dict[str, int]]) -> None:
     """
@@ -140,7 +170,9 @@ def apply_job_skill_allocation(character, allocations: dict[str, dict[str, int]]
                 raise ValueError(f"Job skill levels cannot be negative: {job_name}.{skill_name}={level}")
             set_skill_levels(character, skill_name, source=f"job_points:{job_name}", levels=level)
 
-# Public API
+    recalculate(character)
+
+# PUBLIC API
 
 def create_character(
     *,
@@ -150,6 +182,7 @@ def create_character(
     profession_job_names: list[str],
     race_template_name: str | None = None,
     material: str | None = None,
+    manual_attribute_allocations: dict[str, int] | None = None,
 ) -> Character:
     if not base_race_names:
         raise ValueError("Character must have at least one base race")
@@ -205,6 +238,10 @@ def create_character(
     _seed_character_base_state(character, roll_effects)
 
     recalculate(character)
+
+    if manual_attribute_allocations:
+        apply_manual_attribute_allocation(character, manual_attribute_allocations)
+
     _initialize_current_resources_to_max(character)
 
     return character
