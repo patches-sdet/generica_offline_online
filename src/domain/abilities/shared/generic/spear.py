@@ -1,7 +1,7 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 
 SPEAR = {
-    "name": "Spears & Polearms",
+    "name": "Spears",
     "type": "skill",
     "description": "The ability to use spears and other pole-based weapons.",
     "target": "self",

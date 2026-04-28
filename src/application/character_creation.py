@@ -105,13 +105,6 @@ def _seed_character_base_state(
     """
     character._base_attributes = _build_creation_base_attributes(character, roll_effects)
 
-    # NOTE FOR LATER DEV:
-    # character.attribute_effects used to hold roll effects for older rebuild logic.
-    # With progressions + _base_attributes now canonical, this field should be
-    # considered transitional / removable once the rest of the pipeline no longer
-    # references it anywhere.
-    character.attribute_effects = []
-
 # PUBLIC ALLOCATION HELPERS
 
 def apply_manual_attribute_allocation(
@@ -209,9 +202,15 @@ def create_character(
     if race_template and not race_template.requires_material and material is not None:
         raise ValueError(f"{race_template.name} does not use material")
 
-    # Job limits: use the most restrictive base race limit for multi-base cases
-    max_adventure_jobs = min(base.max_adventure_jobs for base in base_races)
-    max_profession_jobs = min(base.max_profession_jobs for base in base_races)
+        # Job limits:
+    # - composition races like Crossbreed use the most restrictive base race limit
+    # - overlay templates like Toy Golem / Doll Haunter override base race limits
+    if race_template and race_template.kind == "overlay":
+        max_adventure_jobs = race_template.max_adventure_jobs
+        max_profession_jobs = race_template.max_profession_jobs
+    else:
+        max_adventure_jobs = min(base.max_adventure_jobs for base in base_races)
+        max_profession_jobs = min(base.max_profession_jobs for base in base_races)
 
     if len(jobs) > max_adventure_jobs:
         raise ValueError(f"Race allows only {max_adventure_jobs} adventure job(s)")

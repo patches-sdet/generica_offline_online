@@ -6,7 +6,8 @@ __pycache__/
 .venv
 .vscode/
 .idea/
+archive/
 *.old
 check_unbalanced.py
-*_population_audit.md
+*_audit.md
 *help.md

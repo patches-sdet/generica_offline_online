@@ -1,0 +1,22 @@
+__all__ = [
+    "archery",
+    "axes",
+    "brawling",
+    "climb",
+    "clubs"
+    "dagger",
+    "dodge",
+    "fishing",
+    "flight",
+    "guns",
+    "lockpicking",
+    "riding",
+    "shields",
+    "siege",
+    "spear",
+    "stealth",
+    "swim",
+    "swords",
+    "throwing",
+    "whips",
+]

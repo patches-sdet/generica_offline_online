@@ -1,7 +1,7 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 
 CLUBS = {
-    "name": "Clubs & Maces",
+    "name": "Clubs",
     "type": "skill",
     "description": "The ability to use all kinds of bludgeoning weapons, including staves.",
     "target": "self",

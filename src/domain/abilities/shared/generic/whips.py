@@ -1,7 +1,7 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 
 WHIP = {
-    "name": "Whips & Flails",
+    "name": "Whips",
     "type": "skill",
     "description": "The ability to use whips and other flexible weapons, including nets for combat.",
     "target": "self",

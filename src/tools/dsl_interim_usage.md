@@ -1,7 +1,3 @@
-Here is a **paste-ready design note** suitable for your repo (e.g., `ABILITY_DSL_USAGE.md`, `patterns_guidelines.md`, or appended to `shared_ability.md`).
-
----
-
 # Ability DSL Usage Guidelines: When to Use `apply_state(...)` vs Other Patterns
 
 This document defines **how ability effects should be expressed using the shared ability DSL**, and clarifies the intended role of `apply_state(...)` relative to the rest of `patterns.py`.

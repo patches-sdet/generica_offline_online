@@ -1,7 +1,7 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 
 AXES = {
-    "name": "Axes & Choppas",
+    "name": "Axes",
     "type": "skill",
     "description": "The ability to use axes effectively.",
     "target": "self",

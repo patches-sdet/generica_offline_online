@@ -43,7 +43,6 @@ class Character:
 
     attributes: Attributes = field(default_factory=Attributes)
     defenses: Defenses = field(default_factory=Defenses)
-    attribute_effects: list[Effect] = field(default_factory=list)
 
     # Snapshot / debugging
     _base_attributes: dict[str, int] = field(default_factory=dict, init=False)

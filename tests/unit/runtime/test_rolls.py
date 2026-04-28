@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from domain import rolls
 from domain.rolls import main_roll
 
 @dataclass
@@ -21,7 +21,6 @@ class DummyModifier:
         self.value = value
 
 def test_main_roll_uses_character_stat_and_skill(monkeypatch):
-    from domain import rolls
 
     monkeypatch.setattr(rolls, "roll_1d100", lambda: 50)
 
@@ -37,7 +36,6 @@ def test_main_roll_uses_character_stat_and_skill(monkeypatch):
     assert result["automatic_failure"] is False
 
 def test_main_roll_applies_roll_modifiers(monkeypatch):
-    from domain import rolls
 
     monkeypatch.setattr(rolls, "roll_1d100", lambda: 50)
 
@@ -51,7 +49,6 @@ def test_main_roll_applies_roll_modifiers(monkeypatch):
     assert result["total"] == 123
 
 def test_main_roll_marks_critical_success(monkeypatch):
-    from domain import rolls
 
     monkeypatch.setattr(rolls, "roll_1d100", lambda: 95)
 
@@ -62,7 +59,6 @@ def test_main_roll_marks_critical_success(monkeypatch):
     assert result["automatic_failure"] is False
 
 def test_main_roll_marks_automatic_failure(monkeypatch):
-    from domain import rolls
 
     monkeypatch.setattr(rolls, "roll_1d100", lambda: 7)
 
