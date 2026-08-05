@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Optional
+
 from domain.effects.stat_effects import DerivedStatBonus, DerivedStatOverride
+
 
 def reset_derived(character) -> None:
     character._derived_bonuses = defaultdict(int)

@@ -1,8 +1,8 @@
 from .helpers.abilities import (
     ability_level,
     ctx_ability_level,
-    progression_level,
     ctx_progression_level,
+    progression_level,
 )
 
 __all__ = [

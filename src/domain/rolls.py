@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import random
+
 from application.experience import ExperienceGainResult, resolve_experience_die
 from domain.attributes import ATTRIBUTE_NAMES
 from domain.calculations.rolls import apply_roll_modifiers

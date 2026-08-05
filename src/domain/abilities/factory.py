@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
+
 @dataclass(frozen=True, slots=True)
 class Ability:
     name: str

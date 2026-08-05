@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  on_event, scaled_derived_buff
+from domain.abilities.patterns import on_event, scaled_derived_buff
 from domain.effects.special.event import SpendGrindPointEffect
 
 build_job("Frosted Giant", [

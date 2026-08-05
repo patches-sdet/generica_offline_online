@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import pytest
 
-from domain.content_registry import clear_content_registries, initialize_content_registries
+from domain.content_registry import (
+    clear_content_registries,
+    initialize_content_registries,
+)
 
 
 @pytest.fixture

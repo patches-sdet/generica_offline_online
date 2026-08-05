@@ -3,10 +3,10 @@ from application.experience import (
     award_skill_experience,
     resolve_experience_die,
 )
-from domain.character import Character
 from domain.calculations import recalculate
-from domain.skill_ownership import add_skill_levels
 from domain.calculations.skills import rebuild_skills
+from domain.character import Character
+from domain.skill_ownership import add_skill_levels
 
 
 def make_character():

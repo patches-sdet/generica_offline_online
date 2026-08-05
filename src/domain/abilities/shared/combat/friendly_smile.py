@@ -1,6 +1,6 @@
+from domain.abilities import ctx_progression_level
 from domain.abilities.builders._job_builder import build_shared_ability
 from domain.abilities.patterns import apply_state
-from domain.abilities import ctx_progression_level
 
 FRIENDLY_SMILE = {
         "name": "Friendly Smile",

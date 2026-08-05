@@ -1,8 +1,8 @@
 from application.character_creation import create_character
 from application.leveling import (
     award_grind_points,
-    get_related_skill_cap,
     can_grind_skill,
+    get_related_skill_cap,
     grind_skill,
 )
 from domain.calculations import recalculate

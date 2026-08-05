@@ -1,10 +1,11 @@
 import pytest
-from domain.character import Character
-from domain.progression import Progression
+
 from application.skill_validation import (
     validate_generic_skill_cap,
     validate_job_skill_cap,
 )
+from domain.character import Character
+from domain.progression import Progression
 
 
 def test_job_skill_cap_respects_five_times_job_level():

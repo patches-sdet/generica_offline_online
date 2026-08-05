@@ -1,9 +1,6 @@
-from application.experience import (
-    award_attribute_experience,
-    resolve_experience_die,
-)
-from domain.character import Character
+from application.experience import award_attribute_experience, resolve_experience_die
 from domain.calculations import recalculate
+from domain.character import Character
 
 
 def make_character():

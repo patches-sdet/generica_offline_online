@@ -1,7 +1,7 @@
 from domain.content_registry import (
     clear_content_registries,
-    initialize_content_registries,
     has_ability,
+    initialize_content_registries,
 )
 
 

@@ -1,7 +1,7 @@
-from domain.content_registry import initialize_content_registries
-from domain.character import Character
-from domain.skill_ownership import set_skill_levels
 from domain.calculations import recalculate
+from domain.character import Character
+from domain.content_registry import initialize_content_registries
+from domain.skill_ownership import set_skill_levels
 
 
 def test_recalculate_consumes_and_preserves_skill_sources():

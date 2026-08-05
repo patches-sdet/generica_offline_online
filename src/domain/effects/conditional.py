@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Callable
+
 from domain.effects.base import Effect, EffectContext
+
 
 @dataclass(slots=True)
 class ConditionalEffect(Effect):

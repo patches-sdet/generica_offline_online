@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+
 from domain import rolls
 from domain.rolls import main_roll
+
 
 @dataclass
 class DummyCharacter:

@@ -1,5 +1,11 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import DifficultyTable, conditional_effect, create_item, scaled_stat_buff, skill_check
+from domain.abilities.patterns import (
+    DifficultyTable,
+    conditional_effect,
+    create_item,
+    scaled_stat_buff,
+    skill_check,
+)
 from domain.effects.base import CONTEXT_OPTIONS
 
 DRINK_DIFFICULTIES = DifficultyTable({

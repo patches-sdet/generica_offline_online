@@ -1,11 +1,13 @@
 from domain.effects.aggregation import collect_effects
+
+from .abilities import rebuild_abilities
 from .attributes import rebuild_attributes
+from .defenses import calculate_defenses
 from .derived import apply_derived_effects, reset_derived
 from .pools import calculate_pools
-from .defenses import calculate_defenses
-from .abilities import rebuild_abilities
 from .skills import rebuild_skills
 from .tags import rebuild_tags
+
 
 def reset_runtime_state(character):
     character.event_listeners = []

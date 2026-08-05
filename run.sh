@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 case "$1" in
+  benchmark-recalculate)
+    shift
+    PYTHONPATH=src python3 src/tools/recalculate_benchmark.py "$@"
+    ;;
+
   new-job)
     shift
     for job in "$@"; do

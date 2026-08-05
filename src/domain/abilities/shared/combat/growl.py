@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_shared_ability
-from domain.abilities.patterns import skill_check, moxie_damage
+from domain.abilities.patterns import moxie_damage, skill_check
 from domain.conditions import IS_ENEMY
 
 GROWL = {

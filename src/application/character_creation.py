@@ -1,19 +1,19 @@
 import random
-from domain.attributes import DEFAULT_STATS, ATTRIBUTE_NAMES
-from domain.character import Character
-from domain.progression import Progression
-from domain.skill_ownership import set_skill_levels
+
+from domain.attributes import ATTRIBUTE_NAMES, DEFAULT_STATS
 from domain.calculations import calculate_pools, recalculate
+from domain.character import Character
+from domain.content_registry import (
+    get_adventure_job,
+    get_base_race,
+    get_profession_job,
+    get_race_template,
+)
 from domain.effects.base import Effect
 from domain.effects.stat_effects import StatIncrease
-
-from domain.content_registry import (
-    get_base_race,
-    get_race_template,
-    get_adventure_job,
-    get_profession_job,
-)
+from domain.progression import Progression
 from domain.race_resolution import get_race_effects
+from domain.skill_ownership import set_skill_levels
 
 # ROLLING
 

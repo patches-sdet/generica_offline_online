@@ -1,6 +1,6 @@
-from .combat import IS_ENEMY, IS_ALLY
-from .entity import IS_CONSTRUCT, IS_OBJECT, IS_MATERIAL, NOT_IN_PARTY, IN_PARTY
-from .state import IS_SURPRISED, HAS_STATE, IS_LYING, IS_HELPLESS, HAGGLING
+from .combat import IS_ALLY, IS_ENEMY
+from .entity import IN_PARTY, IS_CONSTRUCT, IS_MATERIAL, IS_OBJECT, NOT_IN_PARTY
+from .state import HAGGLING, HAS_STATE, IS_HELPLESS, IS_LYING, IS_SURPRISED
 from .tags import tagged
 
 __all__ = [

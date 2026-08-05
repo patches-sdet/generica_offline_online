@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Callable
-from domain.effects.base import Effect, EffectContext
 
+from domain.effects.base import Effect, EffectContext
 
 ATTRIBUTE_LIST: tuple[str, ...] = (
     "strength",

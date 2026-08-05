@@ -4,8 +4,8 @@ from typing import Any, Callable
 from domain.effects import (
     CompositeEffect,
     ConditionalEffect,
-    DerivedStatBonus,
     Damage,
+    DerivedStatBonus,
     Heal,
     MultiStatIncrease,
     ScalingEffect,

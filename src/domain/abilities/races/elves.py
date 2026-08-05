@@ -1,7 +1,10 @@
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import on_event, scaled_stat_buff
-from domain.effects.special.event import ModifyGrindPointAwardEffect, GainGrindPointsEffect
 from domain.effects.conditional import CompositeEffect
+from domain.effects.special.event import (
+    GainGrindPointsEffect,
+    ModifyGrindPointAwardEffect,
+)
 
 build_job("Elf", [
     {

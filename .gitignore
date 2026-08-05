@@ -10,4 +10,6 @@ archive/
 *.old
 check_unbalanced.py
 *_audit.md
+audit*.md
 *help.md
+.roo/

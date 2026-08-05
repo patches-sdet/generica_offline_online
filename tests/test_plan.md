@@ -429,7 +429,7 @@ These are especially valuable for a content-heavy engine.
 The point is not to test every single skill deeply, but to ensure content modules obey the schema.
 
 ### `unit/content/test_adventure_jobs.py`
-For each module under `domain/abilities/definitions`:
+For each module under `domain/abilities/adventure`:
 - imports cleanly
 - registers abilities/grants without exception
 - every defined ability has required keys
@@ -624,7 +624,7 @@ Add or confirm `.gitignore` coverage for them.
 Old artifacts that likely no longer belong in the active code path:
 
 - `src/domain/abilities/builders/_progression_builder.py.old`
-- `src/domain/abilities/definitions/_template.py.old`
+- `src/domain/abilities/adventure/_template.py.old`
 - `src/domain/abilities/registry.py.old`
 - `src/domain/calculations/calculations.py.old`
 - `src/domain/effects/effects.py.old`

@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  on_event, passive_modifier
+from domain.abilities.patterns import on_event, passive_modifier
 from domain.effects.conditional import CompositeEffect
 from domain.effects.special.event import GainLevelPointsEffect
 

@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  scaled_stat_buff
+from domain.abilities.patterns import scaled_stat_buff
 
 build_job("Dwarf", [
     {

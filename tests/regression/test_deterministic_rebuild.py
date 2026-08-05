@@ -1,6 +1,6 @@
-from helpers.builders import make_character, add_progression
 from domain.calculations import recalculate
 from domain.calculations.pools import calculate_pools
+from helpers.builders import add_progression, make_character
 from unit.calculations.test_pools import _CharacterStub
 
 

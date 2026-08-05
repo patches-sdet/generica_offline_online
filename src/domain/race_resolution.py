@@ -1,9 +1,9 @@
 from typing import Optional
-from domain.effects import DerivedStatOverride, DerivedStatBonus
-from domain.effects.base import Effect
-from domain.content_registry import get_base_race, get_race_template
-from domain.race import build_crossbreed_race
 
+from domain.content_registry import get_base_race, get_race_template
+from domain.effects import DerivedStatBonus, DerivedStatOverride
+from domain.effects.base import Effect
+from domain.race import build_crossbreed_race
 
 MATERIAL_EFFECTS: dict[str, list[Effect]] = {
     "cloth": [

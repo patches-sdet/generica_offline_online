@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 def _ensure_skill_entry(character, skill_name: str) -> None:
     character.skill_sources.setdefault(skill_name, {})
 

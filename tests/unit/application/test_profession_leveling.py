@@ -1,8 +1,8 @@
 from application.character_creation import create_character
 from application.leveling import (
     award_level_points,
-    get_profession_level_up_cost,
     can_level_profession_job,
+    get_profession_level_up_cost,
     level_profession_job,
 )
 
