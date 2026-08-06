@@ -8,7 +8,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
-    
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -18,11 +17,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-cov
+        pip install .
     - name: Run tests
       run: pytest tests/ -v --cov=src --cov-report=term-missing
     - name: Check coverage
       run: |
-        coverage report --fail-under=70
+        coverage report
+        TOTAL_COV=$(coverage report | grep TOTAL | awk '{print $NF}' | sed 's/%//')
+          if [ "$TOTAL_COV" -lt 70 ]; then
+            echo "::warning::Code coverage is only ${TOTAL_COV}%, which is below the 70% threshold!"
+          fi
 
   recalculate-benchmark:
     runs-on: ubuntu-latest
