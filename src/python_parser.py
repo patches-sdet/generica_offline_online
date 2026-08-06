@@ -1,8 +1,6 @@
 import ast
 from pathlib import Path
 
-import yaml
-
 # Define paths
 SOURCE_DIR = Path("src/domain/abilities/adventure/legacy_abilities")  # Path to your 123 .py files
 OUTPUT_DIR = Path("src/domain/abilities/adventure")    # Path where YAML files will be generated

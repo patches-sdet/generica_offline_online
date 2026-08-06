@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import yaml
-
 from domain.abilities.builders._job_builder import build_ability
 from domain.abilities.factory import Ability
 

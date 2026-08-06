@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import yaml
-
 from domain.abilities import ability_level, progression_level
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
