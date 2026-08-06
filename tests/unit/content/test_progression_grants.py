@@ -1,3 +1,5 @@
+import yaml
+
 from pathlib import Path
 
 from domain.content_registry import get_progression_ability_grants

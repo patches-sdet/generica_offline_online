@@ -1,3 +1,7 @@
+import cli
+import main
+
+
 def test_cli_run_cli_is_exposed_from_session():
     assert callable(cli.run_cli)
 
