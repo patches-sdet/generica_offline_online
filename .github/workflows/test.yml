@@ -24,9 +24,9 @@ jobs:
       run: |
         coverage report
         TOTAL_COV=$(coverage report | grep TOTAL | awk '{print $NF}' | sed 's/%//')
-          if [ "$TOTAL_COV" -lt 70 ]; then
-            echo "::warning::Code coverage is only ${TOTAL_COV}%, which is below the 70% threshold!"
-          fi
+        if [ "$TOTAL_COV" -lt 70 ]; then
+          echo "::warning::Code coverage is only ${TOTAL_COV}%, which is below the 70% threshold!"
+        fi
 
   recalculate-benchmark:
     runs-on: ubuntu-latest
