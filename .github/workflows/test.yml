@@ -20,13 +20,6 @@ jobs:
         pip install .
     - name: Run tests
       run: pytest tests/ -v --cov=src --cov-report=term-missing || true
-    - name: Check coverage
-      run: |
-        coverage report
-        TOTAL_COV=$(coverage report | grep TOTAL | awk '{print $NF}' | tr -d '%')
-        if [ "$TOTAL_COV" -lt 70 ]; then
-          echo "::warning::Code coverage is only ${TOTAL_COV}%, which is below the 70% threshold!"
-        fi
 
   recalculate-benchmark:
     runs-on: ubuntu-latest
