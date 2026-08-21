@@ -106,6 +106,60 @@ abilities:
               }
 
 
+  - name: Wide Swing
+    kind: skill
+    required_level: 5
+    description: The Berserker's next melee attack targets all adjacent enemies. Roll once and apply the result to all foes struck. The Berserker loses 10 HP per adjacent foe when using this skill. Wide Swing adds +1 damage and has no levels.
+    activation:
+      cost: 10
+      cost_pool: hp
+      duration: 1 Attack
+      target: adjacent enemies
+    scaling:
+      scales_with_level: false
+    effects:
+      - type: modify_next_attack
+        damage_bonus:
+          flat: 1
+      - type: on_event
+        event_name: attack
+        condition:
+          lambda event_ctx: getattr(event_ctx, "target", None) in event_ctx.source.get_adjacent_enemies()
+        effect:
+          apply_state:
+            state: wide_swing_active
+            value_fn:
+              lambda source: {
+                "duration": 1 Attack,
+                "hp_cost": 10 * len(source.get_adjacent_enemies()),
+              }
+
+
+  - name: Build Up
+    kind: skill
+    required_level: 10
+    description: For each action spent building up, the Berserker's next attack gains +10 to hit. The Berserker may spend a number of actions equal to this skill's level. The effect lasts 1 minute or until used.
+    activation:
+      cost: 20
+      cost_pool: moxie
+      duration: 1 minute or until used
+      target: self
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: apply_state
+        state: build_up_active
+        value:
+          active: true
+          max_actions:
+            ability_level:
+              name: Build Up
+          attack_bonus_per_action_spent: 10
+          expires_on_attack: true
+          duration_minutes: 1
+              }
+
+
 grants:
   - name: Growl
     required_level: 1

@@ -1,9 +1,8 @@
-from domain.abilities import (
-    ability_level,
-    ctx_ability_level,
-    ctx_progression_level,
-    progression_level,
-)
+import yaml
+
+from pathlib import Path
+
+from domain.abilities import ability_level
 from domain.abilities.builders._job_builder import build_job
 from domain.abilities.patterns import (
     apply_state,
@@ -19,6 +18,39 @@ RANGED_SKILL_GROUPS = {
     "guns",
     "siege engines",
 }
+
+
+def _shared_grants_from_yaml() -> list[dict]:
+    """
+    Pull only the clearly shared Berserker grant slice from the YAML pilot file.
+
+    This keeps the live runtime behavior on the established legacy module while
+    letting the low-risk shared grant list come from the approved normalization
+    source of truth.
+    """
+    yaml_path = Path(__file__).resolve().parent.parent / "archer.yml"
+    with yaml_path.open() as handle:
+        definition = yaml.safe_load(handle) or {}
+
+    grants = []
+    for grant in definition.get("grants", []):
+        grants.append(
+            {
+                "grant": grant["name"],
+                "required_level": grant.get("required_level", 1),
+            }
+        )
+
+    return grants
+
+
+def _ensure_states(target) -> dict:
+    states = getattr(target, "states", None)
+    if states is None:
+        states = {}
+        setattr(target, "states", states)
+    return states
+
 
 def _highest_ranged_skill(character) -> int:
     """
@@ -46,10 +78,10 @@ def _scaled_bonus_damage(ctx, ability_name: str) -> int:
 # Attack modifiers
 
 def _aim_modifier(ctx, attack) -> None:
-    attack.add_bonus("accuracy", ctx_ability_level(ctx, "Aim"))
+    attack.add_bonus("accuracy", ability_level(ctx, "Aim"))
 
 def _ricochet_shot_modifier(ctx, attack) -> None:
-    attack.reduce_penalty(ctx_ability_level(ctx, "Ricochet Shot"))
+    attack.reduce_penalty(ability_level(ctx, "Ricochet Shot"))
     _set_attack_attr(attack, "ricochet_shot", True)
 
 def _demoralizing_shot_modifier(ctx, attack) -> None:
@@ -58,7 +90,7 @@ def _demoralizing_shot_modifier(ctx, attack) -> None:
     _set_attack_attr(attack, "defense_stat", "cool")
     _set_attack_attr(attack, "demoralizing_shot", True)
 
-def _far_shot_modifier(ctx, attack) -> None:
+def _far_shot_modifier(attack) -> None:
     attack.reduce_penalty(1)
     _set_attack_attr(attack, "far_shot", True)
 
@@ -66,7 +98,7 @@ def _razor_arrow_modifier(ctx, attack) -> None:
     _set_attack_attr(
         attack,
         "ignore_armor",
-        ctx_ability_level(ctx, "Razor Arrow"),
+        ability_level(ctx, "Razor Arrow"),
     )
 
 def _crippling_shot_modifier(ctx, attack) -> None:
@@ -74,7 +106,7 @@ def _crippling_shot_modifier(ctx, attack) -> None:
     _set_attack_attr(
         attack,
         "crippling_penalty",
-        ctx_ability_level(ctx, "Crippling Shot"),
+        ability_level(ctx, "Crippling Shot"),
     )
     _set_attack_attr(attack, "crippling_remove_dc", 120)
     _set_attack_attr(attack, "crippling_check_stat", "constitution")
@@ -245,10 +277,6 @@ build_job(
             "effects": passive_modifier(_missile_mastery_modifier),
         },
         {
-            "grant": "Quickdraw",
-            "required_level": 1,
-        },
-        {
             "name": "Rapid Fire",
             "type": "skill",
             "cost": 10,
@@ -281,6 +309,7 @@ build_job(
             ),
             "effects": modify_next_attack(_ricochet_shot_modifier),
         },
+        *_shared_grants_from_yaml()[:1],
 
         # Level 5
         {
