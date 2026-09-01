@@ -1,10 +1,11 @@
-from dataclasses import dataclass, field
-from typing import Any, DefaultDict, Optional, TYPE_CHECKING
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, DefaultDict, Optional
+
 from domain.attributes import Attributes, Defenses
-from domain.progression import Progression
-from domain.effects.base import Effect
 from domain.content_registry import get_progression_ability_names
+from domain.effects.base import Effect
+from domain.progression import Progression
 from domain.skill_ownership import get_total_skill_levels
 
 if TYPE_CHECKING:
@@ -278,6 +279,7 @@ class Character:
             "manual_attribute_increases": self.manual_attribute_increases,
             "attributes": self.attributes.to_dict(),
             "skills": self.skill_sources,
+            "ability_provenance": self.ability_provenance,
             "resources": {
                 "hp": self.current_hp,
                 "sanity": self.current_sanity,

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 from .base import Effect, EffectContext
+
 
 @dataclass(slots=True)
 class ResourceEffect(Effect):

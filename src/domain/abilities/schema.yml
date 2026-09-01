@@ -1,0 +1,80 @@
+---
+schema_version: 1
+
+owner:
+  type: adventure        # race | adventure | profession | advanced | shared
+  name: Berserker
+
+abilities:
+  - name: Analyze
+    kind: skill          # passive | active | skill | spell
+    required_level: 1
+    description: Determine the properties of a studied substance.
+    activation:
+      cost: 5
+      cost_pool: sanity
+      duration: 10 Seconds
+      target: object
+    scaling:
+      scales_with_level: false
+    effects:
+      - type: inspect
+        check:
+          stat: intelligence
+          skill: Analyze
+          difficulty_from_context: substance_difficulty
+        reveals:
+          - properties
+          - rarity
+          - alchemy_value
+        failure_blocks_further_attempts_today: true
+
+  - name: Bomb
+    kind: skill
+    required_level: 1
+    description: Throw an improvised bomb that damages the target and nearby foes.
+    activation:
+      cost: 10
+      cost_pool: stamina
+      duration: 1 Attack
+      target: enemy
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: apply_state
+        state: bomb_active
+        value:
+          active: true
+          attack_stat: dexterity
+          attack_skill: Bomb
+          target_stat: agility
+          damage_pool: hp
+          damage_bonus:
+            progression_level:
+              type: adventure
+              name: Alchemist
+          affects_nearby_foes: true
+          splash_shape_runtime_defined: true
+
+  - name: Internal Chemistry
+    kind: passive
+    required_level: 10
+    description: Choose one enhancement whenever consuming a potion.
+    effects:
+      - type: passive_state
+        state: internal_chemistry
+        value:
+          active: true
+          choose_one_on_potion_use: true
+          options:
+            - double_duration
+            - double_one_numerical_value
+            - delay_reaction
+          max_delay_minutes:
+            progression_level:
+              type: adventure
+              name: Alchemist
+
+grants:
+  - name: Poison Resistance
+    required_level: 25

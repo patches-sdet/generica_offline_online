@@ -1,11 +1,11 @@
 from domain.character import Character
 from domain.skill_ownership import (
     add_skill_levels,
-    set_skill_levels,
-    remove_skill_source,
     get_total_skill_levels,
     has_skill,
     rebuild_skill_level_summary,
+    remove_skill_source,
+    set_skill_levels,
 )
 
 

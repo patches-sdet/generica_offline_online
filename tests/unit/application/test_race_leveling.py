@@ -1,8 +1,8 @@
 from application.character_creation import create_character
 from application.leveling import (
     award_level_points,
-    get_race_level_up_cost,
     can_level_race_progression,
+    get_race_level_up_cost,
     level_race_progression,
 )
 

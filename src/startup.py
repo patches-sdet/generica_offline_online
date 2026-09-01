@@ -19,18 +19,23 @@ into an interactive Python shell.
 
 from pprint import pprint
 
+from observability import configure_logging
+
+
+configure_logging()
+
 print("\n=== Generica Offline Online Shell Bootstrap ===\n")
 
 # Registry Initialization
 
 from domain.content_registry import (
-    initialize_content_registries,
+    _PROGRESSION_ABILITY_GRANTS,
     clear_content_registries,
     get_all_abilities,
+    get_all_advanced_jobs,
     get_all_adventure_jobs,
     get_all_profession_jobs,
-    get_all_advanced_jobs,
-    _PROGRESSION_ABILITY_GRANTS,
+    initialize_content_registries,
 )
 
 initialize_content_registries()
@@ -64,13 +69,8 @@ print("✔ Ability lookup helpers ready")
 
 # Skill Ownership System
 
-from domain.skill_ownership import (
-    add_skill_levels,
-    remove_skill_source,
-    has_skill,
-)
-
 from application.runtime import award_generic_skill
+from domain.skill_ownership import add_skill_levels, has_skill, remove_skill_source
 
 print("✔ Skill ownership helpers ready")
 
@@ -100,11 +100,11 @@ except Exception:
 
 from domain.content_registry import (
     _ABILITY_REGISTRY,
-    _BASE_RACE_REGISTRY,
-    _RACE_TEMPLATE_REGISTRY,
-    _ADVENTURE_JOB_REGISTRY,
-    _PROFESSION_JOB_REGISTRY,
     _ADVANCED_JOB_REGISTRY,
+    _ADVENTURE_JOB_REGISTRY,
+    _BASE_RACE_REGISTRY,
+    _PROFESSION_JOB_REGISTRY,
+    _RACE_TEMPLATE_REGISTRY,
 )
 
 print("✔ Registry inspection helpers ready")

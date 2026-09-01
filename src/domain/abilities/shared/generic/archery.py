@@ -1,6 +1,5 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 
-
 ARCHERY = {
     "name": "Archery",
     "type": "skill",

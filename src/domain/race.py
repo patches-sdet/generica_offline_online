@@ -3,7 +3,7 @@ from math import ceil, floor
 from typing import Literal
 
 from domain.effects.base import Effect
-from domain.effects.stat_effects import MultiStatIncrease, DerivedStatBonus
+from domain.effects.stat_effects import DerivedStatBonus, MultiStatIncrease
 
 TemplateKind = Literal["overlay", "composition"]
 

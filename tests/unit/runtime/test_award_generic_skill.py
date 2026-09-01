@@ -1,6 +1,6 @@
-from domain.content_registry import initialize_content_registries
-from domain.character import Character
 from application.runtime import award_generic_skill
+from domain.character import Character
+from domain.content_registry import initialize_content_registries
 
 
 def test_award_generic_skill_only_awards_once():

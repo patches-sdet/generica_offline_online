@@ -1,0 +1,171 @@
+owner:
+  type: adventure
+  name: Berserker
+
+abilities:
+  - name: Furious Strike
+    kind: active
+    required_level: 1
+    description: Your next attack inflicts additional damage equal to your Berserker level plus the level of this skill. The bonus damage is wasted if the attack misses.
+    activation:
+      cost: 10
+      cost_pool: hp
+      duration: 1 Attack
+      target: enemy
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: modify_next_attack
+        damage_bonus:
+          progression_level:
+            type: adventure
+            name: Berserker
+            multiplier: 1
+          ability_level:
+            name: Furious Strike
+            multiplier: 1
+
+  - name: Headbutt
+    kind: active
+    required_level: 1
+    description: The Berserker smashes their head into the enemy. This is a Strength + Brawling + Headbutt attack. If it hits, the target must roll Constitution against the Berserker's Headbutt roll or be stunned for 1 round.
+    activation:
+      cost: 10
+      cost_pool: hp
+      duration: 1 Attack
+      target: enemy
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: attack_with_contested_condition
+        attack:
+          stat: strength
+          skills:
+            - Headbutt
+            - Brawling
+          damage_pool: hp
+        on_hit:
+          contest:
+            defender_stat: constitution
+            against: attack_roll
+            on_fail:
+              apply_state:
+                state: stunned
+                duration: 1 Round
+
+  - name: Power From Pain
+    kind: passive
+    required_level: 1
+    description: Whenever the Berserker loses 10 or more hit points, they gain +1 to all strength-based rolls for the next 5 minutes. This skill has no levels.
+    effects:
+      - type: on_event
+        event_name: hp_lost
+        condition:
+          lambda event_ctx: getattr(event_ctx, "amount", 0) >= 10
+        effect:
+          apply_state:
+            state: power_from_pain_active
+            value_fn:
+              lambda source: {
+                "duration_minutes": 5,
+                "strength_roll_bonus": 1,
+                "source_ability": "Power From Pain",
+              }
+  
+  - name: Reckless Charge
+    kind: active
+    required_level: 5
+    description: The Berserker doubles their running speed for the turn, ignores situational terrain modifiers for the next action, and may immediately make a melee attack after moving. That attack gains an increase equal to Reckless Charge level. The Berserker must move in order to use this skill.
+    activation:
+      cost: 10
+      cost_pool: stamina
+      duration: 1 Attack
+      target: enemy
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: on_event
+        event_name: move
+        attack:
+          attack_bonus:
+            ability_level:
+              name: Reckless Charge
+              multiplier: 1
+          skills:
+            - Reckless Charge
+          damage_pool: hp
+        effect:
+          apply_state:
+            state: reckless_charge_active
+            value_fn:
+              lambda source: {
+                "duration": 1 Turn,
+                "ignore_terrain_modifiers": True,
+                "speed_multiplier": 2,
+                "attack_bonus": source.get_ability_level("Reckless Charge"),
+              }
+
+
+  - name: Wide Swing
+    kind: skill
+    required_level: 5
+    description: The Berserker's next melee attack targets all adjacent enemies. Roll once and apply the result to all foes struck. The Berserker loses 10 HP per adjacent foe when using this skill. Wide Swing adds +1 damage and has no levels.
+    activation:
+      cost: 10
+      cost_pool: hp
+      duration: 1 Attack
+      target: adjacent enemies
+    scaling:
+      scales_with_level: false
+    effects:
+      - type: modify_next_attack
+        damage_bonus:
+          flat: 1
+      - type: on_event
+        event_name: attack
+        condition:
+          lambda event_ctx: getattr(event_ctx, "target", None) in event_ctx.source.get_adjacent_enemies()
+        effect:
+          apply_state:
+            state: wide_swing_active
+            value_fn:
+              lambda source: {
+                "duration": 1 Attack,
+                "hp_cost": 10 * len(source.get_adjacent_enemies()),
+              }
+
+
+  - name: Build Up
+    kind: skill
+    required_level: 10
+    description: For each action spent building up, the Berserker's next attack gains +10 to hit. The Berserker may spend a number of actions equal to this skill's level. The effect lasts 1 minute or until used.
+    activation:
+      cost: 20
+      cost_pool: moxie
+      duration: 1 minute or until used
+      target: self
+    scaling:
+      scales_with_level: true
+    effects:
+      - type: apply_state
+        state: build_up_active
+        value:
+          active: true
+          max_actions:
+            ability_level:
+              name: Build Up
+          attack_bonus_per_action_spent: 10
+          expires_on_attack: true
+          duration_minutes: 1
+              }
+
+
+grants:
+  - name: Growl
+    required_level: 1
+  - name: Rage
+    required_level: 1
+  - name: Toughness
+    required_level: 5
+  - name: Fast as Death
+    required_level: 15

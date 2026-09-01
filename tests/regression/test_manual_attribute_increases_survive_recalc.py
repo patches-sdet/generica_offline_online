@@ -1,5 +1,9 @@
-from application.character_creation import create_character, apply_manual_attribute_allocation
+from application.character_creation import (
+    apply_manual_attribute_allocation,
+    create_character,
+)
 from domain.calculations import recalculate
+
 
 def test_manual_attribute_allocation_survives_recalculate(initialized_content, monkeypatch):
     from application import character_creation

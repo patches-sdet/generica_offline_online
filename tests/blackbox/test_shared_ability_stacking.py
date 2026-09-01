@@ -1,6 +1,6 @@
 from domain.content_registry import get_progression_ability_grants
-from helpers.builders import make_recalculated_character
 from helpers.assertions import assert_has_ability, assert_progression_grants
+from helpers.builders import make_recalculated_character
 
 
 def test_bear_and_berserker_both_grant_growl(initialized_content):

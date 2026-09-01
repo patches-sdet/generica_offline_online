@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 from domain.effects.base import Effect, EffectContext
+
 
 @dataclass(slots=True)
 class StatIncrease(Effect):

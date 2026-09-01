@@ -1,4 +1,7 @@
-from domain.content_registry import clear_content_registries, initialize_content_registries
+from domain.content_registry import (
+    clear_content_registries,
+    initialize_content_registries,
+)
 
 
 def test_force_reload_does_not_raise_duplicate_registration_errors():

@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 TEMPLATE = """from domain.abilities.job_builder import build_job
 from domain.abilities.patterns import buff, scaled_derived_buff

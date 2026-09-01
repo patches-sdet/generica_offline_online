@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  on_event, scaled_derived_buff
+from domain.abilities.patterns import on_event, scaled_derived_buff
 from domain.effects.special.event import SpendGrindPointEffect
 
 build_job("Frosted Giant", [
@@ -20,18 +20,18 @@ build_job("Frosted Giant", [
         "scales_with_level": False,
 },
 
-    {
-        "name": "Large and In Charge",
-        "required_level": 1,
-        "type": "passive",
-        "description": "Your height is equal to 6 feet plus your Giant level. If you are taller than your enemy, you gan a buff to your attack rolls against it equal to your Giant level. This skill has no levels.",
-        "effects": scaled_derived_buff(
-                scale_fn=lambda ctx: ctx.get_progression_level("race", "Frosted Giant"),
-                stat="attack_roll",
-                condition=lambda ctx: ctx.source.height > ctx.target.height
-            ),
-        "scales_with_level": False,
-    },
+    # {
+    #     "name": "Large and In Charge",
+    #     "required_level": 1,
+    #     "type": "passive",
+    #     "description": "Your height is equal to 6 feet plus your Giant level. If you are taller than your enemy, you gan a buff to your attack rolls against it equal to your Giant level. This skill has no levels.",
+    #     "effects": scaled_derived_buff(
+    #             scale_fn=lambda ctx: ctx.get_progression_level("race", "Frosted Giant"),
+    #             stat="attack_roll",
+    #             condition=lambda ctx: ctx.source.height > ctx.target.height
+    #         ),
+    #     "scales_with_level": False,
+    # },
 
     {
         "name": "Sving for de Bleachers",

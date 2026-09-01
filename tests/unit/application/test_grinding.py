@@ -1,12 +1,12 @@
 from application.character_creation import create_character
 from application.leveling import (
     award_grind_points,
-    get_skill_grind_cost,
-    can_grind_skill,
-    grind_skill,
-    get_attribute_grind_cost,
     can_grind_attribute,
+    can_grind_skill,
+    get_attribute_grind_cost,
+    get_skill_grind_cost,
     grind_attribute,
+    grind_skill,
 )
 from domain.calculations import recalculate
 from domain.skill_ownership import add_skill_levels

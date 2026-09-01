@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
+
 from domain.effects.base import Effect
 from domain.effects.stat_effects import StatIncrease
+
 
 @dataclass(frozen=True, slots=True)
 class ProfessionJob:

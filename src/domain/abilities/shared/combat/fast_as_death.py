@@ -1,6 +1,6 @@
 from domain.abilities.builders._job_builder import build_shared_ability
-from domain.effects.stat_effects import DerivedStatBonus
 from domain.effects.conditional import CompositeEffect
+from domain.effects.stat_effects import DerivedStatBonus
 
 FAST_AS_DEATH = {
         "name": "Fast as Death",

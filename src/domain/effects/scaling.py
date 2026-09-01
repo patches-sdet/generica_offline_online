@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable
+
 from domain.effects.base import Effect, EffectContext
+
 
 @dataclass(slots=True)
 class ScalingEffect(Effect):

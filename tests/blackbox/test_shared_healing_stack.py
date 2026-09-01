@@ -1,5 +1,5 @@
-from helpers.builders import make_recalculated_character
 from helpers.assertions import assert_has_ability
+from helpers.builders import make_recalculated_character
 
 
 def test_lesser_healing_stacks_for_cleric_oracle(initialized_content):

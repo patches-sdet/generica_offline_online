@@ -1,7 +1,6 @@
 from domain.abilities.builders._job_builder import build_shared_ability
 from domain.abilities.patterns import apply_state
 
-
 MAGIC_MOUTH = {
     "name": "Magic Mouth",
     "cost": 20,

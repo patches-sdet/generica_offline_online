@@ -1,5 +1,12 @@
 from domain.abilities.builders._job_builder import build_shared_ability
-from domain.abilities.patterns import action_override, scaled_derived_buff, scaled_stat_buff, conditional_effect, heal_hp, skill_check
+from domain.abilities.patterns import (
+    action_override,
+    conditional_effect,
+    heal_hp,
+    scaled_derived_buff,
+    scaled_stat_buff,
+    skill_check,
+)
 from domain.effects.conditional import CompositeEffect
 
 ADORABLE = {

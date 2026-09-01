@@ -1,6 +1,7 @@
 from domain.abilities.factory import make_ability
-from domain.effects.base import EffectContext, Effect
 from domain.content_registry import register_ability, register_progression_ability_grant
+from domain.effects.base import Effect, EffectContext
+
 
 def _normalize_effect_result(result, source_name: str) -> list[Effect]:
     if result is None:

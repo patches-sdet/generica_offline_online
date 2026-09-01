@@ -1,6 +1,6 @@
-from domain.rolls import apply_success_experience
-from domain.character import Character
 from domain.calculations import recalculate
+from domain.character import Character
+from domain.rolls import apply_success_experience
 
 
 def make_character():

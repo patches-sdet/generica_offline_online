@@ -1,5 +1,10 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import DifficultyTable, create_item, scaled_derived_buff, skill_check
+from domain.abilities.patterns import (
+    DifficultyTable,
+    create_item,
+    scaled_derived_buff,
+    skill_check,
+)
 from domain.conditions.entity import IS_FOOD
 from domain.effects.base import CONTEXT_OPTIONS
 
@@ -28,10 +33,10 @@ build_job("Cook", [
         "name": "Sniff",
         "cost": 5,
         "cost_pool": "fortune",
-        "description": "By taking a bif whiff of food or drink, you can determine if it's healthy, unhealthy, poisoned, spoiled, or otherwise dangerous. This skill requires no roll and has no levels.",
+        "description": "By taking a big whiff of food or drink, you can determine if it's healthy, unhealthy, poisoned, spoiled, or otherwise dangerous. This skill requires no roll and has no levels.",
         "effects": [], # This just kinda works.
         "is_passive": True,
-        "is_skill": True,
+        "is_skill": False,
         "required_level": 1,
         "scales_with_level": False,
         "type": "skill",

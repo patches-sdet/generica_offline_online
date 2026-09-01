@@ -1,7 +1,9 @@
 from __future__ import annotations
+
+from domain.attributes import ATTRIBUTE_NAMES
 from domain.calculations import recalculate
 from domain.skill_ownership import add_skill_levels
-from domain.attributes import ATTRIBUTE_NAMES
+
 
 def can_spend_level_points(character, amount: int) -> bool:
     if amount < 0:

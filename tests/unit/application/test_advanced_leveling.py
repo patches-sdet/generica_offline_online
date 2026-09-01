@@ -1,11 +1,11 @@
 from application.character_creation import create_character
 from application.leveling import (
     award_level_points,
-    get_advanced_level_up_cost,
-    can_level_advanced_job,
-    level_advanced_job,
     can_learn_new_advanced_job,
+    can_level_advanced_job,
+    get_advanced_level_up_cost,
     learn_new_advanced_job,
+    level_advanced_job,
 )
 
 

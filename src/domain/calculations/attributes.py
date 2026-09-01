@@ -1,8 +1,7 @@
+from domain.attributes import DEFAULT_STATS, Attributes
 from domain.character import Character
 from domain.effects import EffectContext
-from domain.attributes import Attributes, DEFAULT_STATS
-from domain.effects.stat_effects import StatIncrease, MultiStatIncrease
-
+from domain.effects.stat_effects import MultiStatIncrease, StatIncrease
 
 ATTRIBUTE_EFFECT_TYPES = (StatIncrease, MultiStatIncrease)
 

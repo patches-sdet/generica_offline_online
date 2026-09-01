@@ -3,6 +3,7 @@ from application.runtime import award_experience_die_result
 from domain.calculations import recalculate
 from domain.skill_ownership import add_skill_levels
 
+
 def test_attribute_only_experience_die_award_survives_recalc(initialized_content, monkeypatch):
     from application import character_creation
 

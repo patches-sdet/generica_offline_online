@@ -1,5 +1,5 @@
 from domain.abilities.builders._job_builder import build_job
-from domain.abilities.patterns import  apply_state, scaled_stat_buff, scaled_derived_buff
+from domain.abilities.patterns import apply_state, scaled_derived_buff, scaled_stat_buff
 
 build_job("Orc", [
     {"grant": "Darkspawn", "required_level": 1},

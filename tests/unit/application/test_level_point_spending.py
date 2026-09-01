@@ -1,12 +1,12 @@
-from domain.character import Character
 from application.leveling import (
-    can_spend_level_points,
-    award_level_points,
-    spend_level_points,
-    can_spend_grind_points,
     award_grind_points,
+    award_level_points,
+    can_spend_grind_points,
+    can_spend_level_points,
     spend_grind_points,
+    spend_level_points,
 )
+from domain.character import Character
 
 
 def test_award_level_points_increases_total():

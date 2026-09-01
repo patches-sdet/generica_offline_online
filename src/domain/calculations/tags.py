@@ -1,6 +1,6 @@
-from domain.race_resolution import get_race_tags
 from domain.content_registry import get_progression_source
 from domain.effects.special.tag import ApplyTagEffect
+from domain.race_resolution import get_race_tags
 
 
 def rebuild_tags(character, effects):

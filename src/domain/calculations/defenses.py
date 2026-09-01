@@ -1,4 +1,5 @@
-from domain.attributes import Defenses, DEFENSE_KEYS
+from domain.attributes import DEFENSE_KEYS, Defenses
+
 from .derived import get_derived_bonus, get_derived_override
 
 

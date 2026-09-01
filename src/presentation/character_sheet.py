@@ -1,6 +1,7 @@
 from dataclasses import asdict
+
+from domain.calculations import calculate_defenses, calculate_pools
 from domain.character import Character
-from domain.calculations import calculate_pools, calculate_defenses
 from domain.content_registry import get_ability
 from domain.race_resolution import get_race_display_name
 
