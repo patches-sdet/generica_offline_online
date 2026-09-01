@@ -14,7 +14,7 @@ class ActivationSpec:
     target: str = "self"
 
 @dataclass(frozen=True, slots=True)
-class GrantSpec:
+class AbilityGrant:
     name: str
     required_level: int = 1
 
@@ -34,4 +34,4 @@ class JobDefinition:
     owner_type: str
     owner_name: str
     abilities: tuple[AbilityDefinition, ...]
-    grants: tuple[GrantSpec, ...] = field(default_factory=tuple)
+    grants: tuple[AbilityGrant, ...] = field(default_factory=tuple)

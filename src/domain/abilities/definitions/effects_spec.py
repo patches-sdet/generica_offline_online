@@ -7,7 +7,7 @@ PassiveScope = Literal[
     "skill_roll",
     "movement",
     "pool",
-    "weapon_use"
+    "weapon_use",
 ]
 
 PassiveModifierKey = Literal[
@@ -35,18 +35,35 @@ class ApplyStateSpec:
     payload: object | None = None
 
 @dataclass(frozen=True, slots=True)
+class ContestedRollSpec:
+    attacker_roll: str
+    defender_roll: str
+
+@dataclass(frozen=True, slots=True)
 class DerivedStatBuffSpec:
     stat: str | None = None
     amount: tuple[object, ...] = field(default_factory=tuple)
 
 @dataclass(frozen=True, slots=True)
+class EventValueConditionSpec:
+    field_name: str
+    operator: Literal["==", "<", ">", "<=", ">=", "in"]
+    value: object
+
+@dataclass(frozen=True, slots=True)
 class FlatBonus:
+    source_name: str
+    source_type: str
     amount: int = 0
 
 @dataclass(frozen=True, slots=True)
-class GrantSpec:
-    name = str
-    required_level: int
+class FollowUpAttackSpec:
+    attack_bonus: tuple[object, ...] = field(default_factory=tuple)
+    damage_bonus: tuple[object, ...] = field(default_factory=tuple)
+
+@dataclass(frozen=True, slots=True)
+class IgnoreTerrainModifierSpec:
+    pass
 
 @dataclass(frozen=True, slots=True)
 class ModifyNextAttackSpec:
@@ -54,9 +71,13 @@ class ModifyNextAttackSpec:
     damage_bonus: tuple[object, ...] = field(default_factory=tuple)
     ignore_armor: int | tuple[object, ...] = 0
     ignore_cover: bool = False
-    relative_target_size: RelativeSize | None = None
+    relative_target_sizes: tuple[RelativeSize, ...] | None = None
     targets_all_adjacent_enemies: bool = False
     single_roll_against_all_targets: bool = False
+
+@dataclass(frozen=True, slots=True)
+class MovementModifierSpec:
+    speed_multiplier: int
 
 @dataclass(frozen=True, slots=True)
 class OnEventSpec:
@@ -80,10 +101,21 @@ class PoolCostModifierSpec:
     target_scope: str | None = None
 
 @dataclass(frozen=True, slots=True)
+class PoolModifierSpec:
+    pool: str
+    amount: int | tuple[object, ...]
+    scaling_basis: str | None = None
+
+@dataclass(frozen=True, slots=True)
 class ProgressionLevelBonus:
     source_type: str
     source_name: str
     multiplier: int = 1
+
+@dataclass(frozen=True, slots=True)
+class TimedModifierSpec:
+    duration_minutes: int
+    modifier: object
 
 @dataclass(frozen=True, slots=True)
 class WeaponRequirementSpec:

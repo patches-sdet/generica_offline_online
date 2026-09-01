@@ -47,8 +47,8 @@ def _compile_modify_next_attack(effect: ModifyNextAttackSpec, owner_name: str, a
         if effect.ignore_cover:
             setattr(attack, "ignore_cover", True)
 
-        if effect.relative_target_size is not None:
-            setattr(attack, "minimum_target_size", effect.relative_target_size)
+        if effect.relative_target_sizes is not None:
+            setattr(attack, "minimum_target_size", effect.relative_target_sizes[0])
 
         if effect.targets_all_adjacent_enemies:
             setattr(attack, "targets_all_adjacent_enemies", True)
